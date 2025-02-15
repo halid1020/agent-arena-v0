@@ -1,0 +1,75 @@
+update_steps: 99001
+device: "cuda:0"
+grayscale: False
+size: [64, 64]
+channels: 3
+num_actions: 4
+test_interval: 1000
+
+# Model
+dyn_cell: 'gru_layer_norm'
+dyn_hidden: 200
+dyn_deter: 200
+dyn_stoch: 50
+dyn_discrete: 0
+dyn_input_layers: 1
+dyn_output_layers: 1
+dyn_rec_depth: 1
+dyn_shared: False
+dyn_mean_act: 'none'
+dyn_std_act: 'sigmoid2'
+dyn_min_std: 0.1
+dyn_temp_post: True
+grad_heads: ['image', 'reward']
+units: 400
+reward_layers: 2
+act: "elu"
+cnn_depth: 32
+encoder_kernels: [4, 4, 4, 4]
+decoder_kernels: [5, 5, 6, 6]
+value_head: 'normal'
+kl_scale: 1.0
+kl_balance: 0.8
+kl_free: 1.0
+kl_forward: False
+pred_discount: False
+discount_scale: 1.0
+reward_scale: 1.0
+weight_decay: 0.0
+decoder_thin: True
+reward_gradient_stop: False
+
+overshooting_kl_scale: 0
+overshooting_kl_balance: 0
+overshooting_kl_free: 0
+overshooting_kl_forward: False
+overshooting_reward_scale: 0
+overshooting_observation_scale: 0
+overshooting_distance: 0
+overshooting_warmup: False
+
+
+# Training
+batch_size: 50
+sequence_size : 50
+train_every: 5
+train_steps: 1
+pretrain: 100
+model_lr: 3e-4
+value_lr: 8e-5
+actor_lr: 8e-5
+opt_eps: 1e-5
+grad_clip: 100
+opt: 'adam'
+clip_rewards: 'identity'
+action_noise: 0.0
+obs_noise: False
+bit_depth: 5
+cross_traj: False
+num_episodes: 20000
+
+rotation_degree: 0
+flip_vertical: False
+no_op: [0.5, 0.5, 0.5, 0.5]
+test_horizons: [1, 2, 4, 12]
+eval_episodes: 100

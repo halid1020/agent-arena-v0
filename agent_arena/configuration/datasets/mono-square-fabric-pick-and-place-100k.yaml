@@ -1,0 +1,3 @@
+data_dir: 'datasets/data/MonoSquareFabric-VisionPickAndPlace-TrajectorySim-100k'
+action_horizon: 20
+eval_action_horizon: 20

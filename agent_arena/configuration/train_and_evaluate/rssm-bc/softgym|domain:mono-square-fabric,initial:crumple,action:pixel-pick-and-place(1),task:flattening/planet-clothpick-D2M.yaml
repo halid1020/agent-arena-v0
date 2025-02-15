@@ -1,0 +1,38 @@
+logger_name: "pick_and_place_fabric_single_task_logger"
+
+rssm_config: 'configuration/train_and_evaluate/planet-clothpick/softgym|domain:mono-square-fabric,initial:crumple,action:pixel-pick-and-place(1),task:flattening/D2M.yaml'
+rssm_save_dir: "/data/planet-clothpick-v2/softgym|domain:mono-square-fabric,initial:crumple,action:pixel-pick-and-place(1),task:flattening/planet-clothpick/D2M"
+
+
+# Behaviour Cloning Parameters
+collect_interval: 1
+collect_episodes: 1
+update_steps: 5
+save_interval: 1
+demo_policy: "oracle-rect-fabric|action:pixel-pick-and-place(1),strategy:expert-flattening"
+batch_size: 4
+
+# Actor
+actor_params:
+  device: "cuda:0"
+  actor_layers: 4
+  actor_lr: 8e-5
+  actor_grad_clip: 100
+  actor_dist: 'clip_deter' #'trunc_normal'
+  actor_entropy: '1e-4'
+  actor_state_entropy: 0.0
+  actor_init_std: 1.0
+  actor_min_std: 0.1
+  actor_disc: 5
+  actor_temp: 0.1
+  actor_outscale: 0.0
+  actor_units: 400
+  num_actions: 4
+  actor_act: "relu"
+  weight_decay: 0.0
+  actor_opt: 'adam'
+  opt_eps: 1e-5
+  batch_size: 16
+  update_steps: 200
+  test_interval: 100
+  actor_loss: 'mse'

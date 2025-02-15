@@ -1,0 +1,102 @@
+device: 'cuda:0'
+
+train_mode: "online"
+train_episodes: 1
+update_steps: 100001
+test_interval: 10000
+test_episodes: 5
+collect_interval: 100
+batch_size: 50
+sequence_size: 50
+memory_size: 1000000
+symbolic_env: False
+intial_train_episodes: 5
+checkpoint_experience: False
+action_noise: 0.3
+
+input_obs: "rgb"
+output_obs: "input_obs"
+
+deterministic_latent_dim: 200
+stochastic_latent_dim: 30
+action_dim: 4
+hidden_dim: 200
+embedding_dim: 1024
+min_std_dev: 0.1
+activation: 'relu'
+trans_layers: 1
+input_obs_dim: [3, 64, 64]
+output_obs_dim: [3, 64, 64]
+encoder_batchnorm: False
+encoder_residual: False
+decoder_batchnorm: False
+decoder_residual: False
+free_nats: 3
+
+
+observation_scale: 1.0
+reward_scale: 1.0
+reward_gradient_stop: False
+kl_balance: 0
+kl_scale: 1.0
+kl_balancing: False
+
+overshooting_distance: 0
+kl_overshooting_scale: 0
+kl_overshooting_warmup: False
+kl_overshooting_balance: 0
+reward_overshooting_scale: 0
+reward_overshooting_warmup: False
+
+
+cost_fn: "trajectory_return"
+logger_name: "standard_logger"
+encoder_mode: "default"
+
+optimiser_class: 'adam'
+optimiser_params: 
+  lr: 1e-3
+  eps: 1e-4
+grad_clip_norm: 1000
+
+transform:
+    name: 'planet_transformer'
+    params:
+      device: "cuda:0"
+      img_dim: [64, 64]
+      remap_image: [-0.5, 0.5]
+      bit_depth: 5
+      rgb_noise_var: 1.0
+
+explore_policy:
+  name: 'mpc_cem'
+  params:
+    # action_lower_bound: -1
+    # action_upper_bound: 1
+
+    candidates: 1000
+    planning_horizon: 12
+    iterations: 10
+    # action_dim: [6]
+    clip: True
+
+    cost_fn: 'from_model'
+      
+
+policy:
+  name: 'mpc_cem'
+  params:
+    # action_lower_bound: -1
+    # action_upper_bound: 1
+
+    candidates: 1000
+    planning_horizon: 12
+    iterations: 10
+    # action_dim: [6]
+    clip: True
+
+    cost_fn: 'from_model'
+
+test_horizons: [1, 2, 4] # This shoulud be smaller than action horizon.
+# action_horizon: 50
+# eval_episodes: 100

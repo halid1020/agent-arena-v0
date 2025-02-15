@@ -1,0 +1,108 @@
+# steps: 2e8
+# eval_every: 1e5
+log_every: 1e4
+prefill: 50000
+dataset_size: 2e6
+pretrain: 0
+
+# # Environment
+# time_limit: 108000  # 30 minutes of game play.
+# #grayscale: True
+# # action_repeat: 4
+# eval_noise: 0.0
+# train_every: 16
+# train_steps: 1
+# clip_rewards: 'tanh'
+
+# Model
+grad_heads: ['image', 'reward']
+dyn_cell: 'gru_layer_norm'
+# pred_discount: True
+cnn_depth: 48
+dyn_deter: 600
+dyn_hidden: 600
+dyn_stoch: 32
+dyn_discrete: 32
+reward_layers: 4
+# discount_layers: 4
+value_layers: 4
+actor_layers: 4
+
+# Behavior
+actor_dist: 'onehot'
+actor_entropy: 'linear(3e-3,3e-4,2.5e6)'
+expl_amount: 0.0
+discount: 0.999
+imag_gradient: 'both'
+imag_gradient_mix: 'linear(0.1,0,2.5e6)'
+
+# Training
+discount_scale: 5.0
+reward_scale: 1
+weight_decay: 1e-6
+model_lr: 2e-4
+kl_scale: 0.1
+kl_free: 0.0
+actor_lr: 4e-5
+value_lr: 1e-4
+oversample_ends: True
+
+###############
+###############
+
+envs: 1
+train_mode: "offline"
+eval_episodes: 0
+# reward_scale: 1.0
+steps: 100001
+batch_size: 50
+batch_length: 20
+eval_every: 10000
+action_repeat: 1
+
+policy:
+  name: 'self'
+
+transform:
+      name: 'pick_and_place_transformer'
+      params:
+        device: "cuda:0"
+        img_dim: [64, 64]
+        remap_image: [0, 255]
+        bit_depth: 0
+        rgb_noise_var: 0
+        random_rotation: False
+        random_terminal: False
+        rotation_degree: 0
+        vertical_flip: False
+        random_resize: False
+        action_noise: 0.0
+        reward_scale: 1.0
+
+
+datasets:
+  - key: 'train'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      random_seed: 0
+      num_episodes: 56000
+      raw_img_dim: [128, 128]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      return_mask: False
+      sequence_len: 50
+      action_horizon: 20
+      episode_len: 20
+      mode: 'train'
+      reward_mode: "hoque_ddpg"
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+      unflatten_threshold: 0.98
+      misgrasping_threshold: 1.0
+      flattening_threshold: 0.98

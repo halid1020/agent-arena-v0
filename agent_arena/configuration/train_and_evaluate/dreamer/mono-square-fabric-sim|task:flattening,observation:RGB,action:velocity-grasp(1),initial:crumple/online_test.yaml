@@ -1,0 +1,8 @@
+envs: 1
+train_mode: "online"
+eval_episodes: 2
+reward_scale: 20.0
+steps: 100
+
+policy:
+  name: "self"

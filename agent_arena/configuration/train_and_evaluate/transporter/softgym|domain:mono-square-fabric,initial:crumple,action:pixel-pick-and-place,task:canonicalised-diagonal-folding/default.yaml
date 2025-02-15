@@ -1,0 +1,35 @@
+n_rotations: 1
+in_shape: [128, 128, 6]
+crop_size: 32 # has to be even
+pixel2world: False
+train_mode: "from_policy"
+
+num_train_demo_episodes: 1000
+num_test_demo_episodes: 3
+
+update_steps: 40000
+test_interval: 1000
+
+logger_name: 'pick_and_place_fabric_single_task_logger'
+save_heatmap: True
+verbose: True
+swap_action: True
+
+transform:
+  name: 'transporter_net_transformer'
+  params:   
+    device: "cuda:0"
+    img_dim: [128, 128]
+    rgb_norm_mode: ['remap']
+    rgb_norm_param:
+      remap_range: [-0.5, 0.5]
+    depth_norm_mode: ['clip', 'min_max', 'remap'] 
+    depth_norm_param:
+      clip_range: [1.47, 1.51]
+      min_max_range: [1.47, 1.51]
+      remap_range: [-0.5, 0.5]
+
+demo_policy:
+  name: 'oracle-rect-fabric|action:pixel-pick-and-place(1),task:canonicalised-diagonal-folding,strategy:expert'
+  param:
+    oracle: True

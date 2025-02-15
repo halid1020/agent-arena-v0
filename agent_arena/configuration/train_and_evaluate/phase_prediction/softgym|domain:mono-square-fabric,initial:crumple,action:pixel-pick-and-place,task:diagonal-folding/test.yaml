@@ -1,0 +1,57 @@
+phases:
+  flattening: 0
+  folding: 1
+  sucess: 2
+
+in_shape: [64, 64, 3] ## TODO: redundant, need to remove
+num_train_episodes: 1
+num_val_episodes: 1
+device: 'cuda:0'
+test_interval: 10
+num_update_steps: 100
+
+collection_policy:
+  name: 'oracle-rect-fabric|action:pixel-pick-and-place(1),task:diagonal-folding,strategy:expert'
+  param:
+    oracle: True
+
+
+phase_agents:
+
+  flattening:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:crumple,action:pixel-pick-and-place,task:flattening
+    config: default-demo-2000-double-bc-clothmask
+    log_dir: /data/fast-ldm-fabric-shaper
+
+  folding:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:flatten,action:pixel-pick-and-place,task:diagonal-folding
+    config: default-demo-400
+    log_dir: /data/fast-ldm-fabric-shaper
+
+
+logger_name: 'pick_and_place_fabric_single_task_logger'
+  
+prediction_network:
+  image_encoder:
+    embedding_size: 1024
+    image_dim: [3, 64, 64]
+    activation_function: 'relu'
+    batchnorm: false
+    residual: false
+  
+  mlp:
+    layers: [1024, 256, 64, 16, 3]
+    # the first layers are the embedding of the image,
+    # the last output is the phase prediction
+    
+    activation_function: 'relu'
+
+learning_rate: 0.0001
+
+batch_size: 4
+
+transform:
+  name: 'identity'
+  params: 

@@ -1,0 +1,131 @@
+device: 'cuda:0'
+
+train_mode: 'offline'
+train_episodes: 5
+update_steps: 50001
+test_interval: 1000
+batch_size: 50
+sequence_size: 50
+action_noise: 0.3
+
+input_obs: "rgb"
+output_obs: "input_obs"
+
+deterministic_latent_dim: 200
+stochastic_latent_dim: 30
+action_dim: 4
+hidden_dim: 200
+embedding_dim: 1024
+min_std_dev: 0.1
+activation: 'relu'
+trans_layers: 1
+input_obs_dim: [3, 64, 64]
+output_obs_dim: [3, 64, 64]
+encoder_batchnorm: False
+encoder_residual: False
+decoder_batchnorm: False
+decoder_residual: False
+free_nats: 3
+
+
+observation_scale: 1.0
+reward_scale: 1.0
+reward_gradient_stop: False
+kl_balance: 0
+kl_scale: 1.0
+kl_balancing: False
+
+overshooting_distance: 0
+kl_overshooting_scale: 0
+kl_overshooting_warmup: False
+kl_overshooting_balance: 0
+reward_overshooting_scale: 0
+reward_overshooting_warmup: False
+
+
+cost_fn: "trajectory_return"
+logger_name: "pick_and_place_fabric_single_task_logger"
+encoder_mode: "default"
+
+optimiser_class: 'adam'
+optimiser_params: 
+  lr: 1e-3
+  eps: 1e-4
+grad_clip_norm: 1000
+
+transform:
+    name: 'planet_transformer'
+    params:
+      device: "cuda:0"
+      img_dim: [64, 64]
+      remap_image: [-0.5, 0.5]
+      bit_depth: 5
+      rgb_noise_var: 1.0
+
+
+datasets:
+  - key: 'train'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      random_seed: 0
+      num_episodes: 56000
+      raw_img_dim: [128, 128]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      return_mask: False
+      sequence_len: 50
+      action_horizon: 20
+      episode_len: 20
+      mode: 'train'
+      reward_mode: "hoque_ddpg"
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+      unflatten_threshold: 0.98
+      misgrasping_threshold: 1.0
+      flattening_threshold: 0.98
+
+
+  - key: 'test'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      random_seed: 0
+      num_episodes: 100
+      raw_img_dim: [128, 128]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      return_mask: False
+      mode: 'test'
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+      unflatten_threshold: 0.98
+      misgrasping_threshold: 1.0
+      flattening_threshold: 0.98
+
+
+policy:
+  name: 'mpc_cem'
+  params:
+
+    candidates: 1000
+    planning_horizon: 12
+    iterations: 10
+    clip: True
+
+    cost_fn: 'from_model'
+
+test_horizons: [1, 2, 4] # This shoulud be smaller than action horizon.
+action_horizon: 50
+eval_episodes: 100
+eval_save_latent: True

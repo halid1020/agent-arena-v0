@@ -1,0 +1,71 @@
+obs_dim: 512
+action_dim: 4
+obs_horizon: 2
+pred_horizon: 4
+num_diffusion_iters: 100
+action_horizon: 1
+input_obs: 'depth'
+use_mask: True
+eval_action_sampler: 'normal'
+include_state: False
+
+readjust_pick: True
+data_obs: 'image'
+data_state: 'agent_pos'
+data_action: 'action'
+train_mode: 'from_dataset'
+num_epochs: 100
+
+logger_name: 'pick_and_place_fabric_single_task_logger'
+
+validation_interval: 2000
+total_update_steps: 100000 ## 379*100
+
+action_output:
+  pick_0: [0, 1]
+  place_0: [2, 3]
+  
+dataset_mode: "general"
+dataset_config:
+  data_path: "draper_data/OTS-on-RRN.zarr"
+  seq_length: 4
+  obs_config:
+    mask: 
+      shape: [128, 128, 1]
+      output_key: 'mask'
+    
+    depth: 
+      shape: [128, 128, 1]
+      output_key: 'depth'
+
+  act_config:
+    norm_pixel_pick_and_place: 
+      shape: [1, 4]
+      output_key: 'default'
+
+transform:
+  name: 'pick_and_place_transformer'
+  params:
+    img_dim: [96, 96]
+    device: "cuda:0"
+    random_rotation: True
+    random_terminal: False
+    rotation_degree: 90
+    vertical_flip: True
+    random_resize: False
+    action_noise: 0.0
+    maskout: True
+    bg_value: 0.0
+
+    depth_clip: True
+    depth_clip_min: 1.47 #0.62 #
+    depth_clip_max: 1.51 #0.66 #0.66
+    min_max_norm: True
+    depth_min: 1.47 #0.62
+    depth_max: 1.51 #0.66
+    depth_map: True
+    depth_map_range: [0, 1]
+    depth_blur: True
+    depth_flip: True
+    depth_blur_kernel_size: 11
+    depth_noise_var: 0.01

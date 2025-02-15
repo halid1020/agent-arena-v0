@@ -1,0 +1,79 @@
+flownet:
+
+  experiment: dbg
+  
+  seed: 20
+
+  base_path: path/to/base/dir # base directory containing train and val data directories
+  train_name: null # train data directory name
+  val_name: null # validation data directory name
+
+  max_train_samples: null
+  max_val_samples: null
+
+  workers: 6
+  batch_size: 32
+
+  epochs: 300
+  check_val_every_n_epoch: 1
+  tboard_log_dir: tb
+  csv_log_dir: csv
+
+  net_cfg:
+    input_channels: 2
+    weight_decay: 0.0001
+    lr: 0.001
+    batchNorm: True
+    full_upsample: False
+
+  spatial_aug: 0.9
+  spatial_trans: 5 
+  spatial_rot: 5 
+
+  debug_viz: 
+    remove_occlusions: False
+    data_sample: False
+    
+
+picknet:
+
+  experiment: dbg
+
+  seed: 0 
+
+  base_path: path/to/base/dir # base directory containing train and val dirs
+  train_name: null # train data directory name
+  val_name: null # validation data directory name
+
+  epochs: 150 # max training epochs 
+  max_buf: 20000 # 7200 # max training buf
+  workers: 6
+  batch_size: 10 # batch size 
+
+  check_val_every_n_epoch: 1
+  tboard_log_dir: tb
+  csv_log_dir: csv
+
+  net_cfg:
+    lr: 0.0001
+    input_mode: flowonly
+    min_loss: True
+    model_type: split
+    pick: True # Whether it is pick network or place network
+    im_width: 200
+
+  flow: /path/to/flow/ckpt 
+  augment: False # dataset spatial aug flag
+
+  debug_viz:
+    remove_occlusions: False
+    data_sample: False
+
+
+totoal_update_steps: 1
+validation_interval: 1
+single_pick_thresh: 30
+action_len_thresh: 10
+only_allow_one_picker: True
+depth_offset: 0
+device: "cuda:0"

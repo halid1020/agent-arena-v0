@@ -1,0 +1,84 @@
+phases:
+  flattening: 0
+  folding: 1
+  # success: 2
+
+in_shape: [256, 256, 3] ## TODO: redundant, need to remove
+num_train_episodes: 1000
+train_batch_size: 32
+val_batch_size: 128
+num_val_episodes: 10
+device: 'cuda:0'
+test_interval: 1000
+num_update_steps: 10000
+input_obs: 'rgb'
+output_obs: null
+
+collection_policy:
+  name: 'oracle-rect-fabric|action:pixel-pick-and-place(1),task:diagonal-folding,strategy:expert'
+  param:
+    oracle: True
+
+
+phase_agents:
+
+  flattening:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:crumple,action:pixel-pick-and-place,task:flattening
+    config: default-demo-2000-double-bc-clothmask
+    log_dir: /data/fast-ldm-fabric-shaper
+
+  folding:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:flatten,action:pixel-pick-and-place,task:diagonal-folding
+    config: default-demo-1000
+    log_dir: /data/fast-ldm-fabric-shaper
+  
+  success:
+    name: no-op
+    param:
+      oracle: True
+
+
+logger_name: 'standard_logger'
+  
+predictor:
+  name: 'pretrained_efficient_net_predictor'
+  params:
+
+    num_classes: 2
+
+    
+    class_factor: 1.0
+    class_warmer: False
+
+    classifier:
+      layers: [512, 256]
+      activation: 'relu'
+      dropout: 0.5
+    
+    optimiser:
+      name: 'sgd'
+      params:
+        lr: 1e-3
+        momentum: 0.9
+
+    device: 'cuda:0'
+
+balance_phase_sampling: true
+
+
+transform:
+  name: 'phase_prediction_transform'
+  params:
+    device: "cuda:0"
+    img_dim: [64, 64]
+    rgb_norm_mode: ['normalise']
+    rgb_norm_param:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+    rgb_noise_factor: 0
+    
+    random_rotation: true
+    rotation_degree: 10
+    vertical_flip: true

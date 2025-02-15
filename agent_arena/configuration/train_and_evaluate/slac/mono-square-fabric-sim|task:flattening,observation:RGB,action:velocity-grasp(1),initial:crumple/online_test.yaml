@@ -1,0 +1,13 @@
+observation_shape: [3, 64, 64]
+action_shape: [4]
+action_repeat: 1
+device: "cuda:0"
+seed: 0
+num_steps: 1000
+train_mode: "online"
+initial_collection_steps: 1000
+initial_learning_steps: 100
+eval_interval: 100
+
+policy:
+  name: 'self'

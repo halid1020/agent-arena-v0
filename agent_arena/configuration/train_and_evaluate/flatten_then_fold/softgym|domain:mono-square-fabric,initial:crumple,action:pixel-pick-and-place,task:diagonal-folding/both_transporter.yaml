@@ -1,0 +1,15 @@
+flatten_agent:
+  name: transporter
+  arena: softgym|domain:mono-square-fabric,initial:crumple,action:pixel-pick-and-place,task:flattening
+  config: default-demo-2000-double-bc-clothmask
+  log_dir: /data/fast-ldm-fabric-shaper
+
+fold_agent:
+  name: transporter
+  arena: softgym|domain:mono-square-fabric,initial:flatten,action:pixel-pick-and-place,task:diagonal-folding
+  config: default-demo-200
+  log_dir: /data/fast-ldm-fabric-shaper
+
+logger_name: 'pick_and_place_fabric_single_task_logger'
+
+coverage_threshold: 0.99

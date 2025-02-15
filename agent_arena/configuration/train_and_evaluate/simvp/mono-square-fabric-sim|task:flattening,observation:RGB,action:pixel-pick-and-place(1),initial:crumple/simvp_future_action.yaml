@@ -1,0 +1,1 @@
+command: "-d msf-vpp-trjsim -m simvp -c configs/msf-vpp-trjsim/SimVP-FutureAction.py --ex_name msf-vpp-trjsim_simvp-future-action"

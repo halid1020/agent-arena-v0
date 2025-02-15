@@ -1,0 +1,80 @@
+phases:
+  flattening: 0
+  folding: 1
+  success: 2
+
+in_shape: [64, 64, 3] ## TODO: redundant, need to remove
+num_train_episodes: 100
+batch_size: 32
+num_val_episodes: 10
+device: 'cuda:0'
+test_interval: 1000
+num_update_steps: 10000
+train_batch_size: 32
+val_batch_size: 32
+
+collection_policy:
+  name: 'oracle-rect-fabric|action:pixel-pick-and-place(1),task:diagonal-folding,strategy:expert'
+  param:
+    oracle: True
+
+
+phase_agents:
+
+  flattening:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:crumple,action:pixel-pick-and-place,task:flattening
+    config: default-demo-2000-double-bc-clothmask
+    log_dir: /data/fast-ldm-fabric-shaper
+
+  folding:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:flatten,action:pixel-pick-and-place,task:diagonal-folding
+    config: default-demo-400
+    log_dir: /data/fast-ldm-fabric-shaper
+  
+  success:
+    name: no-op
+    param:
+      oracle: True
+
+
+logger_name: 'standard_logger'
+  
+prediction_network:
+  image_encoder:
+    embedding_size: 1024
+    image_dim: [3, 64, 64]
+    activation_function: 'relu'
+    batchnorm: false
+    residual: false
+  
+  mlp:
+    layers: [1024, 256, 64, 16, 3]
+    # the first layers are the embedding of the image,
+    # the last output is the phase prediction
+    
+    activation_function: 'relu'
+
+learning_rate: 0.0001
+balance_phase_sampling: true
+
+
+transform:
+  name: 'phase_prediction_transform'
+  params:
+    device: "cuda:0"
+    img_dim: [64, 64]
+    rgb_norm_mode: ['remap']
+    rgb_norm_param:
+      remap_range: [-0.5, 0.5]
+    rgb_noise_factor: 0.0
+    depth_norm_mode: ['clip', 'min_max', 'remap'] 
+    depth_norm_param:
+      clip_range: [1.47, 1.51]
+      min_max_range: [1.47, 1.51]
+      remap_range: [-0.5, 0.5]
+    
+    random_rotation: true
+    rotation_degree: 1
+    vertical_flip: true

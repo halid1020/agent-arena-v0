@@ -1,0 +1,164 @@
+dynamic_model_config: 'dreamer-planning/mono-square-fabric-legacy-pick-and-place-flattening/planet-pick-categorical'
+dynamic_model_model_dir: 'tmp/mono-square-fabric-legacy-pick-and-place-flattening/dreamer-planning/planet-pick-categorical/model'
+action_lower_bound: [-0.5, -0.5, -0.5, -0.5]
+action_upper_bound: [0.5, 0.5, 0.5, 0.5]
+no_op: [0.5, 0.5, 0.5, 0.5]
+action_dim: [1, 4]
+device: "cuda:0"
+heatmap_sigma: 3.0
+heatmap_kernel_size: 15
+heatmap_scale: 50.0
+pick_action_feature_loss_scale: 1.0
+train_dynamic_model: False
+pick_condition_place: True
+
+# Actor
+actor_params:
+  device: "cuda:0"
+  actor_lr: 8e-5
+  actor_grad_clip: 100
+  actor_act: "relu"
+  weight_decay: 0.0
+  actor_opt: 'adam'
+  opt_eps: 1e-5
+  batch_size: 16
+  update_steps: 100000
+  test_interval: 1000
+  actor_loss: 'mse'
+  output_mode: 'deterministic'
+  decoder_kernels: [5, 5, 6, 6]
+  decoder_thin: True
+  output_shape: [64, 64]
+  cnn_depth: 32
+  pick_action_feature_loss_scale: 1.0
+
+
+policy:
+  name: 'self'
+
+
+# Dataset
+datasets:
+  - key: 'train_rssm'
+    name: 'mono-square-fabric-legacy-pick-and-place'
+    params:
+      num_episodes: 20000
+      mode: 'train'
+      img_dim: [64, 64]
+      cross_traj: True
+
+    transform:
+      name: 'pick_and_place_transformer'
+      params:
+        device: "cuda:0"
+        bit_depth: 5
+        rgb_noise_var: 1.0
+        random_rotation: True
+        random_terminal: False
+        rotation_degree: 90
+        vertical_flip: True
+        random_resize: False
+
+  - key: 'test_rssm'
+    name: 'mono-square-fabric-legacy-pick-and-place'
+    params:
+      num_episodes: 100
+      mode: 'test'
+      img_dim: [64, 64]
+      cross_traj: False
+
+    transform:
+      name: 'pick_and_place_transformer'
+      params:
+        device: "cuda:0"
+        bit_depth: 5
+        rgb_noise_var: 0
+        random_rotation: False
+        random_terminal: False
+        rotation_degree: 0
+        vertical_flip: False
+        random_resize: False
+    
+  - key: 'train_bc'
+    name: 'mono-square-fabric-legacy-expert-pick-and-place-diagonal-folding-from-crumpled-v2'
+    params:
+      num_episodes: 10000
+      mode: 'train'
+      img_dim: [64, 64]
+      cross_traj: True
+      eval_episodes: 100
+
+    transform: 
+      name: 'pick_and_place_heatmap_transformer'
+      params:
+        device: "cuda:0"
+        bit_depth: 5
+        rgb_noise_var: 1.0
+        random_rotation: True
+        random_terminal: True
+        rotation_degree: 90
+        vertical_flip: True
+        random_resize: False
+        heatmap_size: [64, 64]
+        kernel_size: 15
+        sigma: 3.0
+        scale: 50.0
+
+  - key: 'test_bc'
+    name: 'mono-square-fabric-legacy-expert-pick-and-place-diagonal-folding-from-crumpled-v2'
+    params:
+      num_episodes: 100
+      mode: 'test'
+      img_dim: [64, 64]
+      cross_traj: false
+      eval_episodes: 100
+    
+    transform: 
+      name: 'pick_and_place_heatmap_transformer'
+      params:
+        device: "cuda:0"
+        bit_depth: 5
+        rgb_noise_var: 0
+        random_rotation: False
+        random_terminal: False
+        rotation_degree: 0
+        vertical_flip: False
+        random_resize: False
+        heatmap_size: [64, 64]
+        kernel_size: 15
+        sigma: 3.0
+        scale: 50.0
+
+# # Transform
+# rssm_transform:
+#   name: 'pick_and_place_transformer'
+#   params:
+#     device: "cuda:0"
+#     bit_depth: 5
+#     rgb_noise_var: 1.0
+#     random_rotation: True
+#     random_terminal: False
+#     rotation_degree: 90
+#     vertical_flip: True
+#     random_resize: False
+
+# bc_transform:
+#   name: 'pick_and_place_heatmap_transformer'
+#   params:
+#     device: "cuda:0"
+#     bit_depth: 5
+#     rgb_noise_var: 1.0
+#     random_rotation: True
+#     random_terminal: True
+#     rotation_degree: 90
+#     vertical_flip: True
+#     random_resize: False
+#     heatmap_size: [64, 64]
+#     kernel_size: 15
+#     sigma: 3.0
+#     scale: 50.0
+
+
+
+
+

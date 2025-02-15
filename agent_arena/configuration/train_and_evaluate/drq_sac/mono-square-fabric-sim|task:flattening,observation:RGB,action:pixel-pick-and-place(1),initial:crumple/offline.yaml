@@ -1,0 +1,61 @@
+batch_size: 128
+im_size: 128
+init_termperature: 0.1
+train_mode: 'offline'
+replay_buffer_capacity: 100000
+obs_shape: [3, 128, 128]
+action_shape: [4]
+action_lower_bound: [-1, -1, -1, -1]
+action_upper_bound: [1, 1,1, 1]
+num_eval_episodes: 10
+save_video: true
+save_model: true
+offline_update_steps: 100001
+eval_frequency: 10000
+action_repeat: 1
+
+lr_decay: null
+critic_lr: 1e-4
+alpha_lr: 1e-3
+reward_scale: 20
+
+policy:
+  name: 'self'
+
+
+datasets:
+  - key: 'train'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      random_seed: 0
+      num_episodes: 50000
+      img_dim: [64, 64]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      sequence_len: 50
+      action_horizon: 20
+      episode_len: 20
+      mode: 'train'
+      reward_mode: "hoque_ddpg"
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+
+
+    transform:
+      name: 'pick_and_place_transformer'
+      params:
+        device: "cuda:0"
+        bit_depth: 5
+        rgb_noise_var: 1.0
+        random_rotation: False
+        random_terminal: False
+        rotation_degree: 0
+        vertical_flip: False
+        random_resize: False
+        action_noise: 0.0

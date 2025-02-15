@@ -1,0 +1,2 @@
+device: "cuda:0"
+logger_name: 'pick_and_place_fabric_single_task_logger'

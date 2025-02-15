@@ -1,0 +1,170 @@
+device: "cuda:0"
+grayscale: False
+size: [64, 64]
+channels: 3
+num_actions: 4
+test_interval: 500
+
+# Model
+dyn_cell: 'gru'
+dyn_hidden: 200
+dyn_deter: 200
+dyn_stoch: 50
+dyn_discrete: 0
+dyn_input_layers: 1
+dyn_output_layers: 1
+dyn_rec_depth: 1
+dyn_shared: False
+dyn_mean_act: 'none'
+dyn_std_act: 'sigmoid2'
+dyn_min_std: 0.1
+dyn_temp_post: True
+grad_heads: ['image', 'reward']
+units: 400
+reward_layers: 2
+act: "elu"
+cnn_depth: 32
+encoder_kernels: [4, 4, 4, 4]
+decoder_kernels: [5, 5, 6, 6]
+value_head: 'normal'
+kl_scale: 1.0
+kl_balance: 0.8
+kl_free: 1.0
+kl_forward: False
+pred_discount: False
+discount_scale: 1.0
+reward_scale: 1.0
+weight_decay: 0.0
+decoder_thin: True
+reward_gradient_stop: False
+
+# Overshooting
+overshooting_kl_scale: 0
+overshooting_kl_balance: 0
+overshooting_kl_free: 0
+overshooting_kl_forward: False
+overshooting_reward_scale: 0
+overshooting_observation_scale: 0
+overshooting_distance: 0
+kl_overshooting_warmup: False
+reward_overshooting_warmup: False
+
+# Training
+batch_size: 50
+sequence_size : 50
+model_lr: 3e-4
+opt_eps: 1e-5
+grad_clip: 100
+opt: 'adam'
+clip_rewards: 'identity'
+update_steps: 5
+decoder_output_mode: 'stochastic'
+reward_output_mode: 'stochastic'
+reward_loss: 'nll'
+decoder_loss: 'nll'
+
+
+no_op: [1, 1, 1, 1]
+test_horizons: [1, 2, 4, 12]
+action_horizon: 20
+eval_episodes: 100
+
+datasets:
+  - key: 'train'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      random_seed: 0
+      num_episodes: 50000
+      img_dim: [64, 64]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      sequence_len: 50
+      action_horizon: 20
+      episode_len: 20
+      mode: 'train'
+      reward_mode: "hoque_ddpg"
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+      unflatten_threshold: 0.95
+      misgrasping_threshold: 0.95
+
+
+    transform:
+      name: 'pick_and_place_transformer'
+      params:
+        remap_image: [-0.5, 0.5]
+        device: "cuda:0"
+        bit_depth: 5
+        rgb_noise_var: 1.0
+        random_rotation: True
+        random_terminal: False
+        rotation_degree: 90
+        vertical_flip: True
+        random_resize: False
+        action_noise: 0.0
+        reward_scale: 1.0
+  
+  - key: 'test'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      
+      random_seed: 0
+      num_episodes: 100
+      img_dim: [64, 64]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      sequence_len: 50
+      action_horizon: 20
+      episode_len: 20
+      mode: 'test'
+      reward_mode: "hoque_ddpg"
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+      unflatten_threshold: 0.92
+      misgrasping_threshold: 0.9
+    
+    transform:
+      name: 'pick_and_place_transformer'
+      params:
+        remap_image: [-0.5, 0.5]
+        device: "cuda:0"
+        bit_depth: 5
+        rgb_noise_var: 0
+        random_rotation: False
+        random_terminal: False
+        rotation_degree: 0
+        vertical_flip: False
+        random_resize: False
+
+policy:
+  name: 'rect_fabric_mpc_readjust_pick'
+  params:
+    action_lower_bound: -1
+    action_upper_bound: 1
+
+    candidates: 5000
+    planning_horizon: 1
+    iterations: 100
+    action_dim: [1, 4]
+    clip: True
+
+
+    readjust_pick: True,
+    readjust_pick_threshold: 0.1
+    flatten_threshold: 0.98
+    no_op: [1.0, 1.0, 1.0, 1.0]
+    conservative_place: 1.0
+
+    cost_fn: 'from_model'

@@ -1,0 +1,88 @@
+{
+    "action_types": {
+        "corner-biased-random-pick-and-place": 0,
+        "drag-to-opposite-side": 1,
+        "flatten": 2,
+        "no-op": 3,
+        "random_pick_and_place": 4,
+        "reveal-edge-point": 5,
+        "reveal-hidden-corner": 6,
+        "untwist": 7
+    },
+    "policies_ratio": [
+        0.1,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.1
+    ],
+    "policies": {
+        "oracle-rect-fabric|action:pixel-pick-and-place(1),task:flattening,strategy:random": 0,
+        "oracle-rect-fabric|action:pixel-pick-and-place(1),task:flattening,strategy:corner-biased": 1,
+        "oracle-rect-fabric|action:pixel-pick-and-place(1),task:flattening,strategy:expert-flattening-random-folding": 2,
+        "oracle-rect-fabric|action:pixel-pick-and-place(1),task:flattening,strategy:sim2real-expert": 3,
+        "oracle-rect-fabric|action:pixel-pick-and-place(1),task:flattening,strategy:noisy-expert": 4,
+        "mix_policy": 5
+    },
+    "save_names": [
+        "rgb",
+        "depth",
+        "mask",
+        "edge_mask",
+        "action",
+        "action_type",
+        "normalised_coverage",
+        "success",
+        "policy"
+    ],
+    "save_types": [
+        "uint8",
+        "float16",
+        "bool",
+        "bool",
+        "float16",
+        "uint8",
+        "float16",
+        "bool",
+        "uint8"
+    ],
+    "save_dimensions": [
+        [
+            128,
+            128,
+            3
+        ],
+        [
+            128,
+            128,
+            1
+        ],
+        [
+            128,
+            128,
+            1
+        ],
+        [
+            128,
+            128,
+            1
+        ],
+        [
+            1,
+            6
+        ],
+        [
+            1
+        ],
+        [
+            1
+        ],
+        [
+            1
+        ],
+        [
+            1
+        ]
+    ]
+}

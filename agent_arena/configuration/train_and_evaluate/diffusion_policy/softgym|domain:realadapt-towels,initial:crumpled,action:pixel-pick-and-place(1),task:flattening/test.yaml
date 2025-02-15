@@ -1,0 +1,63 @@
+obs_dim: 512
+action_dim: 4
+obs_horizon: 2
+pred_horizon: 8
+num_diffusion_iters: 100
+action_horizon: 4
+input_obs: 'rgb'
+
+include_state: False
+
+
+data_obs: 'image'
+data_state: 'agent_pos'
+data_action: 'action'
+train_mode: 'from_dataset'
+num_epochs: 100
+
+logger_name: "standard_logger"
+
+validation_interval: 2000
+total_update_steps: 40000 ## 379*100
+
+dataset_mode: "general"
+dataset_config:
+  data_path: "sim2real-rect-fabric-flattening.zarr"
+  seq_length: 8
+  obs_config:
+    color: 
+      shape: [128, 128, 3]
+      output_key: 'rgb'
+
+  act_config:
+    norm_pixel_pick_and_place: 
+      shape: [1, 4]
+      output_key: 'default'
+
+transform:
+  name: 'pick_and_place_transformer'
+  params:
+    img_dim: [96, 96]
+    remap_image: [-0.5, 0.5]
+    device: "cuda:0"
+    bit_depth: 5
+    rgb_noise_factor: 1.0
+    random_rotation: True
+    random_terminal: False
+    rotation_degree: 90
+    vertical_flip: True
+    random_resize: False
+    action_noise: 0.0
+    mask_remap: True
+    mask_remap_range: [-0.5, 0.5]
+    mask_noise_var: 0
+    z_norm: False
+    depth_clip: True
+    depth_clip_min: 0.62 #
+    depth_clip_max: 0.66 #0.66
+    min_max_norm: True
+    depth_min: 0.62
+    depth_max: 0.66
+    depth_map: True
+    depth_map_range: [-0.5, 0.5]
+    depth_noise_var: 0.01

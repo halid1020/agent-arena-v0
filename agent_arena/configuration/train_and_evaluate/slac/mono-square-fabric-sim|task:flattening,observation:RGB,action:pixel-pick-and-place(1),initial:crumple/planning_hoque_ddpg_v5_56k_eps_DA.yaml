@@ -1,0 +1,107 @@
+observation_shape: [3, 64, 64]
+action_shape: [4]
+action_repeat: 1
+device: "cuda:0"
+seed: 0
+train_mode: "offline"
+initial_learning_steps:  0
+eval_interval: 50000
+num_steps:  1000001
+num_sequences: 8
+num_eval_episodes: 0
+buffer_size: 100000
+reward_scale: 1.0
+latent_batch_size: 32
+update_sac: False
+
+add_initial_episodes: 5000
+add_episode_interval: 100
+add_episode_num: 50
+
+transform:
+  name: 'pick_and_place_transformer'
+  params:
+    img_dim: [64, 64]
+    remap_image: [0, 255]
+    device: "cuda:0"
+    bit_depth: 5
+    rgb_noise_var: 1.0
+    random_rotation: True
+    random_terminal: False
+    rotation_degree: 90
+    vertical_flip: True
+    random_resize: False
+    action_noise: 0.0
+
+datasets:
+  - key: 'train'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      random_seed: 0
+      num_episodes: 56000
+      raw_img_dim: [128, 128]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      return_mask: False
+      sequence_len: 50
+      action_horizon: 20
+      episode_len: 20
+      mode: 'train'
+      reward_mode: "hoque_ddpg"
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+      unflatten_threshold: 0.98
+      misgrasping_threshold: 1.0
+      flattening_threshold: 0.98
+
+  
+  - key: 'test'
+
+    name: 'mono-square-fabric-pick-and-place'
+    params:
+      random_seed: 0
+      num_episodes: 100
+      raw_img_dim: [128, 128]
+      cross_traj: True
+      return_pick_and_place_action_z: False
+      return_rgb: True
+      return_depth: False
+      return_mask: False
+      sequence_len: 50
+      action_horizon: 20
+      episode_len: 20
+      mode: 'test'
+      reward_mode: "hoque_ddpg"
+      flatten_bonus: 0.5
+      penalise_action_threshold: 0.7
+      extreme_action_penalty: -0.5
+      misgrasping_penalty: -0.5
+      unflatten_penalty: -0.5
+      unflatten_threshold: 0.98
+      misgrasping_threshold: 1.0
+      flattening_threshold: 0.98
+
+
+policy:
+  name: 'rect_fabric_cloth_mask_mpc'
+  params:
+    action_lower_bound: -1
+    action_upper_bound: 1
+
+    candidates: 5000
+    planning_horizon: 1
+    iterations: 100
+    action_dim: [1, 4]
+    clip: True
+
+
+    flatten_threshold: 0.99
+    no_op: [1.0, 1.0, 1.0, 1.0]
+
+    cost_fn: 'from_model'

@@ -1,0 +1,114 @@
+phases:
+  flattening: 0
+  folding: 1
+
+in_shape: [64, 64, 3] ## TODO: redundant, need to remove
+num_train_episodes: 1000
+train_batch_size: 32
+val_batch_size: 128
+num_val_episodes: 10
+device: 'cuda:0'
+test_interval: 1000
+num_update_steps: 60000
+
+collection_policy:
+  name: 'oracle-rect-fabric|action:pixel-pick-and-place(1),task:diagonal-folding,strategy:expert'
+  param:
+    oracle: True
+
+
+phase_agents:
+
+  flattening:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:crumple,action:pixel-pick-and-place,task:flattening
+    config: default-demo-2000-double-bc-clothmask
+    log_dir: /data/fast-ldm-fabric-shaper
+
+  folding:
+    name: transporter
+    arena: softgym|domain:mono-square-fabric,initial:flatten,action:pixel-pick-and-place,task:diagonal-folding
+    config: default-demo-1000
+    log_dir: /data/fast-ldm-fabric-shaper
+  
+  success:
+    name: no-op
+    param:
+      oracle: True
+
+
+logger_name: 'standard_logger'
+input_obs: 'rgb'
+output_obs: 'rgb'
+  
+predictor:
+  name: 'gan_predictor'
+  params:
+    act_before_decoder: "identity"
+    act_before_classifier: "identity"
+
+    image_encoder:
+      name: 'gan-encoder'
+      params:
+        embedding_size: 1024
+        image_dim: [3, 64, 64]
+        activation_function: 'relu'
+        batchnorm: false
+        residual: false
+    
+    classifier:
+      layers: [1024, 512, 256, 128, 32, 2]
+      # the first layers are the embedding of the image,
+      # the last output is the phase prediction
+      
+      activation_function: 'relu'
+
+      stop_grad: True
+    
+    class_factor: 1.0
+    class_warmer: False
+    recon_factor: 1.0
+    # weight_balancing: True
+    # class_weights: [0.1, 0.9]
+
+    
+    class_start_update_step: 25001
+    recon_end_update_step: 25000
+
+    image_decoder:
+      embedding_size: 1024
+      image_dim: [3, 64, 64]
+      activation_function: 'relu'
+      batchnorm: false
+    
+    optimiser:
+      name: 'adam'
+      params:
+        lr: 1e-3
+        eps: 1e-4
+
+    grad_clip_norm: 1000
+
+    device: 'cuda:0'
+
+balance_phase_sampling: True
+
+
+transform:
+  name: 'phase_prediction_transform'
+  params:
+    device: "cuda:0"
+    img_dim: [64, 64]
+    rgb_norm_mode: ['remap']
+    rgb_norm_param:
+      remap_range: [-0.5, 0.5]
+    rgb_noise_factor: 0.01
+    depth_norm_mode: ['clip', 'min_max', 'remap'] 
+    depth_norm_param:
+      clip_range: [1.47, 1.51]
+      min_max_range: [1.47, 1.51]
+      remap_range: [-0.5, 0.5]
+    
+    random_rotation: true
+    rotation_degree: 90
+    vertical_flip: true

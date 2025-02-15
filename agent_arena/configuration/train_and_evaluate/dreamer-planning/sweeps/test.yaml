@@ -1,0 +1,254 @@
+method: "random"
+name: "test"
+
+parameters:
+  update_steps:
+    distribution: "constant"
+    value: 11
+
+  device: 
+    distribution: "constant"
+    value: "cuda:0"
+
+  size:
+    distribution: "constant" 
+    value: [64, 64]
+
+  channels: 
+    distribution: "constant"
+    value: 3
+
+  num_actions: 
+    distribution: "constant"
+    value: 4
+  
+  test_interval:
+    distribution: "constant"
+    value: 20
+
+  # Model
+  dyn_cell: 
+    distribution: "categorical"
+    values: ["gru", "gru_layer_norm"]
+  
+  dyn_hidden: 
+    distribution: "categorical"
+    values: [150, 200, 250, 300]
+  
+  dyn_deter: 
+    distribution: "categorical"
+    values: [150, 200, 250, 300]
+
+  dyn_stoch: 
+    distribution: "categorical"
+    values: [30, 40, 50, 60, 70]
+  
+  dyn_discrete:
+    distribution: "categorical"
+    values: [0, 10, 20, 30, 40, 50]
+
+  dyn_input_layers: 
+    distribution: "categorical"
+    values: [1, 2, 3]
+
+  dyn_output_layers: 
+    distribution: "categorical"
+    values: [1, 2, 3]
+
+  dyn_rec_depth: 
+    distribution: "constant"
+    value: 1
+  
+  dyn_shared:
+    distribution: "constant" 
+    value: False
+  
+  dyn_mean_act: 
+    distribution: "constant" 
+    value: "none"
+  
+  dyn_std_act: 
+    distribution: "constant" 
+    value: "sigmoid2"
+  
+  
+  dyn_min_std: 
+    distribution: "constant" 
+    value: 0.1
+  
+  dyn_temp_post: 
+    distribution: "constant" 
+    value: True
+
+  grad_heads:
+    distribution: "constant" 
+    value: ["image", "reward"]
+  
+  units: 
+    distribution: "categorical"
+    values: [300, 400, 500]
+
+  reward_layers: 
+    distribution: "categorical"
+    values: [1, 2, 3, 4]
+  
+  act: 
+    distribution: "categorical"
+    values: ["relu", "elu"]
+
+
+  cnn_depth:
+    distribution: "constant"
+    value: 32
+  
+  encoder_kernels: 
+    distribution: "constant"
+    value: [4, 4, 4, 4]
+
+  decoder_kernels: 
+    distribution: "constant"
+    value: [5, 5, 6, 6]
+  
+  value_head: 
+    distribution: "constant"
+    value: 'normal'
+  
+  kl_scale: 
+    distribution: "categorical"
+    values: [0.5, 1.0, 2.0, 5.0, 10]
+
+  kl_balance: 
+    distribution: "constant"
+    value: 0.8
+  
+  kl_free: 
+    distribution: "categorical"
+    values: [0.1, 0.5, 1.0, 2.0, 3.0]
+  
+  kl_forward: 
+    distribution: "constant"
+    value: False
+  
+  pred_discount:
+    distribution: "constant"
+    value: False
+  
+  discount_scale: 
+    distribution: "constant"
+    value: 1.0
+  
+  reward_scale: 
+    distribution: "categorical"
+    values: [0.1, 1.0, 2.0, 5.0, 10]
+
+  weight_decay: 
+    distribution: "constant"
+    value: 0.0
+
+  decoder_thin: 
+    distribution: "constant"
+    value: True
+
+
+  reward_gradient_stop: 
+    distribution: "constant"
+    value: False
+
+  overshooting_kl_scale:
+    distribution: "categorical"
+    values: [0.1, 0.5, 1.0, 2.0, 5.0, 10]
+
+  overshooting_kl_balance:
+    distribution: "constant"
+    value: 1.0
+  
+  overshooting_kl_free:
+    distribution: "categorical"
+    values: [0.1, 0.5, 1.0, 2.0, 3.0]
+
+  overshooting_kl_forward:
+    distribution: "constant"
+    value: False
+
+  overshooting_reward_scale:
+    distribution: "categorical"
+    values: [0.1, 0.5, 1.0, 2.0, 5.0, 10]
+
+  overshooting_observation_scale: 
+    distribution: "constant"
+    value: 0
+
+  overshooting_distance: 
+    distribution: "categorical"
+    values: [0, 1, 2, 4]
+
+  overshooting_warmup: 
+    distribution: "categorical"
+    values: [True, False]
+
+
+  # Training
+  batch_size:
+    distribution: "categorical"
+    values: [8, 16, 32, 50, 64]
+
+  sequence_size : 
+    distribution: "constant"
+    value: 50
+
+  model_lr: 
+    distribution: "constant"
+    value: 3e-4
+  
+  opt_eps: 
+    distribution: "constant"
+    value: 1e-5
+
+  grad_clip: 
+    distribution: "constant"
+    value: 100
+
+  opt:
+    distribution: "constant"
+    value: 'adam'
+
+  clip_rewards:
+    distribution: "constant" 
+    value: 'identity'
+
+  action_noise: 
+    distribution: "constant" 
+    value: 0.0
+  
+  obs_noise: 
+    distribution: "categorical"
+    values: [True]
+
+  flip_vertical: 
+    distribution: "categorical"
+    values: [True]
+
+  bit_depth:
+    distribution: "constant" 
+    value: 0.0
+
+  rotation_degree: 
+    distribution: "constant" 
+    value: 90
+  
+  no_op: 
+    distribution: "constant" 
+    value: [0.5, 0.5, 0.5, 0.5]
+
+  test_horizons: 
+    distribution: "constant" 
+    value: [1, 2, 4]
+
+  
+  eval_episodes: 
+    distribution: "constant" 
+    value: 10
+
+  cross_traj: 
+    distribution: "constant" 
+    value: False

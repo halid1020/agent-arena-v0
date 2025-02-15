@@ -1,0 +1,29 @@
+state_dim: 2
+obs_dim: 514 # 512 + 2
+action_dim: 2
+obs_horizon: 2
+pred_horizon: 16
+num_diffusion_iters: 100
+action_horizon: 8
+dataset_path: "pusht_cchi_v7_replay.zarr"
+input_obs: 'rgb'
+include_state: True
+action_shape: [2]
+
+eval_action_sampler: 'normal'
+
+data_obs: 'image'
+data_state: 'agent_pos'
+data_action: 'action'
+train_mode: 'from_dataset'
+num_epochs: 100
+
+logger_name: "standard_logger"
+
+dataset_mode: "diffusion"
+
+action_output:
+  default: [0, 1]
+
+validation_interval: 2000
+total_update_steps: 40000 ## 379*100

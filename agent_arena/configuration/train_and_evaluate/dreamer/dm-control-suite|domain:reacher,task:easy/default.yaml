@@ -1,0 +1,68 @@
+eval_episodes: 5
+steps: 1e6
+eval_every: 1e4
+log_every: 1e4
+prefill: 2500
+dataset_size: 0
+pretrain: 100
+
+# Environment
+time_limit: 1000
+train_every: 5
+train_steps: 1
+
+# Model
+grad_heads: ['rgb', 'reward']
+dyn_cell: 'gru_layer_norm'
+pred_discount: False
+cnn_depth: 32
+dyn_deter: 200
+dyn_stoch: 50
+dyn_discrete: 0
+reward_layers: 2
+discount_layers: 3
+value_layers: 3
+actor_layers: 4
+
+# Behavior
+actor_dist: 'trunc_normal'
+expl_amount: 0.0
+actor_entropy: '1e-4'
+discount: 0.99
+imag_gradient: 'dynamics'
+imag_gradient_mix: 1.0
+
+# Training
+reward_scale: 2
+weight_decay: 0.0
+model_lr: 3e-4
+value_lr: 8e-5
+actor_lr: 8e-5
+opt_eps: 1e-5
+kl_free: '1.0'
+kl_scale: '1.0'
+
+
+# envs: 1
+train_mode: "online"
+# eval_episodes: 0
+# reward_scale: 1.0
+# steps: 100001
+# batch_size: 50
+# batch_length: 20
+# eval_every: 10000
+# action_repeat: 1
+
+policy:
+  name: 'self'
+
+logger_name: "standard_logger"
+
+# transform:
+#   name: 'planet_transformer'
+#   params:
+#     device: "cuda:0"
+#     img_dim: [64, 64]
+#     remap_image: [0, 255]
+#     rgb_noise_var: 0.5
+

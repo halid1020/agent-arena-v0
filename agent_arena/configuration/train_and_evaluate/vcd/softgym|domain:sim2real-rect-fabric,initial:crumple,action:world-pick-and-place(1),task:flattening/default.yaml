@@ -1,0 +1,33 @@
+seed: 100
+
+down_sample_scale: 3
+n_his: 5
+
+edge_model_path: 'tmp/vcd_checkpoints/edge_model/vsbl_edge_best.pth'
+partial_dyn_path: 'tmp/vcd_checkpoints/dynamics_model/vsbl_dyn_140.pth'
+load_optim: false
+
+shooting_number: 500
+delta_y: 0.07
+delta_y_range: [0, 0.5]
+move_distance_range: [0.05, 0.2]
+pull_step: 10
+wait_step: 6
+num_worker: 6
+task: flatten
+pred_time_interval: 5
+configurations: [0, 1, 2, 3, 4]
+pick_and_place_num: 10
+
+cuda_idx: 0
+voxel_size: 0.0216
+sensor_noise: 0
+gpu_num: 1
+
+fix_collision_edge: 0
+use_collision_as_mesh_edge: 0
+
+validation_interval: 0
+total_update_steps: 0
+
+logger_name: "standard_logger"

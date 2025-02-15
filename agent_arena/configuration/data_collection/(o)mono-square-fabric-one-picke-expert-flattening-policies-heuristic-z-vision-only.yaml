@@ -1,0 +1,58 @@
+### Vision-based Pick and Place
+### Suitable for:
+### (1) Action-conditioned Video Prediction
+### (2) Behaviour Cloning (Superivsed Learning)
+### (3) Offline Inverse Reinforcement Learning
+### (4) Offline Reinforcement Learning with Sparse Rewards
+### (5) Offline Reinforcement Learning with Dense Rewards but only for flattening
+### (6) Vision-based Goal-condition Reinforcement Learning
+
+### Cannot do:
+### (1) Offline Reinforcement Learning with Dense Rewards for foldings.
+
+random_seed: 0
+
+flush_every: 20
+
+environment: 'mono-square-fabric-sim|task:flattening,action:pixel-pick-and-place-z(1),initial:crumple'
+
+initial_coverage: [0, 1.1]
+
+
+policies:
+  - oracle-rect-fabric|action:pixel-pick-and-place-z(1),strategy:expert-flattening
+
+policies_ratio: [
+  1.0
+]
+
+
+## Save success as true for only expert policies if it achieves its goal.
+save_names: [
+  'rgb', 'depth', 'mask', 
+  'action', 'action_type',
+  'normalised_coverage',
+  'success', 'policy']
+
+save_types: [
+  'uint8', 'float16', 'bool', 
+  'float16', 'uint8',
+  'float16',
+  'bool', 'uint8']
+
+save_dimensions: [
+  [128, 128, 3], [128, 128, 1], [128, 128, 1], 
+  
+  [1, 6], [1],
+  
+  [1], 
+  
+  [1], [1]]
+
+save_steps: [
+  21, 21, 21, 
+  20, 20,
+  21,
+  1, 1]
+
+

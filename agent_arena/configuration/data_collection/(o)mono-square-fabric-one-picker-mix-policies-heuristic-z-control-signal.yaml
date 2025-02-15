@@ -1,0 +1,118 @@
+### Vision-based Pick and Place
+### Suitable for:
+### (1) Action-conditioned Video Prediction
+### (2) Behaviour Cloning (Superivsed Learning)
+### (3) Offline Inverse Reinforcement Learning
+### (4) Offline Reinforcement Learning with Sparse Rewards
+### (5) Offline Reinforcement Learning with Dense Rewards but only for flattening
+### (6) Vision-based Goal-condition Reinforcement Learning
+
+### Cannot do:
+### (1) Offline Reinforcement Learning with Dense Rewards for foldings.
+
+num_episodes: 5 # 400000
+random_seed: 0
+flush_every: 1
+
+environment:  'mono-square-fabric-sim|task:flattening,observation:RGB-D,action:pixel-pick-and-place-z(1),initial:crumple,horizon:25,save_control_step_info:True'
+
+policies:
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:random
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:corner-biased
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-flattening-random-folding
+
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-flattening
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-rectangular-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-side-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-double-side-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-cross-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-double-side-rectangular-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-double-side-cross-folding
+
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-diagonal-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-one-corner-inward-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-double-corner-inward-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-all-corner-inward-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:expert-diagonal-cross-folding
+
+
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-flattening
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-rectangular-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-side-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-double-side-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-cross-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-double-side-rectangular-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-double-side-cross-folding
+
+
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-diagonal-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-one-corner-inward-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-double-corner-inward-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-all-corner-inward-folding
+  - oracle-rect-fabric|action:pick-and-place-z(1),strategy:noisy-expert-diagonal-cross-folding
+
+  - mix_policy:
+    policy_weights: [
+      # 0.1 Random, 0.2 Corner-biased Random, 0.1 expert flatten random folding
+      0.1, 0.2, 0.1,
+
+      # 0.3 expert policies
+      0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025,
+
+      # 0.08 expert noisy flatten policy
+      # 0.22 expert noisy folding policy
+      0.08, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    ]
+    action_dim: [1, 6]
+
+policies_ratio: [
+  0.1, 0.1, 0.1,
+
+  # 0.3 expert policies
+  0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025,
+
+  # 0.08 expert noisy flatten policy
+  # 0.22 expert noisy folding policy
+  0.08, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+
+  0.1
+]
+
+## Save success as true for only expert policies if it achieves its goal.
+save_names: [
+  'rgb', 'depth', 'mask', 
+  'action', 'action_type',
+  'normalised_coverage',
+  'success', 'policy',
+  'action_step', 'control_signal', 'control_rgb', 'control_depth', 'control_normalised_coverage'
+  ]
+
+save_types: [
+  'uint8', 'float16', 'bool', 
+  'float16', 'uint8',
+  'float16',
+  'bool', 'uint8',
+  'uint8', 'float16', 'uint8', 'float16', 'float16']
+
+save_dimensions: [
+  [128, 128, 3], [128, 128, 1], [128, 128, 1], 
+  
+  [1, 6], [1],
+  
+  [1], 
+  
+  [1], [1],
+
+  [1], [1, 4], [128, 128, 3], [128, 128, 1], [1]
+  
+  ]
+
+save_steps: [
+  21, 21, 21, 
+  20, 20,
+  21,
+  1, 1,
+  
+  2000, 2000, 2001, 2001, 2001]
+
+

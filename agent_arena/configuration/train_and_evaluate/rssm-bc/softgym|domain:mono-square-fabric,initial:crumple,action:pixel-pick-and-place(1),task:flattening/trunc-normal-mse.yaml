@@ -1,0 +1,69 @@
+dynamic_model_config: 'dreamer-planning/pick-and-place-cloth-flattening-old/planet-pick'
+dynamic_model_model_dir: 'tmp/pick-and-place-cloth-flattening-old/dreamer-planning/planet-pick/model'
+
+# Actor
+actor_params:
+  device: "cuda:0"
+  actor_layers: 4
+  actor_lr: 8e-5
+  actor_grad_clip: 100
+  actor_dist: 'trunc_normal'
+  actor_entropy: '1e-4'
+  actor_state_entropy: 0.0
+  actor_init_std: 1.0
+  actor_min_std: 0.1
+  actor_disc: 5
+  actor_temp: 0.1
+  actor_outscale: 0.0
+  actor_units: 400
+  num_actions: 4
+  actor_act: "relu"
+  weight_decay: 0.0
+  actor_opt: 'adam'
+  opt_eps: 1e-5
+  batch_size: 16
+  update_steps: 10000
+  test_interval: 1000
+  actor_loss: 'mse'
+
+
+# Dataset
+rssm_dataset: 
+  name: 'pick-and-place-cloth-flattening-old'
+  params:
+    num_episodes: 20000
+  
+bc_dataset: 
+  name: 'pick-and-place-cloth-diagonal-folding-from-crumpled-pure-expert'
+  params:
+    observation_noise: True
+    num_episodes: 1000
+
+# Transform
+rssm_transform:
+  name: 'pick_and_place_cloth_flattening_transformer'
+  params:
+    device: "cuda:0"
+    bit_depth: 5
+    obs_noise: True
+    random_rotation: True
+    rotation_degree: 90
+    vertical_flip: True
+    random_resize: False
+
+bc_transform:
+  name: 'pick_and_place_cloth_flattening_transformer'
+  params:
+    device: "cuda:0"
+    bit_depth: 5
+    obs_noise: True
+    random_rotation: True
+    rotation_degree: 90
+    vertical_flip: True
+    random_resize: False
+
+
+
+# General
+train_dynamic_model: False
+

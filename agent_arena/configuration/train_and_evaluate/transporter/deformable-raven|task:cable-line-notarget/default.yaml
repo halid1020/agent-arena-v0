@@ -1,0 +1,42 @@
+n_rotations: 36
+in_shape: [320, 160, 6]
+crop_size: 64 # has to be even
+pixel2world: True
+verbose: True
+train_mode: "from_policy"
+num_train_demo_episodes: 1000
+num_test_demo_episodes: 10
+save_heatmap: True
+lite: True
+pick_action_filter: "identity"
+
+update_steps: 39000
+test_interval: 1000
+
+logger_name: 'standard_logger'
+
+transform:
+  name: 'transporter_net_transformer'
+  params:   
+    device: "cuda:0"
+    rgb_norm_mode: ["remap", "mean_std"]
+    rgb_norm_param:
+      remap_range: [0, 1]
+      mean: 0.18877631
+      std: 0.07276466
+
+
+    depth_norm_mode: ['mean_std'] 
+    depth_norm_param:
+      mean: 0.00509261
+      std: 0.00903967
+
+
+demo_policy:
+  name: 'deformable-raven|task:cable-line-notarget'
+  param:
+    oracle: True
+
+
+policy:
+  name: 'self'

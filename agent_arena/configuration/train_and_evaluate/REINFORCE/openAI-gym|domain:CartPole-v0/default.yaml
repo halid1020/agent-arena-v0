@@ -1,0 +1,18 @@
+action_mode: "discrete"
+device: "cuda:0"
+hidden_size: 256
+action_size: 2
+state_size: 4
+
+optimiser:
+  name: "adam"
+  param:
+    lr: 0.003
+
+collect_episode_horizon: 500
+gamma: 0.99
+num_collect_episodes: 1
+total_update_steps: 500
+validation_interval: 100
+
+logger_name: "standard_logger" # if not provided, will default to "standard logger"

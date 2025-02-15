@@ -1,0 +1,181 @@
+device: 'cuda:0'
+train_mode: 'offline'
+
+output_obs: "mask"
+input_obs: "depth"
+
+deterministic_latent_dim: 200
+stochastic_latent_dim: 30
+action_dim: 4
+hidden_dim: 200
+embedding_dim: 1024
+min_std_dev: 0.1
+activation: 'relu'
+trans_layers: 1
+input_obs_dim: [1, 64, 64]
+output_obs_dim: [1, 64, 64]
+encoder_batchnorm: False
+encoder_residual: False
+decoder_batchnorm: False
+decoder_residual: False
+no_op: [1, 1, 1, 1]
+free_nats: 1
+symlog: False
+
+observation_scale: 1.0
+reward_scale: 1.0
+reward_gradient_stop: False
+kl_balance: 0.8
+kl_scale: 1.0
+kl_balancing: True
+
+overshooting_distance: 2  
+kl_overshooting_scale: 0.1
+kl_overshooting_warmup: True
+kl_overshooting_balance: 1.0
+reward_overshooting_scale: 0.1
+reward_overshooting_warmup: False
+
+
+optimiser_class: 'adam'
+optimiser_params: 
+  lr: 1e-3
+  eps: 1e-4
+grad_clip_norm: 1000
+
+batch_size: 50
+sequence_size: 50
+total_update_steps: 50001
+test_interval: 1000
+validation_interval: 5000
+
+refresh_init_state: False
+
+action_output:
+  norm-pixel-pick-and-place:
+    pick_0: [0, 1]
+    place_0: [2, 3]
+
+
+transform:
+  name: 'pick_and_place_transformer'
+  params:
+    img_dim: [64, 64]
+    remap_image: [0, 1]
+    device: "cuda:0"
+    random_rotation: True
+    random_terminal: False
+    rotation_degree: 1
+    vertical_flip: True
+    random_resize: False
+    action_noise: 0.0
+    depth_clip: True
+    depth_clip_min: 1.8 #
+    depth_clip_max: 2.0 #0.66
+    min_max_norm: True
+    depth_min: 1.8
+    depth_max: 2.0
+    depth_map: True
+    depth_map_range: [0, 1]
+    depth_blur: True
+    depth_flip: True
+    depth_blur_kernel_size: 5
+    depth_noise_var: 0.01
+    maskout: True
+    bg_value: 0
+
+
+encoder_mode: "default"
+cost_fn: "trajectory_return"
+
+logger_name: "pick_and_place_fabric_single_task_logger"
+
+
+datasets:
+  - key: 'train'
+
+    name: 'default'
+    params:
+      data_path: 'gc_longsleeve_flattening_offline_rl_mix_200k' #'diffusion_policy_on_softgym|domain:cloth-funnel-real2sim-longsleeve,task:flattening,horizon:20'
+      seq_length: 50
+      cross_trajectory: True
+      split_ratios: [0.01, 0.01, 0.98]
+      io_mode: 'r'
+      sample_mode: 'train'
+      sample_terminal: True
+      obs_config: 
+        mask: 
+          shape: [128, 128, 1]
+          output_key: 'mask'
+        depth:
+          shape: [128, 128, 1]
+          output_key: 'depth'
+        # goal_mask: 
+        #   shape: [128, 128, 1]
+        #   output_key: 'goal-mask'
+        # goal_depth:
+        #   shape: [128, 128, 1]
+        #   output_key: 'goal-depth'
+        speedFolding_approx:
+          shape: [1]
+          output_key: 'reward'
+      
+      act_config:
+        norm-pixel-pick-and-place: 
+          shape: [4]
+          output_key: 'default'
+      
+
+  - key: 'test'
+
+    name: 'default'
+    params:
+      data_path: 'gc_longsleeve_flattening_offline_rl_mix_200k' #'diffusion_policy_on_softgym|domain:cloth-funnel-real2sim-longsleeve,task:flattening,horizon:20'
+      seq_length: 20
+      cross_trajectory: False
+      io_mode: 'r'
+      sample_mode: 'eval'
+      split_ratios: [0.01, 0.01, 0.98]
+      sample_terminal: True
+      obs_config: 
+        mask: 
+          shape: [128, 128, 1]
+          output_key: 'mask'
+        depth:
+          shape: [128, 128, 1]
+          output_key: 'depth'
+        speedFolding_approx:
+          shape: [1]
+          output_key: 'reward'
+        # goal_mask: 
+        #   shape: [128, 128, 1]
+        #   output_key: 'goal-mask'
+        # goal_depth:
+        #   shape: [128, 128, 1]
+        #   output_key: 'goal-depth'
+      
+      act_config:
+        norm-pixel-pick-and-place: 
+          shape: [4]
+          output_key: 'default'
+
+    
+
+policy:
+  name: 'rect_fabric_cloth_mask_mpc'
+  params:
+    candidates: 5000
+    planning_horizon: 1
+    iterations: 100
+    clip: True
+    swap_action: False
+    cloth_mask: "from_env"
+
+    cost_fn: 'from_model'
+
+
+test_horizons: [1, 2, 4] # This shoulud be smaller than action horizon.
+action_horizon: 50
+eval_episodes: 100
+eval_action_horizon: 20
+eval_save_latent: True

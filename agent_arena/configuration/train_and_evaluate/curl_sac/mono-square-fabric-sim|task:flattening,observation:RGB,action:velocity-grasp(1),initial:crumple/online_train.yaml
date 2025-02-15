@@ -1,0 +1,15 @@
+batch_size: 128
+train_mode: 'online'
+actor_lr: 1e-4
+critic_lr: 1e-4
+lr_decay: 0.01
+encoder_type: 'pixel'
+action_shape: [4]
+num_train_steps: 1000000
+device: 'cuda:0'
+num_eval_episodes: 10
+reward_scale: 20
+
+
+policy:
+  name: 'self'

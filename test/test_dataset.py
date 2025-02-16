@@ -1,6 +1,8 @@
+# TODO: make this test work
+
 import numpy as np
-from utilities.dataset \
-    import AgentArenaTrajectoryDataset
+from agent_arena.utilities.trajectory_dataset \
+    import TrajectoryDataset
 
 # Define the shapes of your observation and action types
 obs_shapes = {
@@ -21,7 +23,9 @@ import shutil
 shutil.rmtree(data_dir, ignore_errors=True)
 
 # Create a new dataset in write mode with whole trajectory sampling
-dataset = AgentArenaTrajectoryDataset(data_dir, mode='w', obs_config=obs_shapes, act_config=action_shapes, whole_trajectory=True)
+dataset = TrajectoryDataset(data_dir, io_mode='w', 
+        obs_config=obs_shapes, act_config=action_shapes, 
+        whole_trajectory=True)
 
 # Add some trajectories
 for _ in range(5):  # Add 5 trajectories
@@ -45,7 +49,7 @@ print(f"Observation types: {dataset.get_observation_types()}")
 print(f"Action types: {dataset.get_action_types()}")
 
 # To use the dataset for reading after writing, you need to reinitialize it in read mode
-read_dataset = AgentArenaTrajectoryDataset(data_dir, mode='r', whole_trajectory=True)
+read_dataset = TrajectoryDataset(data_dir, mode='r', whole_trajectory=True)
 
 # Create a DataLoader and use the dataset
 from torch.utils.data import DataLoader

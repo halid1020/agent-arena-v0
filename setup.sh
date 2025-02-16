@@ -1,5 +1,5 @@
 conda deactivate
-conda activate agent-arena
+conda activate agent-arena-v0
 
 export PYTORCH_JIT=0
 export EGL_GPU=$CUDA_VISIBLE_DEVICES

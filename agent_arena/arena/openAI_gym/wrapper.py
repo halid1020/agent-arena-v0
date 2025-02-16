@@ -96,7 +96,8 @@ class OpenAIGymArena(Arena):
         return self._max_env_step
     
     def step(self, action):
-        action = action['default']
+        if type(action) == dict:
+            action = action['default']
         reward = 0
         info = {}
         #print(self._env_step )

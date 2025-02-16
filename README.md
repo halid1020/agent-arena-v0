@@ -38,7 +38,7 @@ Before starting this step, please make sure the current repository is parallel w
 ```
 conda env create -f environment.yml
 
-conda activate agent-arena
+conda activate agent-arena-v0
 
 # Change following line to fit your own GPU setting
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
@@ -51,7 +51,7 @@ Note that we separate out the installation of `Pytorch` from the environment yam
 Note that if you want to remove the environment
 
 ```
-conda remove -n agent-arena --all  
+conda remove -n agent-arena-v0 --all  
 ```
 
 ## VI. Test Agent-Arena

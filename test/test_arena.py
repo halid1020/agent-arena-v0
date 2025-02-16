@@ -19,7 +19,7 @@ def main():
 
     disp = args.disp == 1  # Convert disp to boolean directly
 
-    arena = ag_ar.build_arena(f"{args.arena},disp:{disp}", ray=False)
+    arena = ag_ar.build_arena(f"{args.arena},disp:False", ray=False)
 
     arena.set_eval()
 

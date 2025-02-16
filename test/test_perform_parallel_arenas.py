@@ -11,13 +11,13 @@ from time import time
 
 
 def main():
-    arena_name = 'softgym|domain:clothfunnels-real2sim-longsleeve,task:flattening,horizon:5'
-    agent_name = 'cloth-funnel'
-    config_name = 'place_only'
+    arena_name = 'softgym|domain:rainbow-rectangular-fabrics,initial:crumpled,action:pixel-pick-and-place(1),task:flattening'
+    agent_name = 'oracle-rect-fabric|action:pixel-pick-and-place(1),strategy:oracle-towel,task:flattening'
+    config_name = ''
     log_dir = 'test_results'
     log_dir = os.path.join(log_dir, arena_name, agent_name, config_name)
 
-    ray.init()
+    ray.init(local_mode=True)
 
     config = ag_ar.retrieve_config(agent_name, arena_name, config_name)
     arenas = setup_arenas(arena_name, num_processes=4)

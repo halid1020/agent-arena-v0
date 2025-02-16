@@ -11,9 +11,9 @@ from time import time
 
 
 def main():
-    arena_name = 'softgym|domain:clothfunnels-realladapt-longsleeve,task:flattening,horizon:30'
-    agent_name = 'cloth-funnel'
-    config_name = 'place_only'
+    arena_name = 'softgym|domain:mono-square-fabric,initial:crumpled,action:pixel-pick-and-place(1),task:flattening'
+    agent_name = 'oracle-rect-fabric|action:pixel-pick-and-place(1),strategy:realadapt,task:flattening'
+    config_name = ''
     log_dir = 'test_results'
 
     # ray.init(local_mode=True)

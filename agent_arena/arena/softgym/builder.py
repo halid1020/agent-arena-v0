@@ -16,7 +16,7 @@ class SoftGymBuilder():
         if 'fabric' in config['domain']:
             from ..softgym.builders.fabric_domain_builder \
                 import FabricDomainBuilder
-            return FabricDomainBuilder.build_from_config(**config)
+            return FabricDomainBuilder.build_from_config(**config, ray=ray)
         elif 'towel' in config['domain']:
             from ..softgym.builders.fabric_domain_builder \
                 import FabricDomainBuilder

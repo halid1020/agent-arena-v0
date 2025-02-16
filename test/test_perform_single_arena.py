@@ -11,19 +11,17 @@ from time import time
 
 
 def main():
-    arena_name = 'softgym|domain:cloth-funnel-longsleeve,task:flattening,horizon:30'
+    arena_name = 'softgym|domain:clothfunnels-realladapt-longsleeve,task:flattening,horizon:30'
     agent_name = 'cloth-funnel'
     config_name = 'place_only'
     log_dir = 'test_results'
 
     # ray.init(local_mode=True)
 
-    config = ag_ar.retrieve_config(agent_name, arena_name, config_name, log_dir)
+    config = ag_ar.retrieve_config(agent_name, arena_name, config_name)
     arena = ag_ar.build_arena(arena_name + ',disp:0')
     agent = ag_ar.build_agent(agent_name, config=config)
-    
     arena.set_log_dir(log_dir)
-    
     agent.set_log_dir(log_dir)
 
     start = time()

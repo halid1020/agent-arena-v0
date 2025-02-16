@@ -10,7 +10,7 @@ class ClothFunnelDomainBuilder():
         
     def build_from_config(domain, task, disp, horizon=8, rayid=0, ray=False):
         object = domain.split('-')[-1]
-        real2sim = domain.split('-')[-2]
+        realadapt = domain.split('-')[-2]
         
 
         #TODO: set the correct config
@@ -30,7 +30,7 @@ class ClothFunnelDomainBuilder():
             'horizon': int(horizon),
         }
         
-        if real2sim == 'real2sim':
+        if realadapt == 'realadapt':
             config['grasp_mode'] = {
                 'around': 0.9,
                 'miss': 0.1

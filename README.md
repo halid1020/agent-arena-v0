@@ -2,6 +2,8 @@
 
 This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by **Dr Kasim Terzić** at the *Univiersity of St Andrews, UK*.
 
+[![DOI](https://zenodo.org/badge/933415395.svg)](https://doi.org/10.5281/zenodo.14876793)
+
 [Website]() /  [ArXiv]() [Coming Soon]
 
 

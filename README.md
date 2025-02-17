@@ -1,12 +1,17 @@
-<h1>  Agent-Arena </h1>
+<h1>  Agent-Arena (v0): A Simple Framework for Experimenting Control Algorithms on Benchmark Environments </h1>
 
 This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by **Dr Kasim Terzić** at the *Univiersity of St Andrews, UK*.
 
+[![DOI](https://zenodo.org/badge/933415395.svg)](https://doi.org/10.5281/zenodo.14876793)
+
 [Website]() /  [ArXiv]() [Coming Soon]
 
-Table of Contents
 
----
+![plot](assets/agent-arena.jpg)
+
+
+
+## Table of Contents
 
 - [I. Prerequisites](#prerequsites)
 - [II. Simulation Setup](#simulation)

@@ -4,3 +4,4 @@
 3. Make sure original transporter can be trained on Raven.
 4. clean unnecessary configuration files.
 5. add tutorials for how to use it.
+6. Make sure oracle foldings are working.

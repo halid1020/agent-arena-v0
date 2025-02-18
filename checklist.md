@@ -5,3 +5,5 @@
 4. clean unnecessary configuration files.
 5. add tutorials for how to use it.
 6. Make sure oracle foldings are working.
+7. get rid of the v0 from the branch name.
+8. make sure dreamer works in dm control suite.

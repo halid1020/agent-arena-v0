@@ -8,3 +8,4 @@
 7. get rid of the v0 from the branch name.
 8. make sure dreamer works in dm control suite.
 9. Create an example folder for showcasing the usage of this framework.
+10. Refactor all the environment we have so far with the arena framework

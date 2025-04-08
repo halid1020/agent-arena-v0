@@ -55,6 +55,7 @@ dependencies:
     - ray==2.7.2
     - pygame==2.6.1
     - pymunk==6.8.1
+    - gdown==4.7.3
     
 
     ## install realsense

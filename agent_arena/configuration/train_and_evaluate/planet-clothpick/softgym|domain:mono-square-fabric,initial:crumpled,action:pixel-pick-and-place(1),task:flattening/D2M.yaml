@@ -51,9 +51,13 @@ validation_interval: 5000
 
 refresh_init_state: False
 
+# action_output:
+#   pick_0: [0, 1]
+#   place_0: [2, 3]
+
 action_output:
-  pick_0: [0, 1]
-  place_0: [2, 3]
+  pick_0: [1, 0]
+  place_0: [3, 2]
 
 
 transform:
@@ -88,7 +92,6 @@ transform:
 
 encoder_mode: "default"
 cost_fn: "trajectory_return"
-
 logger_name: "pick_and_place_fabric_single_task_logger"
 
 datasets:

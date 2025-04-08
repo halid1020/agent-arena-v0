@@ -23,7 +23,6 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 
 Please make sure you have GPU driver installed in your operating system before preceding the set-up instructions. This project works in Linux environment, and it has not been tested on other operating systems. Known operating systems that works are:
 
-* Ubuntu 20.04.6 LTS
 * Ubuntu 22.04.3 LTS
 
 Then, download and install `anaconda3` right under your home directory regarding your operating system version by following this [tutorial](https://docs.anaconda.com/free/anaconda/install/linux/).
@@ -45,10 +44,17 @@ conda env create -f environment.yml
 
 conda activate agent-arena-v0
 
-# Change following line to fit your own GPU setting
+### Change following line to fit your own GPU setting
+# For Ubuntu 22.04.3 LTS, please use following
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
-conda install -c conda-forge diffusers 
 
+# For Ubuntu 22.04.3 LTS, please use following
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+
+
+### For all cases, you need the following to install the difusers package.
+conda install -c conda-forge diffusers 
 ```
 
 Note that we separate out the installation of `Pytorch` from the environment yaml file to prevent installing wrong cuda and torch versions for your GPU setting, so please change that line for serving your own configuration. However, if you install the latest Nvidia driver on the machine, the provided command usually should work. Please open an interpreter to test if pytorch can detect GPU and load tensors and conduction calculations on the GPU before preceding the next step.
@@ -70,6 +76,8 @@ Every time you open a new terminal, please make sure run the command right under
 Right under the repo's root directory to link the corresponding libraries from the simulation and initiate the conda environment.
 
 ```
+cd test
+
 python test_arena.py
 
 ```

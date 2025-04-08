@@ -51,11 +51,11 @@ class PickAndPlaceTransformer:
         #     )
         #     cv2.imwrite('tmp/pre_pnp_rgb.png', pnp_rgb)
 
-        #     # next_rgb = sample['rgb'][0, 1].squeeze(0).cpu().numpy()
-        #     # print('next_rgb shape', next_rgb.shape)
-        #     # if next_rgb.shape[0] == 3:
-        #     #     next_rgb = next_rgb.transpose(1, 2, 0)
-        #     # cv2.imwrite('tmp/pre_pnp_next_rgb.png', next_rgb)
+            # next_rgb = sample['rgb'][0, 1].squeeze(0).cpu().numpy()
+            # print('next_rgb shape', next_rgb.shape)
+            # if next_rgb.shape[0] == 3:
+            #     next_rgb = next_rgb.transpose(1, 2, 0)
+            # cv2.imwrite('tmp/pre_pnp_next_rgb.png', next_rgb)
         
 
         
@@ -69,7 +69,11 @@ class PickAndPlaceTransformer:
             sample['goal-depth'] = sample['gc-depth'][:, :, 1:]
 
         for obs in ['rgb', 'depth', 'mask', 'rgbd', 'goal-rgb', 'goal-depth', 'goal-mask']:
+            
             if obs in sample:
+                if len(sample[obs].shape) == 4:
+                    sample[obs] = sample[obs].unsqueeze(0)
+
                 if sample[obs].shape[-1] <= 4:
                     sample[obs] = sample[obs].permute(0, 1, 4, 2, 3)
                 #print('obs', obs, sample[obs].shape)
@@ -214,7 +218,9 @@ class PickAndPlaceTransformer:
             for obs in ['rgb', 'depth', 'mask']:
                 if obs in sample:
                     sample[obs][vertical_flip_decision] = \
-                        torchvision.transforms.functional.vflip(sample[obs][vertical_flip_decision])
+                        torch.flip(sample[obs][vertical_flip_decision], dims=[-2])
+                        
+                        #torchvision.transforms.functional.vflip(sample[obs][vertical_flip_decision])
 
 
 

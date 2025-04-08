@@ -1,6 +1,6 @@
 This is a description for traning and evaluating `PlaNet-ClohPick` models in `mono-square-fabric` environment of `SoftGym`.
 
-Make sure you setup the ['agent-arena'](https://github.com/halid1020/agent-arena-v0) and [`softgym`](https://github.com/halid1020/softgym) as instructed.
+Make sure you setup the [`agent-arena-v0`](https://github.com/halid1020/agent-arena-v0) and [`softgym`](https://github.com/halid1020/softgym) as instructed.
 
 # Download Training Data
 

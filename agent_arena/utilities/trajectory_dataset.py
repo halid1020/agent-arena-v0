@@ -20,6 +20,7 @@ class TrajectoryDataset(Dataset):
                  goal_config: Dict[str, Tuple] = None, save_goal=False,
                  whole_trajectory: bool = False, sample_mode='all', 
                  sample_terminal=True, split_ratios=[0.1, 0.1, 0.8],
+                 num_trj=None,
                  transform=None):
         """
         Initialize the dataset.
@@ -39,6 +40,8 @@ class TrajectoryDataset(Dataset):
         self.split_ratios = split_ratios
         self.save_goal = save_goal
         self.transform = transform
+        self.num_trj = num_trj
+        print('num_trj', num_trj)
         if whole_trajectory:
             self.seq_length = None
             self.cross_trajectory = False
@@ -131,10 +134,14 @@ class TrajectoryDataset(Dataset):
             self.goal_output_types = [v['output_key'] for k, v in self.goal_config.items()]
         
         self.update_dataset_info()
+        print('num_samples', self.num_samples)
 
     def update_dataset_info(self):
         """Update dataset information after adding new data."""
-        self.traj_lengths = self.trajectory_lengths[:]
+        if self.num_trj is None:
+            self.traj_lengths = self.trajectory_lengths[:]
+        else:
+            self.traj_lengths = self.trajectory_lengths[:self.num_trj]
         self.traj_starts = np.concatenate(([0], np.cumsum(self.traj_lengths)[:-1])) if len(self.traj_lengths) > 0 else np.array([])
         self.total_timesteps = np.sum(self.traj_lengths)
         # create terminal array
@@ -179,9 +186,8 @@ class TrajectoryDataset(Dataset):
             self.num_samples = self.all_samples - int(np.sum(self.split_ratios[:-1]) * self.all_samples)
             self.start_sample = int(np.sum(self.split_ratios[:-1]) * self.all_samples)
             self.end_sample = self.all_samples
-        print('num_samples', self.num_samples)
 
-        print('num_samples', self.num_samples)
+        
 
     def add_transition(self, observation: Dict[str, np.ndarray], action: Dict[str, np.ndarray], done: bool):
         """
@@ -297,6 +303,9 @@ class TrajectoryDataset(Dataset):
             }
             ret['goal'] = goals
         return ret
+    
+    def set_transform(self, transform):
+        self.transform = transform
     
     def num_trajectories(self) -> int:
         """Return the number of trajectories in the dataset."""

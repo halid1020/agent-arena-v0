@@ -6,14 +6,14 @@ from agent_arena.utilities.trajectory_dataset \
 
 # Define the shapes of your observation and action types
 obs_shapes = {
-    'rgb': (64, 64, 3),
-    'depth': (64, 64),
-    'particles': (100, 3)
+    'rgb': {'shape': (64, 64, 3), 'output_key': 'rgb'},
+    'depth': {'shape': (64, 64, 1), 'output_key': 'depth'},
+    'particles': {'shape': (100, 3), 'output_key': 'particles'},
 }
 
 action_shapes = {
-    'velocity': (2,),
-    'torque': (3,)
+    'velocity': {'shape': (2,), 'output_key': 'velocity'},
+    'torque': {'shape': (3,), 'output_key': 'torque'},
 }
 
 data_dir = 'tmp/test_dataset'
@@ -49,7 +49,8 @@ print(f"Observation types: {dataset.get_observation_types()}")
 print(f"Action types: {dataset.get_action_types()}")
 
 # To use the dataset for reading after writing, you need to reinitialize it in read mode
-read_dataset = TrajectoryDataset(data_dir, mode='r', whole_trajectory=True)
+read_dataset = TrajectoryDataset(data_dir, io_mode='r', 
+    whole_trajectory=True, obs_config=obs_shapes, act_config=action_shapes)
 
 # Create a DataLoader and use the dataset
 from torch.utils.data import DataLoader
@@ -58,7 +59,7 @@ dataloader = DataLoader(read_dataset, batch_size=1, shuffle=True, num_workers=4)
 
 print()
 print("Iterating through the DataLoader")
-for obs_dict, actions_dict in dataloader:
+for data in dataloader:
     # obs_dict and actions_dict now contain whole trajectories
     # obs_dict['rgb'].shape: (batch_size, max_traj_length, 64, 64, 3)
     # actions_dict['velocity'].shape: (batch_size, max_traj_length - 1, 2)
@@ -66,5 +67,9 @@ for obs_dict, actions_dict in dataloader:
     
     print()
     # print shapes for all fields
-    print({k: v.shape for k, v in obs_dict.items()})
-    print({k: v.shape for k, v in actions_dict.items()})
+    print("Observation shapes:")
+    for key, value in data['observation'].items():
+        print(f"{key}: {value.shape}")
+    print("Action shapes:")
+    for key, value in data['action'].items():
+        print(f"{key}: {value.shape}")

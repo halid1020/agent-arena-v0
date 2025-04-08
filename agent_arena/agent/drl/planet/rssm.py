@@ -491,10 +491,13 @@ class RSSM(TrainableAgent):
         
         # Apply transformations
         if apply_transform:
-            if single:
+            if single and not self.apply_transform_in_dataset:
                 for k, v in data.items():
                     data[k] = np.expand_dims(v, 0)
             data = self.transform(data, train=train)
+            if self.apply_transform_in_dataset:
+                for k, v in data.items():
+                    data[k] = v.unsqueeze(0)
             for k, v in data.items():
                 data[k] = v.to(self.config.device)
 

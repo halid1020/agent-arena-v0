@@ -15,6 +15,10 @@ from agent_arena.utilities.transform.planet_transformer \
 from agent_arena.utilities.transform.phase_prediction_transformer \
     import PhasePredictionTransformer
 
+from agent_arena.utilities.transform.pick_and_place_transformer_v1 \
+    import PickAndPlaceTransformerV1
+
+
 DATA_TRANSFORMER = {
     'planet_transformer': PlaNetTransformer,
     'pick_and_place_transformer':  PickAndPlaceTransformer,
@@ -24,4 +28,5 @@ DATA_TRANSFORMER = {
     'identity': IdentityTransformer,
     'contrastive_learning_transformer': ContrastiveLearningTransformer,
     'phase_prediction_transform': PhasePredictionTransformer,
+    'pick_and_place_transformer_v1':  PickAndPlaceTransformerV1,
 }

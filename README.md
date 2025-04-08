@@ -24,6 +24,7 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 Please make sure you have GPU driver installed in your operating system before preceding the set-up instructions. This project works in Linux environment, and it has not been tested on other operating systems. Known operating systems that works are:
 
 * Ubuntu 22.04.3 LTS
+* Ubuntu 24.04.2 LTS
 
 Then, download and install `anaconda3` right under your home directory regarding your operating system version by following this [tutorial](https://docs.anaconda.com/free/anaconda/install/linux/).
 
@@ -48,7 +49,7 @@ conda activate agent-arena-v0
 # For Ubuntu 22.04.3 LTS, please use following
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 
-# For Ubuntu 22.04.3 LTS, please use following
+# For Ubuntu Ubuntu 24.04.2 LTS LTS, please use following
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 

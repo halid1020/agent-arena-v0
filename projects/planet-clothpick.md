@@ -4,19 +4,19 @@ Make sure you setup the [`agent-arena-v0`](https://github.com/halid1020/agent-ar
 
 # Download Training Data
 
-1. Create `data` directory under `agent-arena-v0`
+1. Create a `data` directory under `agent-arena-v0`
 ```
 cd <path-to-agent-arena>/agent-arena-v0
 
-# if data directory was not created, create one as follow
+# if the `data` directory was not created, create one as follows
 mkdir data
 
 ```
 
-2. Download and setup training data.
+2. Download and set up training data.
 
 ```
-cd data
+cd <path-to-agent-arena>/agent-arena-v0/data
 
 gdown https://drive.google.com/uc?id=1gBDrYKjtD0Qga9sjcJpybYIXKbtWxiIW
 
@@ -28,12 +28,12 @@ unzip MonoSquareFabric-VisionPickAndPlace-TrajectorySim.zip
 
 After downloading the data, you can start traning `planet-clothpick` agent. You can find the implementation of the agent [here](https://github.com/halid1020/agent-arena-v0/tree/main/agent_arena/agent/drl/planet)
 
-Under the `softgym` directory, please run
+Under the `softgym`'s root directory, please run
 ```
 . ./setup.sh
 ```
 
-Then, under the `agent-arena-v0` directory, please run
+Then, using the same terminal, under the `agent-arena-v0`'s root directory, please run
 
 ```
 . ./setup.sh
@@ -43,18 +43,18 @@ cd tool
 python train_and_evaluate.py \
     --agent planet-clothpick \
     --arena "softgym|domain:mono-square-fabric,initial:crumpled,action:pixel-pick-and-place(1),task:flattening" \
-    --config <config-file-name>
+    --config <config-file-name> \
     --log_dir <save-path> \
 ```
 
-The above program will also evalaute the agent in the test trials of the arena.
+The above program will also evaluate the agent in the test trials of the arena.
 
 Provided config files are `D2M` and `RGB2RGB`, and you can find them [here](https://github.com/halid1020/agent-arena-v0/tree/main/agent_arena/configuration/train_and_evaluate/planet-clothpick/softgym%7Cdomain%3Amono-square-fabric%2Cinitial%3Acrumpled%2Caction%3Apixel-pick-and-place(1)%2Ctask%3Aflattening)
 
 
-# Download Provided Weigths
+# Download Provided Weights
 
-Download the provided weigths of the model to a save directory.
+Download the provided weights of the model to a save directory.
 
 ```
 cd <save-dir>
@@ -68,7 +68,7 @@ Provided weights are checkpoint `50000` of `D2M`. Note that this checkpoint cann
 
 # Evaluate PlaNet-ClothPick on Test Trials
 
-After training the agent or downloading the weights, you can evalaute the agent on its environment:
+After training the agent or downloading the weights, you can evaluate the agent on its environment:
 
 ```
 python evaluate.py \

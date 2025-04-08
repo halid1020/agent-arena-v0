@@ -6,7 +6,8 @@ from .utils import check_memory_usage
 
 def perform_single(arena, agent, mode='eval', episode_config=None,
     collect_frames=False, end_success=True,
-    update_agent_from_arena=lambda ag, ar: None):
+    update_agent_from_arena=lambda ag, ar: None,
+    max_steps=None):
 
     if mode == 'eval':
         arena.set_eval()
@@ -25,7 +26,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
 
     res = {}
     internal_states = []
-    informations = []
+    information_list = []
     actions = []
     phases = []
     action_time = []
@@ -35,7 +36,8 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     if episode_config is not None and episode_config['save_video']:
         frames = []
        
-
+    if max_steps is not None:
+        assert max_steps > 0, 'max_steps must be greater than 0'
    
     agent.reset([arena.id]) # reset the agent for the single default arena
     information = arena.reset(episode_config)
@@ -44,7 +46,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     ##################################
 
     information['done'] = False
-    informations.append(information)
+    information_list.append(information)
     agent.init([information])
 
     evals = arena.evaluate()
@@ -60,11 +62,13 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         #print('goal keys', res['goal'].keys())
 
     done = information['done']
+    steps = 0
    
     while not done:
         start_time = time.time()
         
         action = agent.act([information])[0]
+        steps += 1
         #print('perform action', action)
         phase = agent.get_phase()[0]
         phases.append(phase)
@@ -74,7 +78,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         elapsed_time = (end_time - start_time)
         action_time.append(elapsed_time)
         information = arena.step(action)
-        informations.append(information)
+        information_list.append(information)
 
         check_memory_usage()
         #print('info keys', information.keys())
@@ -103,7 +107,8 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         agent.update([information], [action])
         
         done = information['done'] or agent.terminate()[arena.id]
-        
+        done = done or (max_steps is not None and steps >= max_steps)
+
         if end_success:
             done = done or agent.success()[arena.id] or arena.success() 
         for k, v in evals.items():
@@ -112,9 +117,9 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
        
     res['actions'] = actions #np.stack(actions)
     res['action_durations'] = np.asarray(action_time)
-    internal_states.append(agent.get_state().copy())
+    internal_states.append(agent.get_state()[arena.id].copy())
     res['phases'] = np.stack(phases)
-    res['informations'] = informations
+    res['information'] = information_list
     if episode_config is not None and episode_config['save_video']:
         res['frames'] = np.concatenate(frames, axis=0)
     res['internal_states'] = internal_states

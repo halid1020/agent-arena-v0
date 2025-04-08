@@ -27,13 +27,9 @@ class GarmentMaskBiasedPixelPickAndPlacePolicy(Agent):
     
     def _mask_biased_random_pick_and_place(self, info):
         mask = info['observation']['mask']
+        if len(mask.shape) == 3:
+            mask = mask[:, :, 0]
         rgb = info['observation']['rgb']
-
-        ## plot the original mask and the border
-
-        # from matplotlib import pyplot as plt
-        # plt.imsave('rgb.png', rgb)
-        # plt.imsave('border.png', border)
         
         mask_coords = np.argwhere(mask)
         if len(mask_coords) == 0:
@@ -48,16 +44,16 @@ class GarmentMaskBiasedPixelPickAndPlacePolicy(Agent):
         pick_pixel = pick_pixel.astype(np.float32)
         pick_pixel[0] = pick_pixel[0] / mask.shape[0] * 2 - 1
         pick_pixel[1] = pick_pixel[1] / mask.shape[1] * 2 - 1
-        # swap x and y
-        #pick_pixel = pick_pixel[::-1]
-
+        
         action = {
             'norm-pixel-pick-and-place': {
                 'pick_0': pick_pixel,
                 'place_0': np.random.uniform(-1, 1, 2)
             }
         }
-        #print('action', action)
+        action['pick_0'] = action['norm-pixel-pick-and-place']['pick_0']
+        action['place_0'] = action['norm-pixel-pick-and-place']['place_0']
+        
         return action
 
     

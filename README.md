@@ -2,6 +2,11 @@
 
 This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by **Dr Kasim Terzić** at the *Univiersity of St Andrews, UK*.
 
+**Ryan Hayward** partially contributed to the `README.md` of the forked `softgym` repository that works align with this framework.
+
+**Jose Alex Chandy** participated in the development of `environment.yml` file in the `ros1-integration` repository.
+
+
 [![DOI](https://zenodo.org/badge/933415395.svg)](https://doi.org/10.5281/zenodo.14876793)
 
 [Website]() /  [ArXiv]() [Coming Soon]
@@ -14,10 +19,10 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 ## Table of Contents
 
 - [I. Prerequisites](#prerequsites)
-- [II. Simulation Setup](#simulation)
-- [III. Train and Run PlaNet-ClothPick](#train-planet)
-- [VI. Replicate Other Results](#other-results)
-- [V. Demonstration](#demo)
+- [II. Arena: Softgym Simulation Setup](#simulation)
+- [III. Agent Setup](#agent)
+- [IV. Test Agent-Arena](#test)
+- [V. Tutorial](#tutorial)
 
 ## I. Prerequsites
 
@@ -94,6 +99,8 @@ MoviePy - Building file ./tmp/manupilation_-1/performance_visualisation/episode_
 
 You can also enbale GUI display by adding `--disp` argument to the running command.
 
-**Ryan Hayward** partially contributed to the `README.md` of the forked `softgym` repository that works align with this framework.
+## V. Tutorial
 
-**Jose Alex Chandy** participated in the development of `environment.yml` file in the `ros1-integration` repository.
+In order to study the functionality of the `Agent-Arena`, please refer to our Arxiv paper.
+
+For implementation learning, please refer to the `example`, `test` and `projects` folders.

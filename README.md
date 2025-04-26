@@ -9,7 +9,7 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 
 [![DOI](https://zenodo.org/badge/933415395.svg)](https://doi.org/10.5281/zenodo.14876793)
 
-[Website]() /  [ArXiv]() [Coming Soon]
+[ArXiv](https://arxiv.org/abs/2504.06468)
 
 
 ![plot](assets/agent-arena.jpg)

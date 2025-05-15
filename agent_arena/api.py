@@ -27,26 +27,34 @@ def load_yamls(file_path: str) -> typing.Dict[str, typing.Any]:
     return yaml.safe_load(Path(file_path).read_text())
 
 @dispatch(str)
-def retrieve_config(config_name: str) -> typing.Dict[str, typing.Any]:
-    configs = load_yamls(os.path.join(
-            os.environ['AGENT_ARENA_PATH'],
-            config_name))
+def retrieve_config(config_path: str) -> typing.Dict[str, typing.Any]:
+    configs = load_yamls(config_path)
 
     return DotMap(configs)
 
 @dispatch(str, str, str)
 def retrieve_config(agent_name: str, arena_name:str, 
-        config_name:str) -> typing.Dict[str, typing.Any]:
+        config_name:str, config_dir: Optional[str]=None,
+        ) -> typing.Dict[str, typing.Any]:
     
     config = DotMap()
-    if agent_name in AGENT_NEEDS_CONFIG.keys():
-        config = retrieve_config('configuration/train_and_evaluate/{}/{}/{}.yaml'.\
-            format(agent_name, arena_name, config_name))
-        config.oracle = False
-    elif agent_name in AGENT_NO_CONFIG.keys():
-        pass
-    else:
-        config.oracle = True
+    
+    config_path = '{}/{}/{}.yaml'.format(agent_name, arena_name, config_name)
+    if config_dir == None: ## If None load from agent-arena trajecotry
+        config_path = os.path.join(os.environ['AGENT_ARENA_PATH'], 'configuration', 'train_and_evaluate', config_path)
+        if agent_name in AGENT_NEEDS_CONFIG.keys():
+            config = retrieve_config(config_path)
+            config.oracle = False
+        elif agent_name in AGENT_NO_CONFIG.keys():
+            pass
+        else:
+            
+            config.oracle = True
+    else: ## load from customised trajectory
+        config_path = os.path.join(config_dir, config_path)
+        config = retrieve_config(config_path)
+
+    
     
     #config.save_dir = os.path.join(log_dir, arena_name, agent_name, config_name)
     return config

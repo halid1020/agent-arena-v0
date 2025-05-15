@@ -20,7 +20,7 @@ class TrajectoryDataset(Dataset):
                  goal_config: Dict[str, Tuple] = None, save_goal=False,
                  whole_trajectory: bool = False, sample_mode='all', 
                  sample_terminal=True, split_ratios=[0.1, 0.1, 0.8],
-                 num_trj=None,
+                 num_trj=None, data_dir: Optional[str]=None,
                  transform=None):
         """
         Initialize the dataset.
@@ -54,12 +54,14 @@ class TrajectoryDataset(Dataset):
         
         self.mode = io_mode
         
-        
-        data_path = os.path.join(
-            os.environ['AGENT_ARENA_PATH'],
-            '..',
-            'data',
-            data_path)
+        if data_dir == None:
+            data_path = os.path.join(
+                os.environ['AGENT_ARENA_PATH'],
+                '..',
+                'data',
+                data_path)
+        else:
+            data_path = os.path.join(data_dir, data_path)
         print('data_path', data_path)
 
         if io_mode == 'w':

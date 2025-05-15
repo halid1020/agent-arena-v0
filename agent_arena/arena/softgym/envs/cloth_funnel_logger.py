@@ -78,9 +78,10 @@ class ClothFunnelLogger(Logger):
             T = result['actions'].shape[0]
             N = result['actions'].shape[1]
         result['actions'] = result['actions'].reshape(T, N, 2, -1)[:, :, :, :2]
+        print('results key', result.keys())
        
         if plot_pick_and_place:
-            rgbs = np.stack([info['observation']['rgb'] for info in result['informations']])
+            rgbs = np.stack([info['observation']['rgb'] for info in result['information']])
             pt(
                 rgbs, result['actions'].reshape(T, -1, 4), # TODO: this is envionrment specific
                 title='Episode {}'.format(eid), 

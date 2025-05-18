@@ -220,7 +220,7 @@ class ClothFunnelEnv(Arena):
         # plt.imsave('obs.png', rgb)
 
         for k, v in info['goal'].items():
-            info['observation'][f'goal_{k}'] = v
+            info['observation'][f'goal-{k}'] = v
             #print(f'goal_{k}', v.shape)
 
         if 'done' not in info:

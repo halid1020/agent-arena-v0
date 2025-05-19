@@ -16,6 +16,23 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 
 
 
+<h3>  Branch to fit ROS2 Humbel</h3>
+
+This branch is for integrating the `Agent-Arena` framework with `ROS2 Humble`. The only difference between this branch and main is in its `environment.yml` file, where it also includes the necessary packages to make Agent-Arena work with `ROS2 Humble`. On the robot machine, please follow the `README.md` in the main branch to install `agent-arena-v0`.
+
+
+##  Setup `ROS` with `agent-arena`
+```
+cd <path-to-agent-arena>#
+
+# Establish agent-arena conda environment
+. ./setup.sh  
+
+# Integarate ROS-2 enviornment.
+source $CONDA_PREFIX/setup.bash 
+```
+
+
 ## Table of Contents
 
 - [I. Prerequisites](#prerequsites)

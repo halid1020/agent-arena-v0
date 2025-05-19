@@ -18,7 +18,7 @@ dependencies:
   - ros-humble-desktop
   #- python=3.7.7
   - pip:
-    - ruamel.yaml
+    - ruamel.yaml==0.17.21
     - dotmap
     - gym #==0.23.1
     - h5py
@@ -54,6 +54,12 @@ dependencies:
     - multipledispatch #==1.0.0
 
     - sk-video
+    - zarr
+    - moviepy==1.0.3
+    - open3d-python==0.19.0
+    - pytorch-lightning
+    - ray
+    - pyrealsense2
     
 
     ## install realsense

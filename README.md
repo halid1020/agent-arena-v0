@@ -67,7 +67,7 @@ conda env create -f environment.yml
 
 conda activate agent-arena-v0
 
-### Change following line to fit your own GPU setting
+### Change following line to fit your own GPU setting, note that you may need to adjust the versions by # pip install --upgrade torch torchvision
 # For Ubuntu 22.04.3 LTS, please use following
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 
@@ -77,7 +77,8 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 
 
 ### For all cases, you need the following to install the difusers package.
-conda install -c conda-forge diffusers 
+conda install -c conda-forge diffusers # pip install diffusers
+pip install segment-anything
 ```
 
 Note that we separate out the installation of `Pytorch` from the environment yaml file to prevent installing wrong cuda and torch versions for your GPU setting, so please change that line for serving your own configuration. However, if you install the latest Nvidia driver on the machine, the provided command usually should work. Please open an interpreter to test if pytorch can detect GPU and load tensors and conduction calculations on the GPU before preceding the next step.

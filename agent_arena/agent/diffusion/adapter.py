@@ -113,7 +113,8 @@ class DiffusionAdapter(TrainableAgent):
             self.transform =  build_transform(transform_config.name, transform_config.params)
         
         self.update_step = -1
-        self._init_dataset()
+        self.dataset_inited = False
+        
         
     def _init_dataset(self):
 
@@ -151,6 +152,7 @@ class DiffusionAdapter(TrainableAgent):
             # don't kill worker process afte each epoch
             #persistent_workers=True
         )
+        self.dataset_inited = True
         #self.dataloader = None
     
     def _init_demo_policy_dataset(self, arena):
@@ -317,13 +319,13 @@ class DiffusionAdapter(TrainableAgent):
 
 
     def train(self, update_steps, arena):
-
-        if self.config.train_mode == 'from_dataset':
-            self._init_dataset()
-        elif self.config.train_mode == 'from_policy':
-            self._init_demo_policy_dataset(arena)
-        else:
-            raise ValueError('Invalid train mode')
+        if not self.dataset_inited:
+            if self.config.train_mode == 'from_dataset':
+                self._init_dataset()
+            elif self.config.train_mode == 'from_policy':
+                self._init_demo_policy_dataset(arena)
+            else:
+                raise ValueError('Invalid train mode')
         
         update_steps = min(#
             self.config.total_update_steps - self.update_step-1,

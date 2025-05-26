@@ -35,11 +35,11 @@ source $CONDA_PREFIX/setup.bash
 
 ## Table of Contents
 
-- [I. Prerequisites](#prerequsites)
-- [II. Arena: Softgym Simulation Setup](#simulation)
-- [III. Agent Setup](#agent)
-- [IV. Test Agent-Arena](#test)
-- [V. Tutorial](#tutorial)
+- [I. Prerequsites](#i-prerequsites)
+- [II. Arena: Softgym Simulation Setup](#ii-arena-softgym-simulation-setup)
+- [III. Agent Setup](#iii-agent-setup)
+- [IV. Testing](#iv-testing)
+- [V. Tutorial](#v-tutorial)
 
 ## I. Prerequsites
 
@@ -52,11 +52,13 @@ Then, download and install `anaconda3` right under your home directory regarding
 
 Please do not try to run the project on CPU unless for testing purpose, because it will take ages to train and run. This project does not provide functionality to run a single model on multiple different GPUs, but you can run multiple models on different GPUs by assigning associate device name in the `yaml` files.
 
+
 ## II. Arena: Softgym Simulation Setup
 
 The current repository produces the policies and environment wrappers on the `SoftGym` cloth-manipulation benchmark environment. We suggest readers download [our modfied version](https://github.com/halid1020/softgym/tree/master) of the simulation environment for setting up our `agent-areana` framework successfully.
 
 Please follow the [tutorial ](https://github.com/halid1020/softgym/blob/master/README.md)to setup the simulation environment. We want to restate that the docker provided by the [original SoftGym](https://github.com/Xingyu-Lin/softgym) (which is also used by this project) is only employed to compile the simulation environment. The running and calling the environment's functionalities should be done outside the docker, or in another docker if you setup your experiment environment in a remote machine. After installing and compiling our version of the `SoftGym`, please get out of the docker. Here, we assume you have setup the simulation and downloaded corresponding data files of initial states for running the environments successfully.
+
 
 ## III. Agent Setup
 
@@ -89,7 +91,7 @@ Note that if you want to remove the environment
 conda remove -n agent-arena-v0 --all  
 ```
 
-## VI. Test Agent-Arena
+## IV. Testing
 
 Every time you open a new terminal, please make sure run the command right under the `agent-arena`'s root directory.
 

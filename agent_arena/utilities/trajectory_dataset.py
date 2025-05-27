@@ -279,6 +279,7 @@ class TrajectoryDataset(Dataset):
         """
         start_idx = self.traj_starts[idx]
         end_idx = start_idx + self.traj_lengths[idx] - 1
+        #print('obs confgig', self.obs_config)
         obs = {
             obs_output_type: self.observation[obs_type][start_idx:end_idx+1]\
                 .reshape(-1, *self.obs_config[obs_type]['shape']) \
@@ -360,7 +361,12 @@ class TrajectoryDataset(Dataset):
             ret['goal'] = goals
         
         if self.transform is not None:
-            ret = self.transform(ret)
+            ret_ = self.transform(ret)
+            # make sure all keys are in the ret_ dict, TODO: make it more elegant
+            for key in ret['observation'].keys():
+                if key not in ret_:
+                    ret_[key] = ret['observation'][key]
+            return ret_
 
         return ret
     

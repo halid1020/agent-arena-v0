@@ -172,7 +172,7 @@ def learningTounfold_reward(last_info, actino, info):
     reward = lam*reward_c + (1-lam)*reward_o
     return reward # 0-1
 
-def speedFolding_reward(last_info, action, info):
+def speedFolding_approx_reward(last_info, action, info):
     """
         In the original paper, it used a pretrained smoothness classifier to calculate the smoothness of the folding.
         Here, we use the max IoU to approximate the smoothness.
@@ -192,7 +192,7 @@ def coverage_alignment_reward(last_info, action, info):
 
     if last_info is None:
         last_info = info
-    r_cs = speedFolding_reward(last_info, action, info)
+    r_ca = speedFolding_approx_reward(last_info, action, info)
     dc = info['evaluation']['normalised_coverage'] - last_info['evaluation']['normalised_coverage']
     ds = info['evaluation']['max_IoU'] - last_info['evaluation']['max_IoU']
     nc = info['evaluation']['normalised_coverage']
@@ -201,14 +201,15 @@ def coverage_alignment_reward(last_info, action, info):
     epsilon_s = 1e-4
     max_c = 0.99
     max_iou = 0.85
+    b = 0.7
     
-    if dc < epsilon_c and ds < epsilon_s and nc < max_c and iou < max_iou:
+    if nc - dc > 0.9 and nc < 0.9:
         return 0
     
-    if nc >= max_c and iou >= max_iou:
-        return 1
+    if nc >= 0.95:
+        return b
     
-    return r_cs
+    return r_ca
 
 
 

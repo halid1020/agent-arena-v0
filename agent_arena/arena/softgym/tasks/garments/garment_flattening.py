@@ -74,7 +74,7 @@ class GarmentFlatteningTask(Task):
             'clothfunnel_default': cloth_funnel_weighted_reward,
             'clothfunnel_tanh_reward': cloth_funnel_tanh_reward,
             'normalised_coverage': normalised_coverage_reward(last_info, action, info),
-            'speedFolding_approx': speedFolding_reward(last_info, action, info),
+            'speedFolding_approx': speedFolding_approx_reward(last_info, action, info),
             'coverage_differance': coverage_differance_reward(last_info, action, info),
             'learningToUnfold_approx': learningTounfold_reward(last_info, action, info),
             'max_IoU': max_IoU_reward(last_info, action, info),

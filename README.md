@@ -14,7 +14,7 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 
 ![plot](assets/agent-arena.jpg)
 
-
+**For `ROS` integration, please see the regarding branches.**
 
 ## Table of Contents
 

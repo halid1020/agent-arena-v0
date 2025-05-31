@@ -10,12 +10,14 @@ def get_resnet(name:str, input_channel=3, weights=None, **kwargs) -> nn.Module:
     """
     # Use standard ResNet implementation from torchvision
     func = getattr(torchvision.models, name)
-    resnet = func(weights=weights, **kwargs)
-    resnet.conv1 = nn.Conv2d(input_channel, 64, kernel_size=7, stride=2, padding=3,bias=False)
+    resnet = func(**kwargs)
+    resnet.conv1 = nn.Conv2d(input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
     # remove the final fully connected layer
     # for resnet18, the output dim should be 512
     resnet.fc = torch.nn.Identity()
+    resnet.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+    #print(resnet)
     return resnet
 
 

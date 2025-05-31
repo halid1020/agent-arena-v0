@@ -1,0 +1,61 @@
+# TODO
+# install realsense
+# pip install diffusers 0.21.4 # this can only be done after torch.
+
+name: agent-arena-v0
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pybind11=2.4.3
+  - pip
+  - python=3.7.12 #7.7
+  - pip:
+    - ruamel.yaml==0.17.21
+    - seaborn==0.12.2
+    - dotmap==1.3.30
+    - gym==0.23.1
+    - h5py==3.6.0
+    - tqdm==4.63.1
+    - opencv-python==4.5.5.64
+    - imutils==0.5.4
+    - matplotlib==3.5.3
+    - moviepy==1.0.3
+    - scikit-image==0.19.3
+    - tensorboard==2.11.2
+    - termcolor==2.3.0
+    - kornia==0.6.12
+    - pandas==1.3.5
+    - charset-normalizer==2.1.0
+    - pyquaternion==0.9.9
+    - shapely==1.8.1.post1
+    - scikit-learn==1.0.2
+    - pyswarm==0.6
+
+    # Deformable Raven
+    - transformations==2020.1.1
+    - pybullet==3.0.4
+    - circle-fit
+
+    # DM Control
+    - dm_control==1.0.13
+    - pytorch-lightning==1.9.5
+    - tensorboardX==2.6.2.2
+    - psutil==5.9.8
+    - transforms3d==0.4.1
+    - einops==0.3.2
+    - meshcat==0.3.2
+    - multipledispatch==1.0.0
+
+    - sk-video==1.1.10
+    - zarr==2.12.0
+    - open3d-python==0.7.0.0
+    - ray==2.7.2
+    - pygame==2.6.1
+    - pymunk==6.8.1
+    - gdown==4.7.3
+
+
+# Run following after building and activating the environment
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# pip install diffusers==0.18.2 after installing pytorch.

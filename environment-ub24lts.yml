@@ -1,7 +1,3 @@
-# TODO
-# install realsense
-# pip install diffusers 0.21.4 # this can only be done after torch.
-
 name: agent-arena-v0
 channels:
   - conda-forge
@@ -56,6 +52,6 @@ dependencies:
     - gdown==4.7.3
 
 
-# Run following after building and activating the environment
+# Run following after building and activating the conda environment
 # pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 # pip install diffusers==0.18.2 after installing pytorch.

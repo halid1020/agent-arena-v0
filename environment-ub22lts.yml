@@ -51,6 +51,6 @@ dependencies:
     - pymunk==6.8.1
     - gdown==4.7.3
     
-
+# Run following after building and activating the conda environment
 # conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 # conda install -c conda-forge diffusers 

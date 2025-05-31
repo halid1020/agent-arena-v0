@@ -45,7 +45,7 @@ Please follow the [tutorial ](https://github.com/halid1020/softgym/blob/master/R
 
 ## III. Agent Setup
 
-Before starting this step, please make sure the current repository is parallel with the softgym repository you just setup. You do not need docker at this stage, unless you want to build your own docker environment in a remote machine. Here, we assume you are right under the `Agent-Arena` directory, now please follow the following command to finish the setup:
+Before starting this step, please make sure the current repository is parallel with the softgym repository you just setup. You do not need docker at this stage, unless you want to build your own docker environment in a remote machine. Here, we assume you are right under the `agent-arena-v0` root directory, now please follow the following command to finish the setup:
 
 ```
 conda env create -f environment.yml
@@ -75,7 +75,7 @@ conda remove -n agent-arena-v0 --all
 
 ## IV. Testing
 
-Every time you open a new terminal, please make sure run the command right under the `agent-arena`'s root directory.
+Every time you open a new terminal, please make sure run the command right under the `agent-arena-v0`'s root directory.
 
 ```
 . ./setup.sh

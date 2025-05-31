@@ -56,7 +56,7 @@ conda activate agent-arena-v0
 # For Ubuntu 22.04.3 LTS, please use following
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 
-# For Ubuntu Ubuntu 24.04.2 LTS LTS, please use following
+# Alternatively, for Ubuntu 24.04.2 LTS, please use following
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 

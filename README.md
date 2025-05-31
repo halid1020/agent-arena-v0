@@ -14,7 +14,7 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 
 ![plot](assets/agent-arena.jpg)
 
-
+**For `ROS` integration, please see the regarding branches.**
 
 ## Table of Contents
 
@@ -45,7 +45,7 @@ Please follow the [tutorial ](https://github.com/halid1020/softgym/blob/master/R
 
 ## III. Agent Setup
 
-Before starting this step, please make sure the current repository is parallel with the softgym repository you just setup. You do not need docker at this stage, unless you want to build your own docker environment in a remote machine. Here, we assume you are right under the `Agent-Arena` directory, now please follow the following command to finish the setup:
+Before starting this step, please make sure the current repository is parallel with the softgym repository you just setup. You do not need docker at this stage, unless you want to build your own docker environment in a remote machine. Here, we assume you are right under the `agent-arena-v0` root directory, now please follow the following command to finish the setup:
 
 ```
 conda env create -f environment.yml
@@ -56,7 +56,7 @@ conda activate agent-arena-v0
 # For Ubuntu 22.04.3 LTS, please use following
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 
-# For Ubuntu Ubuntu 24.04.2 LTS LTS, please use following
+# Alternatively, for Ubuntu 24.04.2 LTS, please use following
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 
@@ -75,7 +75,7 @@ conda remove -n agent-arena-v0 --all
 
 ## IV. Testing
 
-Every time you open a new terminal, please make sure run the command right under the `agent-arena`'s root directory.
+Every time you open a new terminal, please make sure run the command right under the `agent-arena-v0`'s root directory.
 
 ```
 . ./setup.sh

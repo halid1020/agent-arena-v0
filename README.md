@@ -14,7 +14,7 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 
 ![plot](assets/agent-arena.jpg)
 
-
+**For `ROS` integration, please see the regarding branches.**
 
 ## Table of Contents
 
@@ -45,27 +45,17 @@ Please follow the [tutorial ](https://github.com/halid1020/softgym/blob/master/R
 
 ## III. Agent Setup
 
-Before starting this step, please make sure the current repository is parallel with the softgym repository you just setup. You do not need docker at this stage, unless you want to build your own docker environment in a remote machine. Here, we assume you are right under the `Agent-Arena` directory, now please follow the following command to finish the setup:
+Before starting this step, please make sure the current repository is parallel with the softgym repository you just setup. You do not need docker at this stage, unless you want to build your own docker environment in a remote machine. Here, we assume you are right under the `agent-arena-v0` root directory, now please follow the following command to finish the setup:
 
 ```
-conda env create -f environment.yml
+conda env create -f environment-ub24lts.yml # or, environment-ub22lts for Ubuntu 22.04.3 LTS
 
 conda activate agent-arena-v0
-
-### Change following line to fit your own GPU setting
-# For Ubuntu 22.04.3 LTS, please use following
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
-
-# For Ubuntu Ubuntu 24.04.2 LTS LTS, please use following
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-
-
-### For all cases, you need the following to install the difusers package.
-conda install -c conda-forge diffusers 
 ```
 
-Note that we separate out the installation of `Pytorch` from the environment yaml file to prevent installing wrong cuda and torch versions for your GPU setting, so please change that line for serving your own configuration. However, if you install the latest Nvidia driver on the machine, the provided command usually should work. Please open an interpreter to test if pytorch can detect GPU and load tensors and conduction calculations on the GPU before preceding the next step.
+Then, see the end of the environment yml file to install the pytorch version that fits.
+
+Note that we separate out the installation of `PyTorch` and `diffusers` from the environment yaml file to prevent installing wrong cuda and torch versions for your GPU setting, so please change that line for serving your own configuration. However, if you install the latest Nvidia driver on the machine, the provided command usually should work. Please open an interpreter to test if pytorch can detect GPU and load tensors and conduction calculations on the GPU before preceding the next step.
 
 Note that if you want to remove the environment
 
@@ -75,7 +65,7 @@ conda remove -n agent-arena-v0 --all
 
 ## IV. Testing
 
-Every time you open a new terminal, please make sure run the command right under the `agent-arena`'s root directory.
+Every time you open a new terminal, please make sure run the command right under the `agent-arena-v0`'s root directory.
 
 ```
 . ./setup.sh

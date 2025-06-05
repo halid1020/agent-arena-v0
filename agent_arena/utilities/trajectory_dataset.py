@@ -41,7 +41,7 @@ class TrajectoryDataset(Dataset):
         self.save_goal = save_goal
         self.transform = transform
         self.num_trj = num_trj
-        print('num_trj', num_trj)
+        
         if whole_trajectory:
             self.seq_length = None
             self.cross_trajectory = False
@@ -136,6 +136,7 @@ class TrajectoryDataset(Dataset):
             self.goal_output_types = [v['output_key'] for k, v in self.goal_config.items()]
         
         self.update_dataset_info()
+        print('total trj', self.total_trj)
         print('num_samples', self.num_samples)
 
     def update_dataset_info(self):
@@ -144,6 +145,7 @@ class TrajectoryDataset(Dataset):
             self.traj_lengths = self.trajectory_lengths[:]
         else:
             self.traj_lengths = self.trajectory_lengths[:self.num_trj]
+        self.total_trj = len(self.traj_lengths)
         self.traj_starts = np.concatenate(([0], np.cumsum(self.traj_lengths)[:-1])) if len(self.traj_lengths) > 0 else np.array([])
         self.total_timesteps = np.sum(self.traj_lengths)
         # create terminal array

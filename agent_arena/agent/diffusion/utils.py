@@ -16,6 +16,9 @@ def get_resnet(name:str, input_channel=3, weights=None, **kwargs) -> nn.Module:
     # remove the final fully connected layer
     # for resnet18, the output dim should be 512
     resnet.fc = torch.nn.Identity()
+    ## print resnet structure
+    #print(resnet)
+
     return resnet
 
 

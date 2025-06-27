@@ -33,6 +33,7 @@ class TrajectoryDataset(Dataset):
             obs_shapes (Dict[str, Tuple]): Dictionary of observation shapes for each observation type (required for 'w' mode).
             action_shapes (Dict[str, Tuple]): Dictionary of action shapes for each action type (required for 'w' mode).
             whole_trajectory (bool): If True, sample whole trajectories instead of fixed-length sequences.
+            splot_raitos (list of floats): Eval, val, and train.
         """
         self.whole_trajectory = whole_trajectory
         self.sample_mode = sample_mode
@@ -41,7 +42,7 @@ class TrajectoryDataset(Dataset):
         self.save_goal = save_goal
         self.transform = transform
         self.num_trj = num_trj
-        print('num_trj', num_trj)
+        
         if whole_trajectory:
             self.seq_length = None
             self.cross_trajectory = False
@@ -136,6 +137,7 @@ class TrajectoryDataset(Dataset):
             self.goal_output_types = [v['output_key'] for k, v in self.goal_config.items()]
         
         self.update_dataset_info()
+        print('total trj', self.total_trj)
         print('num_samples', self.num_samples)
 
     def update_dataset_info(self):
@@ -144,6 +146,7 @@ class TrajectoryDataset(Dataset):
             self.traj_lengths = self.trajectory_lengths[:]
         else:
             self.traj_lengths = self.trajectory_lengths[:self.num_trj]
+        self.total_trj = len(self.traj_lengths)
         self.traj_starts = np.concatenate(([0], np.cumsum(self.traj_lengths)[:-1])) if len(self.traj_lengths) > 0 else np.array([])
         self.total_timesteps = np.sum(self.traj_lengths)
         # create terminal array

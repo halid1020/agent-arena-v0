@@ -33,6 +33,7 @@ class TrajectoryDataset(Dataset):
             obs_shapes (Dict[str, Tuple]): Dictionary of observation shapes for each observation type (required for 'w' mode).
             action_shapes (Dict[str, Tuple]): Dictionary of action shapes for each action type (required for 'w' mode).
             whole_trajectory (bool): If True, sample whole trajectories instead of fixed-length sequences.
+            splot_raitos (list of floats): Eval, val, and train.
         """
         self.whole_trajectory = whole_trajectory
         self.sample_mode = sample_mode

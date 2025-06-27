@@ -112,7 +112,7 @@ class Agent(ABC):
             self.internal_states[arena_id] = {}
         return [True for _ in arena_ids]
 
-    def init(self, informations: List[Dict[str, Any]]) -> List[bool]:
+    def init(self, info_list: List[Dict[str, Any]]) -> List[bool]:
         """
         Initialise the agent's internal state given the initial information.
         
@@ -122,9 +122,9 @@ class Agent(ABC):
         Returns:
             A list indicating if the initialization was successful.
         """
-        return [True for _ in informations]
+        return [True for _ in info_list]
 
-    def update(self, informations: List[InformationType], actions: List[ActionType]) -> List[bool]:
+    def update(self, info_list: List[InformationType], actions: List[ActionType]) -> List[bool]:
         """
         Update the agent's internal state given the current information and action.
         
@@ -135,7 +135,7 @@ class Agent(ABC):
         Returns:
             A list indicating if the update was successful.
         """
-        return [True for _ in informations]
+        return [True for _ in info_list]
 
     @abstractmethod
     def act(self, info_list: List[InformationType], update: bool = False) -> List[ActionType]:

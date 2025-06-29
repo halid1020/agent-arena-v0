@@ -27,7 +27,4 @@ cd <path-to-agent-arena>#
 
 # Establish agent-arena conda environment
 . ./setup.sh  
-
-# Integarate ROS-2 enviornment.
-source $CONDA_PREFIX/setup.bash 
 ```

@@ -1,6 +1,6 @@
 import numpy as np
 
-from .folding_wrapper \
+from .folding \
     import FoldingWrapper
 import agent_arena as ag_ar
 from agent_arena.utilities.constants.rect_fabric import *

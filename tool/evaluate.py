@@ -34,7 +34,6 @@ def main():
 
     save_dir = os.path.join(args.log_dir, args.arena, args.agent, args.config)
     
-   
     #create_message_logger(save_dir, args.verbose)
 
     arena = ag_ar.build_arena(args.arena + ',disp:{}'.format(disp))

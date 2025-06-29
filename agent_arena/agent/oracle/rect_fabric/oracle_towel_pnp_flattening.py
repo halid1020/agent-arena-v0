@@ -68,6 +68,7 @@ class OracleTowelPnPFlattening(RandomPickAndPlacePolicy):
             #print('hello')
             self.action_types.extend(['noisy-' + n for n in self.action_types])
 
+
     def get_name(self):
         return 'Oracle Rectangular Fabric Pick and Place Expert Policy'
 
@@ -82,15 +83,6 @@ class OracleTowelPnPFlattening(RandomPickAndPlacePolicy):
             self.internal_states[arena_id]['is_success'] = False
             if self.canonical:
                 self.internal_states[arena_id]['to_canonical'] = False
-
-        # self.internal_states[arena_id]['last_action'] = None
-        # self.internal_states['revealing_corner']= False
-        # self.internal_states['revealing_corner_id'] = None
-        # self.internal_states['last_corner_id ']= None
-        # #self.last_hidden_points = []
-        # self.internal_states['is_success '] = False
-        # if self.canonical:
-        #     self.to_canonical = False
 
     def _search_best_pairs(self, corner_positions_2d, flatten_corner_world_positions_2d):
         N = corner_positions_2d.shape[0]

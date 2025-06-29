@@ -21,8 +21,9 @@ class OracleRectFabricPolicyBuilder():
         print('Agent Config:', config) 
 
         config = DotMap(config)
-        return  OracleRectFabricPolicyBuilder.return_class_from_strategy_and_action(task , strategy, action, num_picker)(config)
-    
+        cls =  OracleRectFabricPolicyBuilder.return_class_from_strategy_and_action(task , strategy, action, num_picker)
+        return cls(config)
+
     def return_class_from_strategy_and_action(task, strategy, action, num_picker=2):
 
         if 'pixel-pick-and-place' in action and strategy in ['oracle-towel', 'noisy-oracle-towel', 'realadapt']:
@@ -225,7 +226,7 @@ class OracleRectFabricPolicyBuilder():
                 'drag_action_noise': 0.05,
                 'flattening_noise': True
             })
-        elif 'folding' in task and 'oralce-towel' == strategy:
+        elif 'folding' in task and 'oracle-towel' == strategy:
             config.update({
                 'flattening_noise': False,
                 'folding_noise': False

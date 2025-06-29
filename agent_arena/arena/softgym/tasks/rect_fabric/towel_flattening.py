@@ -109,35 +109,6 @@ class TowelFlatteningTask(Task):
             'coverage_aligment': coverage_alignment_reward(last_info, action, info),
         }
     
-    
-    
-    # def _planet_clothpick_reward(self, action):
-    #     misgrasping_threshold = 1.0
-    #     misgrasping_penalty = -0.5
-    #     penalise_action_threshold = 0.7
-    #     extreme_action_penalty = -0.5
-    #     unflatten_threshold = 0.98
-    #     unflatten_penalty = -0.5
-    #     flattening_threshold = 0.98
-    #     flatten_bonus = 0.5
-    #     action = action['norm_pixel_pick_and_place']
-
-    #     reward = self.cur_coverage - self.last_coverage
-    #     if reward < 1e-4 and self.cur_coverage < misgrasping_threshold:
-    #         reward = misgrasping_penalty
-        
-    #     if np.max(np.abs(action)) > penalise_action_threshold:
-    #         reward = extreme_action_penalty
-
-    #     if self.last_coverage > unflatten_threshold \
-    #         and self.cur_coverage < unflatten_threshold:
-    #         reward = unflatten_penalty
-
-    #     if self.cur_coverage > flattening_threshold:
-    #         reward  = flatten_bonus
-        
-    #     return reward
-    
    
     
     def get_steps2sucess(self):
@@ -145,54 +116,6 @@ class TowelFlatteningTask(Task):
         ## return the index of first success form the self.successes array, if there is no True return -1
         return np.argmax(self.successes) if np.any(self.successes) else -1
     
-    # def evaluate(self,
-    #         arena,
-    #         metrics = ['normalised_improvement', 'normalised_coverage', 'wrinkle_pixel_ratio', 'canonical_IoU',
-    #                    'canonical_hausdorff_distance', 'success', 'steps2sucess'],
-    #     ):
-
-    #     target_coverage = arena.get_flattened_coverage()
-    #     initial_coverage = arena.get_initial_coverage()/target_coverage
-    #     current_coverage = arena.get_coverage()/target_coverage
-    #     target_coverage = 1.0
-
-    #     ### go over metrics and compute them
-    #     results = {}
-    #     for metric in metrics:
-    #         if metric == 'normalised_improvement':
-
-    #             ## if the target_coverage and curre_coverage are the same, then the normalised_improvement is 1
-    #             if current_coverage >= 1.0 or abs(target_coverage-current_coverage) < 1e-2:
-    #                 results[metric] = 1.0
-    #             elif initial_coverage >= 1.0 or abs(target_coverage-initial_coverage) < 1e-2:
-    #                 results[metric] = 0.0
-    #             else:
-    #                 ni = (current_coverage - initial_coverage)/(target_coverage - initial_coverage)
-    #                 results[metric] = max(min(1.0, ni), 0.0)
-
-    #         elif metric == 'normalised_coverage':
-    #             results[metric] = arena.get_normalised_coverage()
-    #         elif metric == 'wrinkle_pixel_ratio':
-    #             results[metric] = get_wrinkle_pixel_ratio(
-    #                 arena.render(mode='rgb'), 
-    #                 arena.get_cloth_mask(resolution=(128, 128)))
-    #         elif metric == 'canonical_IoU':
-    #             results[metric] = self.get_flatten_canonical_IoU(arena)
-    #         elif metric == 'canonical_hausdorff_distance':
-    #             results[metric] = self.get_canonical_hausdorff_distance(arena)
-    #         elif metric == 'canonical_chamfer_distance':
-    #             results[metric] = self.get_canonical_chamfer_distance(arena)
-    #         elif metric == 'maximum_IoU':
-    #             results[metric] = self.get_maximum_IoU(arena)
-    #         elif metric == 'success':
-    #             results[metric] = self.success(arena)
-    #         elif metric == 'steps2sucess':
-    #             results[metric] = self.get_steps2sucess()
-    #         else:
-    #             raise NotImplementedError
-
-
-    #     return results
     
     def evaluate(self, arena):
         return {

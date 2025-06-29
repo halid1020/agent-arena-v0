@@ -13,56 +13,56 @@ from agent_arena.arena.softgym.tasks.rect_fabric.towel_flattening \
 
     
 class RectFabricMultiStepFoldingExpertPolicy(RealAdaptPnPFlattening):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config):
+        super().__init__(config)
 
-        
+        kwargs = config.toDict()
         self._train = kwargs['train'] if 'train' in kwargs else False
-        self.current_action_type = ''
+        self.current_action_type = {0: ''}
 
         ### Default is double cross folding
-        self.folding_pick_order = kwargs['folding_pick_order'] if 'folding_pick_order' in kwargs else np.asarray([[[0, 0]], [[1, 0]]])
-        self.folding_place_order = kwargs['folding_place_order'] if 'folding_place_order' in kwargs else np.asarray([[[1, 1]], [[0, 1]]])
+        self.folding_pick_order = {0: kwargs['folding_pick_order'] if 'folding_pick_order' in kwargs else np.asarray([[[0, 0]], [[1, 0]]])}
+        self.folding_place_order = {0: kwargs['folding_place_order'] if 'folding_place_order' in kwargs else np.asarray([[[1, 1]], [[0, 1]]])}
         #self.folding_scale_range = kwargs['folding_scale_range'] if 'folding_scale_range' in kwargs else [(1.0, 1.0), (1.0, 1.0)]
-        self.flatten_threshold = kwargs['flatten_threshold'] if 'flatten_threshold' in kwargs else 0.96
-        self.fold_steps = -1
+        self.flatten_threshold = {0: kwargs['flatten_threshold'] if 'flatten_threshold' in kwargs else 0.96}
+        self.fold_steps = {0: -1}
         #self.over_ratio_ = -0.02
 
-        self.random_folding_steps = kwargs['random_folding_steps'] if 'random_folding_steps' in kwargs else False
-        print('random_folding_steps', self.random_folding_steps)
+        self.random_folding_steps = {0: kwargs['random_folding_steps'] if 'random_folding_steps' in kwargs else False}
+        #print('random_folding_steps', self.random_folding_steps)
         if self.random_folding_steps:
-            print('random_folding_steps', self.random_folding_steps)
+            #print('random_folding_steps', self.random_folding_steps)
             self.action_types.append('random_folding')
             self.pick_corner = kwargs['pick_corner'] if 'pick_corner' in kwargs else False
 
-        self.flatten_noise = kwargs['flatten_noise'] if 'flatten_noise' in kwargs else False
-        self.folding_noise = kwargs['folding_noise'] if 'folding_noise' in kwargs else False
-        self.next_step_threshold = 0.06
-        self._reset()
-        self.phase = 'folding'
-        self.action_type = 'folding'
+        self.flatten_noise = {0: kwargs['flatten_noise'] if 'flatten_noise' in kwargs else False}
+        self.folding_noise = {0: kwargs['folding_noise'] if 'folding_noise' in kwargs else False}
+        self.next_step_threshold = {0: 0.06}
+        self.phase = {0: 'folding'}
+        self.action_type = {0: 'folding'}
+        self.is_success = {0: False}
+        self.over_ratios = {}
     
     def get_phase(self):
         return self.phase
         
     
-    def reset(self):
-        super().reset()
-        print('resetting folding policy')
-        self.fold_steps = -1
-        self.current_action_type = ''
-        self.is_success = False
-        if self.random_folding_steps:
-            print('generate random folding steps !')
-            steps = random.randint(*self.random_folding_steps)
-            self.folding_pick_order = np.random.rand(steps, 1, 2)
-            if self.pick_corner:
-                self.folding_pick_order = np.random.randint(0, 2, (steps, 1, 2))
-            self.folding_place_order = np.random.rand(steps, 1, 2)
-            self.over_ratios = np.zeros((steps, )).astype(np.float32)
-        
-        # if info is not None:
-        #     self.init_state(info)
+    def reset(self, arena_ids):
+        super().reset(arena_ids)
+
+        for arena_id in arena_ids:
+            self.fold_steps[arena_id] = -1
+            self.current_action_type[arena_id] = ''
+            self.is_success[arena_id] = False
+            if self.random_folding_steps[arena_id]:
+                print('generate random folding steps !')
+                steps = random.randint(*self.random_folding_steps[arena_id])
+                self.folding_pick_order[arena_id] = np.random.rand(steps, 1, 2)
+                if self.pick_corner:
+                    self.folding_pick_order[arena_id] = np.random.randint(0, 2, (steps, 1, 2))
+                self.folding_place_order [arena_id]= np.random.rand(steps, 1, 2)
+                self.over_ratios[arena_id] = np.zeros((steps, )).astype(np.float32)
+
 
     def finsihed(self):
         return self.fold_steps >= len(self.folding_pick_order)
@@ -72,20 +72,13 @@ class RectFabricMultiStepFoldingExpertPolicy(RealAdaptPnPFlattening):
             return True
         return TowelFlatteningTask.success(arena)
     
-    def _get_pick_and_place_particle_ids(self, arena):
+    def _get_pick_and_place_particle_ids(self, arena, arena_id):
         
         cloth_H, cloth_W = arena.get_cloth_size()
 
-        pick_pixel_pos = self.folding_pick_order[self.fold_steps].copy()
-        place_pixel_pos = self.folding_place_order[self.fold_steps].copy()
-        #print('pick_pixel_pos', pick_pixel_pos)
-
-        # logging.debug('[oracle, multi-step fold] self.folding_pick_order {}'.format(self.folding_pick_order))
-        # logging.debug('[oracle, multi-step fold] pick_pixel_pos {}'.format(pick_pixel_pos))
-        # logging.debug('[oracle, multi-step fold] place_pixel_pos {}'.format(place_pixel_pos))
-
-        print('pick_pixel_pos', pick_pixel_pos)
-        print('place_pixel_pos', place_pixel_pos)
+        pick_pixel_pos = self.folding_pick_order[arena_id][self.fold_steps[arena_id]].copy()
+        place_pixel_pos = self.folding_place_order[arena_id][self.fold_steps[arena_id]].copy()
+        
         
         pick_pixel_pos[:, 0] *= (cloth_H-1)
         pick_pixel_pos[:, 1] *= (cloth_W-1)
@@ -101,18 +94,28 @@ class RectFabricMultiStepFoldingExpertPolicy(RealAdaptPnPFlattening):
             + place_pixel_pos[:, 1].astype(np.int32)
         
         ## remove if ids are negative
-        logging.debug('[oracle, multi-step fold]  pick_particle_ids {} shape {} before filtering'\
-                          .format(pick_particle_ids, pick_particle_ids.shape))
+        
         pick_particle_ids = pick_particle_ids[pick_particle_ids >= 0]
         place_particle_ids = place_particle_ids[place_particle_ids >= 0]
         
         return pick_particle_ids, place_particle_ids
     
     def terminate(self):
-        return self.fold_steps >= len(self.folding_pick_order)
+        ret = {}
+        for arena_id in self.internal_states.keys():
+            ret[arena_id] = self.fold_steps[arena_id] >= len(self.folding_pick_order[arena_id])
+        return ret
+
     
-    def act(self, info):
+    def act(self, info_list):
+        ret_actions = []
+        for info in info_list:
+            ret_actions.append(self.single_act(info))
+        return ret_actions
+    
+    def single_act(self, info):
         arena = info['arena']
+        arena_id = info['arena_id']
         action = np.clip(
                     self.no_op.astype(float).reshape(*self.action_dim), 
                     self.action_space.low,
@@ -121,10 +124,9 @@ class RectFabricMultiStepFoldingExpertPolicy(RealAdaptPnPFlattening):
         .reshape(self.action_dim[0], -1)
 
         ## No-op
-        if self.fold_steps >= len(self.folding_pick_order):
+        if self.fold_step[arena_id] >= len(self.folding_pick_order[arena_id]):
             print('no-oppping')
-            self.is_success = True
-            logging.debug('case fold no-op')
+            self.is_success[arena_id] = True
             self.phase = 'success'
             return {'norm_pixel_pick_and_place': np.clip(
                     self.no_op.astype(float).reshape(*self.action_dim), 
@@ -132,13 +134,12 @@ class RectFabricMultiStepFoldingExpertPolicy(RealAdaptPnPFlattening):
                     self.action_space.high)}
         
         ### Folding
-        logging.debug('[oracle, multi-step fold] self.fold_steps {}'.format(self.fold_steps))
-        logging.debug('[oracle, multi-step fold]  normalised_coverage {}'.format(info['normalised_coverage']))
+        
         if self._is_folding_case(arena):
             self.phase = "folding"
             logging.debug('[oracle, multi-step fold]  case fold')
-            if self.fold_steps < 0:
-                self.fold_steps = 0
+            if self.fold_steps [arena_id]< 0:
+                self.fold_steps[arena_id] = 0
 
             
             particles = arena.get_object_positions()
@@ -190,15 +191,10 @@ class RectFabricMultiStepFoldingExpertPolicy(RealAdaptPnPFlattening):
             return {'norm_pixel_pick_and_place': self.hueristic_z(arena, action.copy()).reshape(*self.action_dim)}
 
         ### Flattening
-        logging.debug('[oracle, multi-step fold] case flatten')
         flatten_action = super().act(info)
         action[:1] = flatten_action
-        self.phase = "flattening"
+        self.phase[arena_id] = "flattening"
 
         return {
             'norm_pixel_pick_and_place': action.reshape(*self.action_dim)
         }
-        
-    
-    # def get_action_type(self):
-    #     return self.phase

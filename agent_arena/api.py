@@ -74,7 +74,6 @@ def build_agent(
     
     if config is not None and config.oracle:
         return OracleBuilder.build(name)
-    
     # if arena is not None:
     #     config.action_space = arena.get_action_space()
     if name in AGENT_NEEDS_CONFIG.keys():

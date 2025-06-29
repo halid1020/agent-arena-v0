@@ -6,12 +6,12 @@ from .pick_and_place_folding_policies \
 from agent_arena.utilities.constants.rect_fabric import ALL_CORNER_INWARD_FOLDING_SUCCESS_THRESHOLD
 
 class RectFabricAllCornerInwardFoldingExpertPolicy(RectFabricMultiStepFoldingExpertPolicy):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config):
+        super().__init__(config)
         self.action_types.append('all-corner-inward-folding')
         if self.folding_noise:
             self.action_types.append('noisy-all-corner-inward-folding')
-        
+        kwargs= config.toDict()
         self.real2sim = False if 'real2sim' not in kwargs else kwargs['real2sim']
 
         self.folding_pick_order = np.asarray([[[0, 0]], [[1, 1]], [[0, 1]], [[1, 0]]])

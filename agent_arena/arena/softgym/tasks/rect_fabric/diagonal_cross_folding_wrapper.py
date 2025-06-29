@@ -4,7 +4,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .folding_wrapper \
+from .folding \
     import FoldingWrapper
 import agent_arena as ag_ar
 from agent_arena.utilities.constants.rect_fabric import *

@@ -5,10 +5,10 @@ import os
 import json
 
 
-from ..task import TaskWrapper
+from ..task import Task
 from ..metrics_utils import *
 from .towel_flattening \
-    import FlatteningWrapper
+    import TowelFlatteningTask
 from scipy.optimize import minimize
 
 
@@ -40,46 +40,52 @@ def objective_function(cur_particles, goal_particles, theta):
     return np.sum(distances**2)
 
 
-class FoldingWrapper(TaskWrapper):
-    def __init__(self, env, canonical=False):
-        self.env = env
+class FoldingTask(Task):
+    def __init__(self, canonical=False):
         self.canonical = canonical
+        self.successes = []
+        self.task_name = 'folding'
         self.goals = None
 
     
 
-    def step(self, action):
-        #print('folding wraper action', action)
-        return self._process_info(self.env.step(action))
+    def step(self, arena, action):
+        info = self._process_info(arena)
+        self.last_coverage = self.cur_coverage
+        self.cur_coverage = arena._get_normalised_coverage()
+        info['reward'] = self.reward(arena, action)
+        self.successes.append(info['success'])
+        return info
     
-    def reset(self, episode_config=None):
-        info = self.env.reset(episode_config)
-        return self._process_info(info)
+    def reset(self, arena):
+        self.goal = None
+        info = self._process_info(arena)
+        self.successes = [info['success']]
+        self.goal = self.get_goal(arena)
+        self._save_goal(arena)
+        return info
     
-    def success(self):
-        # print('ldp', self._largest_particle_distance())
-        # print('nc', self.get_normalised_coverage())
-        is_success = self._largest_particle_distance() < 0.017
+    def success(self, arena):
+        is_success = self._largest_particle_distance(arena) < 0.017
         if self.canonical:
-            is_success = is_success and self._get_canonical_IoU() >= 0.7
+            is_success = is_success and self._get_canonical_IoU(arena) >= 0.7
         
         return is_success
     
     
     
-    def evaluate(self,
-            metrics = [
-                'wrinkle_pixel_ratio', 
-                'mean_particle_distance', 
-                'largest_particle_distance', 
-                'largest_corner_distance',
-                'mean_edge_distance',
-                'canonical_IoU',
-                'success',
-                'goal_mean_particle_distance',
-                'largest_edge_distance']
-        ):
-        print('evaluate')
+    def evaluate(self, arena):
+       
+        metrics = [
+            'wrinkle_pixel_ratio', 
+            'mean_particle_distance', 
+            'largest_particle_distance', 
+            'largest_corner_distance',
+            'mean_edge_distance',
+            'canonical_IoU',
+            'success',
+            'goal_mean_particle_distance',
+            'largest_edge_distance']
         ### go over metrics and compute them
         results = {}
         for metric in metrics:
@@ -150,12 +156,12 @@ class FoldingWrapper(TaskWrapper):
         
         return np.min(edge_distance)
 
-    def _get_goal_particle_distances(self):
+    def _get_goal_particle_distances(self, arena):
         """
         Return the distance between the goal particles and the current particles in meters.
         """
         # Particles are in the form of N*(x, z, y)
-        cur_particles = self.env.get_particle_positions()
+        cur_particles = arena.get_particle_positions()
         best_particles = cur_particles
         goal_particles = self.goals[-1]['particle']
 
@@ -163,7 +169,7 @@ class FoldingWrapper(TaskWrapper):
             # Rearrange particles to N*(x, y, z)
             cur_particles = cur_particles[:, [0, 2, 1]]
             goal_particles = goal_particles[:, [0, 2, 1]]
-            H, W = self.env.get_cloth_size()
+            H, W = arena.get_cloth_size()
             num_particles = H*W
             particle_grid_idx = np.array(list(range(num_particles))).reshape(H, W)
             min_value = np.inf
@@ -224,7 +230,7 @@ class FoldingWrapper(TaskWrapper):
         return value
 
 
-    def _largest_particle_distance(self, particles=None):
+    def _largest_particle_distance(self, arena, particles=None):
         distances = []
         for group_a, group_b in self.fold_groups:
             distances.append(np.max(self._get_distance(particles, group_a, group_b)))
@@ -232,7 +238,7 @@ class FoldingWrapper(TaskWrapper):
         return np.min(distances)
     
 
-    def _get_canonical_IoU(arena):
+    def _get_canonical_IoU(self, arena):
         mask = arena.get_cloth_mask(resolution=(128, 128)).reshape(128, 128)
         depth = arena.get_goals()[-1]['depth']
         # resizes depth to 128x128
@@ -259,24 +265,24 @@ class FoldingWrapper(TaskWrapper):
     
     # def _generate_goals(self):
     #     logging.info('[softgym, folding_wrapper, load gaols] generate goal')
-    #     info = self.env.set_to_flatten()
+    #     info = arena.set_to_flatten()
     #     info = self._process_info(info)
     #     #print('info largest_particle_distance {}'.format(info['largest_particle_distance']))
         
 
     #     #print('generating goal')
         
-    #     episode_config = self.env.get_episode_config()
+    #     episode_config = arena.get_episode_config()
     #     #print('episode config generating goals', episode_config)
     #     self.oracle_policy.reset()
     #     self.oracle_policy.init(info)
     #     #actions = []
     #     while not self.oracle_policy.success(info):
     #         #print('reset to generate')
-    #         self.env.reset(episode_config)
+    #         arena.reset(episode_config)
     #         actions = []
     #         #print('step 0')
-    #         info = self.env.set_to_flatten()
+    #         info = arena.set_to_flatten()
     #         info = self._process_info(info)
     #         logging.info('[softgym, folding_wrapper, load gaols] info keys {}'\
     #                         .format(info.keys()))
@@ -302,8 +308,8 @@ class FoldingWrapper(TaskWrapper):
 
     # def _save_goal(self):
 
-    #     eid = self.env.get_episode_id()
-    #     mode = self.env.get_mode()
+    #     eid = arena.get_episode_id()
+    #     mode = arena.get_mode()
     #     if not os.path.exists(self._get_goal_path(eid, mode)):
     #         os.makedirs(self._get_goal_path(eid, mode))
     #     plt.imsave(self._get_goal_path(eid, mode) + '/rgb.png', self.goal['rgb'])
@@ -320,14 +326,14 @@ class FoldingWrapper(TaskWrapper):
         
         self._save_goal()
         
-        return [self.env.get_flatten_observation(), self.goal]
+        return [arena.get_flatten_observation(), self.goal]
 
     def _save_goal(self):
         """
             Save goals, rgb, depth, and the action and the particle.
         """
-        eid = self.env.get_episode_id()
-        mode = self.env.get_mode()
+        eid = arena.get_episode_id()
+        mode = arena.get_mode()
        
         
         if not os.path.exists(self._get_goal_path(eid, mode)):
@@ -389,11 +395,11 @@ class FoldingWrapper(TaskWrapper):
         self.goal = self.goals[-1]
     
     def _generate_goals(self):
-        episode_config = self.env.get_episode_config()
+        episode_config = arena.get_episode_config()
         
 
         
-        info = self.env.reset(episode_config)
+        info = arena.reset(episode_config)
         info = self._process_info(info)
         goals = []
         self.oracle_policy.reset()
@@ -431,7 +437,7 @@ class FoldingWrapper(TaskWrapper):
             info['goals'] = self.get_goals()
 
         info['success'] = self.success()
-        info['cloth_size'] = self.env.get_cloth_size()
+        info['cloth_size'] = arena.get_cloth_size()
         info['largest_particle_distance'] = self._largest_particle_distance()
         info['mean_particle_distance'] = self._mean_particle_distance()
         info['task'] = self.task_name
@@ -453,7 +459,7 @@ class FoldingWrapper(TaskWrapper):
     
     def get_next_goal(self):
         if FlatteningWrapper._get_canonical_IoU(self) >= 0.8 \
-            and self.env.get_normalised_coverage() >= 0.999:
+            and arena.get_normalised_coverage() >= 0.999:
             
             return self.goals[-1].copy()
         

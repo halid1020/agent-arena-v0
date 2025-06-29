@@ -107,39 +107,31 @@ class FabricDomainBuilder():
                 import TowelFlatteningTask
             task = TowelFlatteningTask()
             #env.set_task(task)
-        elif task == 'canonical-flattening':
-            from ...softgym.task_wrappers.rect_fabric.flattening_wrapper \
-                import FlatteningWrapper
-            env = FlatteningWrapper(env, canonical=True, domain=domain, initial=initial)
-        elif task == 'one-step-folding':
-            from ...softgym.task_wrappers.rect_fabric.one_step_folding_wrapper \
-                import OneStepFoldingWrapper
-            env = OneStepFoldingWrapper(env, domain=domain, initial=initial)
         elif task == 'diagonal-folding':
             #print('hello')
-            from ...softgym.task_wrappers.rect_fabric.diagonal_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.diagonal_folding_wrapper \
                 import DiagonalFoldingWrapper
             env = DiagonalFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
         elif task == 'corners-edge-inward-folding':
-            from ...softgym.task_wrappers.rect_fabric.corners_edge_inward_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.corners_edge_inward_folding_wrapper \
                 import CornersEdgeInwardFoldingWrapper
             env = CornersEdgeInwardFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
         elif task == 'canonical-diagonal-folding':
-            from ...softgym.task_wrappers.rect_fabric.diagonal_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.diagonal_folding_wrapper \
                 import DiagonalFoldingWrapper
             env = DiagonalFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
 
         elif task == 'diagonal-cross-folding':
-            from ...softgym.task_wrappers.rect_fabric.diagonal_cross_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.diagonal_cross_folding_wrapper \
                 import DiagonalCrossFoldingWrapper
             env = DiagonalCrossFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
         
         elif task == 'canonical-diagonal-cross-folding':
-            from ...softgym.task_wrappers.rect_fabric.diagonal_cross_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.diagonal_cross_folding_wrapper \
                 import DiagonalCrossFoldingWrapper
             env = DiagonalCrossFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
         elif task == 'cross-folding':
-            from ...softgym.task_wrappers.rect_fabric.cross_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.cross_folding_wrapper \
                 import CrossFoldingWrapper
             env = CrossFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
 
@@ -147,68 +139,68 @@ class FabricDomainBuilder():
        
 
         elif task == 'one-corner-inward-folding':
-            from ...softgym.task_wrappers.rect_fabric.one_corner_inward_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.one_corner_inward_folding_wrapper \
                 import OneCornerInwardFoldingWrapper
             env = OneCornerInwardFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
         elif task == 'canonical-one-corner-inward-folding':
-            from ...softgym.task_wrappers.rect_fabric.one_corner_inward_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.one_corner_inward_folding_wrapper \
                 import OneCornerInwardFoldingWrapper
             env = OneCornerInwardFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
         
         elif task == 'double-corner-inward-folding':
-            from ...softgym.task_wrappers.rect_fabric.double_corner_inward_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.double_corner_inward_folding_wrapper \
                 import DoubleCornerInwardFoldingWrapper
             env = DoubleCornerInwardFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
         elif task == 'canonical-double-corner-inward-folding':
-            from ...softgym.task_wrappers.rect_fabric.double_corner_inward_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.double_corner_inward_folding_wrapper \
                 import DoubleCornerInwardFoldingWrapper
             env = DoubleCornerInwardFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
         
         elif task == 'all-corner-inward-folding':
-            from ...softgym.task_wrappers.rect_fabric.all_corner_inward_folding_wrapper \
-                import AllCornerInwardFoldingWrapper
-            env = AllCornerInwardFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
+            from ...softgym.tasks.rect_fabric.all_corner_inward_folding \
+                import AllCornerInwardFolding
+            task = AllCornerInwardFolding(domain=domain, initial=initial, action=org_action)
         elif task == 'canonical-all-corner-inward-folding':
-            from ...softgym.task_wrappers.rect_fabric.all_corner_inward_folding_wrapper \
+            from ..tasks.rect_fabric.all_corner_inward_folding \
                 import AllCornerInwardFoldingWrapper
             env = AllCornerInwardFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
         
         
         ## Following tasks are for both square and rectangular fabrics.
         elif task == 'rectangular-folding':
-            from ...softgym.task_wrappers.rect_fabric.rectangular_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.rectangular_folding_wrapper \
                 import RectangularFoldingWrapper
             env = RectangularFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
 
         elif task == 'canonical-rectangular-folding':
-            from ...softgym.task_wrappers.rect_fabric.rectangular_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.rectangular_folding_wrapper \
                 import RectangularFoldingWrapper
             env = RectangularFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
 
         elif task == 'side-folding':
-            from ...softgym.task_wrappers.rect_fabric.side_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.side_folding_wrapper \
                 import SideFoldingWrapper
             env = SideFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
         elif task == 'canonical-side-folding':
-            from ...softgym.task_wrappers.rect_fabric.side_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.side_folding_wrapper \
                 import SideFoldingWrapper
             env = SideFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
 
         elif task == 'double-side-folding':
-            from ...softgym.task_wrappers.rect_fabric.double_side_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.double_side_folding_wrapper \
                 import DoubleSideFoldingWrapper
             env = DoubleSideFoldingWrapper(env, domain=domain, initial=initial, action=org_action)
         elif task == 'canonical-double-side-folding':
-            from ...softgym.task_wrappers.rect_fabric.double_side_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.double_side_folding_wrapper \
                 import DoubleSideFoldingWrapper
             env = DoubleSideFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
 
         elif task == 'double-side-folding':
-            from ...softgym.task_wrappers.rect_fabric.double_side_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.double_side_folding_wrapper \
                 import DoubleSideFoldingWrapper
             env = DoubleSideFoldingWrapper(env, domain=domain, initial=initial)
         elif task == 'canonical-double-side-folding':
-            from ...softgym.task_wrappers.rect_fabric.double_side_folding_wrapper \
+            from ...softgym.tasks.rect_fabric.double_side_folding_wrapper \
                 import DoubleSideFoldingWrapper
             env = DoubleSideFoldingWrapper(env, canonical=True, domain=domain, initial=initial)
        

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import logging
 
 
-from .folding_wrapper \
+from .folding \
     import FoldingWrapper
 
 import agent_arena as ag_ar

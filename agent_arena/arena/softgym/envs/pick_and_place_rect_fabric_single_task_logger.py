@@ -102,7 +102,8 @@ class PickAndPlaceRectFabricSingleTaskLogger(Logger):
             N = result['actions'].shape[1]
         result['actions'] = result['actions'].reshape(T, N, 2, -1)[:, :, :, :2]
         #print('keys of information', result['informations'][0].keys())
-        rgbs = np.stack([info['observation']['rgb'] for info in result['informations']])
+        print('results keys', result.keys())
+        rgbs = np.stack([info['observation']['rgb'] for info in result['information']])
         pt(
             rgbs, result['actions'].reshape(T, -1, 4), # TODO: this is envionrment specific
             title='Episode {}'.format(eid), 

@@ -234,6 +234,7 @@ class ClothEnv(Arena):
             return self.flatten_obs
         
         goal_ = self._env._goal
+        #print('goal_ keys', goal_.keys())
         flatten_obs = {}
         H, W = self.observation_shape()['rgb'][0], self.observation_shape()['rgb'][1]
         flatten_obs['rgb'] = cv2.resize(goal_['rgb'], (H, W), interpolation=cv2.INTER_LINEAR).reshape(H, W, -1)

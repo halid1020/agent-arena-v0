@@ -11,12 +11,12 @@ from agent_arena.agent.bc.transporter.adapter import TransporterAdapter
 
 
 
-from agent_arena.agent.flatten_then_fold import FlattenThenFold
+from agent_arena.agent.cloth_control.flatten_then_fold import FlattenThenFold
 
 # from agent_arena.agent.cloth_control.phase_prediction \
 #     import PhasePrediction
 
-from agent_arena.agent.reinforce import REINFORCE
+from agent_arena.agent.drl.reinforce import REINFORCE
 
 from agent_arena.agent.cloth_control.fabricflownet.adapter import FabricFlowNetAdapter
 # from agent_arena.agent.vcd.adapter import VCDAdapter
@@ -30,7 +30,7 @@ from agent_arena.agent.human.pick_and_fling.pixel_human import PixelHuman as PnF
 from agent_arena.agent.human.pixel_multi_primitive import PixelMultiPrimitive
 
 
-from agent_arena.agent.diffusion.adapter import DiffusionAdapter
+from agent_arena.agent.bc.diffusion.adapter import DiffusionAdapter
 
 
 from agent_arena.agent.planning.mpc.rect_fabric.pick_and_place_cloth_mask_mpc \

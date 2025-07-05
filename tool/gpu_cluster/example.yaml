@@ -1,0 +1,8 @@
+training_configs:
+  - arena: "softgym|domain:mono-square-fabric,initial:crumpled,action:pixel-pick-and-place(1),task:flattening"
+    agent: "planet-clothpick"
+    config: "RGB2RGB"
+
+  - arena: "softgym|domain:mono-square-fabric,initial:crumpled,action:pixel-pick-and-place(1),task:flattening"
+    agent: "planet-clothpick"
+    config: "D2M"

@@ -18,11 +18,6 @@ def setup_arenas(arena_name, num_processes=16):
         num_cpus=0.2).remote(f'{arena_name},disp:0', ray=True)
         for _ in range(num_processes)]
     arenas = ray.get(arenas)
-    #arenas = [ray.get(e) for e in arenas]
-    
-    #ray.get([e.setup_ray.remote(e) for e in arenas])
-
-    # os.environ['CUDA_VISIBLE_DEVICES'] = original_visible_devices
     return arenas
 
 

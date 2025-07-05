@@ -1,0 +1,2 @@
+,obs_loss,reward_loss,kl_loss,posterior_entropy,prior_entropy,kl_overshooting_loss,reward_overshooting_loss,total_loss,update_step
+0,8524.3466796875,0.14884810149669647,1.0,1.1869443655014038,1.1893161535263062,1.0,0.1482086181640625,8525.509765625,0

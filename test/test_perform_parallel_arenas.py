@@ -11,7 +11,7 @@ from time import time
 
 
 def main():
-    arena_name = 'softgym|domain:rainbow-rectangular-fabrics,initial:crumpled,action:pixel-pick-and-place(1),task:flattening'
+    arena_name = 'softgym|domain:mono-square-fabric,initial:crumpled,action:pixel-pick-and-place(1),task:flattening'
     agent_name = 'oracle-rect-fabric|action:pixel-pick-and-place(1),strategy:oracle-towel,task:flattening'
     config_name = ''
     log_dir = 'test_results'

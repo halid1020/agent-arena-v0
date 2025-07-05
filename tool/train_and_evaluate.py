@@ -8,9 +8,9 @@ from agent_arena.utilities.utils import create_message_logger
 def parse_arguments():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--arena', default='')
-    parser.add_argument('--agent', default='planet')
-    parser.add_argument('--config', default='default')
+    parser.add_argument('--arena', default='softgym|domain:mono-square-fabric,initial:crumpled,action:pixel-pick-and-place(1),task:flattening')
+    parser.add_argument('--agent', default='planet-clothpick')
+    parser.add_argument('--config', default='RGB2RGB')
     parser.add_argument('--log_dir', default='test_results')
     parser.add_argument('--verbose', default='silence', type=str)
     parser.add_argument('--disp', default=0, type=int)
@@ -23,7 +23,7 @@ def main():
 
     disp = args.disp == 1  # Convert disp to boolean directly
 
-    config = ag_ar.retrieve_config(args.agent, args.arena, args.config, )
+    config = ag_ar.retrieve_config(args.agent, args.arena, args.config)
     # create_message_logger(config.save_dir, args.verbose)
     save_dir = os.path.join(args.log_dir, args.arena, args.agent, args.config)
     

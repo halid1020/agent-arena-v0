@@ -28,7 +28,7 @@ class GarmentDomainBuilder():
             "picker_low": [[-1, 0.02, -1], [-1, 0.02, -1]],
             "picker_high": [[1, 1.0, 1], [1, 1.0, 1]],
             'save_image_dim': (256, 256),
-            "picker_initial_pos": [[0.2, 0.2, 0.2], [-0.2, 0.2, 0.2]],
+            "picker_initial_pos": [[0.5, 0.2, 0.5], [-0.5, 0.2, 0.5]],
             "control_horizon": 1000,
             "num_picker": 2,
             "action_horizon": 30,

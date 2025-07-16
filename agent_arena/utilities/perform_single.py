@@ -47,7 +47,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
 
     information['done'] = False
     information_list.append(information)
-    agent.init([information])
+    agent.init(information)
 
     evals = arena.evaluate()
 
@@ -104,7 +104,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
             print('evals', evals['normalised_coverage'])
         
 
-        agent.update([information], [action])
+        agent.update(information, action)
         
         done = information['done'] or agent.terminate()[arena.id]
         done = done or (max_steps is not None and steps >= max_steps)

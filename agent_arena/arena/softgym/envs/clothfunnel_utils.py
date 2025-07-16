@@ -99,7 +99,7 @@ def get_default_config(
             'msaaSamples': 0,
         },
         'flip_mesh': 0,
-        "picker_initial_pos": np.asarray([[0.2, 0.2, 0.2], [-0.2, 0.2, 0.2]]),
+        #"picker_initial_pos": np.asarray([[0.2, 0.2, 0.2], [-0.2, 0.2, 0.2]]),
     }
 
     return config

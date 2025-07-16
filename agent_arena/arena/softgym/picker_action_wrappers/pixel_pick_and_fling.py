@@ -89,22 +89,19 @@ class PixelPickAndFling():
     
     def process(self, action):
         #action = action['norm_pixel_pick_and_fling']
+
         p0 = np.asarray(action['pick_0'])
         p1 = np.asarray(action['pick_1'])
 
-        # p0[0], p0[1] = -0.7, 0.9
-        # p1[0], p1[1] = 0.3, -0.6
+        ref_a = np.array([-1, 1])
+        ref_b = np.array([1, 1])
 
-        # print('p0:', p0)
-        # print('p1:', p1)
-
-        ## Assuming top-down view
-        # p0 = p0 * self.camera_to_world_ratio * self.camera_height
-        # p1 = p1 * self.camera_to_world_ratio * self.camera_height
-        # p0 = np.concatenate([p0, [self.pick_height]])
-        # p1 = np.concatenate([p1, [self.pick_height]])
-
+        if np.linalg.norm(p1[:2] - ref_a) > np.linalg.norm(p0[:2] - ref_a):
+            p0, p1 = p1, p0
+      
         # convert to world coordinate
+        print('p0', p0)
+        print('p1', p1)
         p0 = pixel_to_world(p0, self.camera_height-self.pick_height, 
             self.camera_intrinsics, self.camera_pose, self.camera_size)
         p1 = pixel_to_world(p1, self.camera_height-self.pick_height, 

@@ -22,6 +22,7 @@ class ClothFunnelDomainBuilder():
             'picker_low': (-5, 0, -5),
             'picker_high': (5, 5, 5),
             'grasp_mode': {'closest': 1.0},
+            "picker_initial_pos": [[0.7, 0.2, 0.7], [-0.7, 0.2, 0.7]],
             'init_state_path': os.path.join(
                 os.environ['AGENT_ARENA_PATH'], '..', 'data', 'cloth_funnel', 'init_states'),
             'task': task,

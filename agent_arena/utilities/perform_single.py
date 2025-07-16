@@ -39,7 +39,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     if max_steps is not None:
         assert max_steps > 0, 'max_steps must be greater than 0'
    
-    agent.reset([arena.id]) # reset the agent for the single default arena
+    agent.reset() # reset the agent for the single default arena
     information = arena.reset(episode_config)
     
 
@@ -67,12 +67,12 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     while not done:
         start_time = time.time()
         
-        action = agent.act([information])[0]
+        action = agent.act(information)
         steps += 1
         #print('perform action', action)
         phase = agent.get_phase()[0]
         phases.append(phase)
-        internal_states.append(agent.get_state()[arena.id].copy())
+        internal_states.append(agent.get_state()[0].copy())
 
         end_time = time.time()
         elapsed_time = (end_time - start_time)

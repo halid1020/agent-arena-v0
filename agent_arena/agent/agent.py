@@ -28,7 +28,7 @@ class Agent(ABC):
         self.logger.set_log_dir(logdir)
         print("Log directory for the agent is set to {}".format(logdir))
 
-    def reset(self, arena_ids: List[ArenaIdType]) -> List[bool]:
+    def paralle_reset(self, arena_ids: List[ArenaIdType]) -> List[bool]:
         """
         Reset the agent before a new trial for the given arena_ids.
         
@@ -41,8 +41,37 @@ class Agent(ABC):
         for arena_id in arena_ids:
             self.internal_states[arena_id] = {}
         return [True for _ in arena_ids]
+    
+    def reset(self):
+        self.internal_states[0] = {}
+        return True
 
-    def init(self, info_list: List[Dict[str, Any]]) -> List[bool]:
+    def init(self, info: InformationType) -> bool:
+        """
+        Initialise the agent's internal state given the initial information.
+        
+        Args:
+            informations: Initial information for the agent from the reset arenas.
+        
+        Returns:
+            A list indicating if the initialization was successful.
+        """
+        return True
+
+    def update(self, info: InformationType, actions: ActionType) -> bool:
+        """
+        Update the agent's internal state given the current information and action.
+        
+        Args:
+            informations: Current list of informations for the agent from the arenas.
+            actions: Actions taken by the agent.
+        
+        Returns:
+            A list indicating if the update was successful.
+        """
+        return True
+
+    def parallel_init(self, info_list: List[Dict[str, Any]]) -> List[bool]:
         """
         Initialise the agent's internal state given the initial information.
         
@@ -54,7 +83,7 @@ class Agent(ABC):
         """
         return [True for _ in info_list]
 
-    def update(self, info_list: List[InformationType], actions: List[ActionType]) -> List[bool]:
+    def parallel_update(self, info_list: List[InformationType], actions: List[ActionType]) -> List[bool]:
         """
         Update the agent's internal state given the current information and action.
         
@@ -67,8 +96,8 @@ class Agent(ABC):
         """
         return [True for _ in info_list]
 
-    @abstractmethod
-    def act(self, info_list: List[InformationType], update: bool = False) -> List[ActionType]:
+    
+    def parallel_act(self, info_list: List[InformationType], update: bool = False) -> List[ActionType]:
         """
         Produce actions given the current informations from the arena, update the internal state if required.
         
@@ -80,8 +109,16 @@ class Agent(ABC):
         Returns:
             A list containing the agent's action.
         """
+        actions = []
+        for info in info_list:
+            self.act(info)
+            actions.append(info, update=update)
+        return actions
+    
+    @abstractmethod
+    def act(self, info: InformationType, update: bool = False) -> ActionType:
         raise NotImplementedError
-
+         
     def success(self) -> Dict[ArenaIdType, bool]:
         """Check if the agent thinks it succeeded in each arena."""
         return {arena_id: False for arena_id in self.internal_states.keys()}

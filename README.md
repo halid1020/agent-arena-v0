@@ -6,6 +6,8 @@ This project is mainly authored by **Halid Abdulrahim Kadi** and supervised by *
 
 **Jose Alex Chandy** participated in the development of `environment.yml` file in the `ros1-integration` repository.
 
+**Florian Pfleiderer** provided feedback on the code of this repository.
+
 
 [![DOI](https://zenodo.org/badge/933415395.svg)](https://doi.org/10.5281/zenodo.14876793)
 

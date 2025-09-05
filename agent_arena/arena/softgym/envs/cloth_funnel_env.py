@@ -87,7 +87,7 @@ class ClothFunnelEnv(Arena):
         camera_angle[0] = np.pi + camera_angle[0]
         camera_angle[2] = 4*np.pi/2 - camera_angle[2]
         #print('camera_angle', camera_angle)
-        self.picker_initial_pos = self.default_config['picker_initial_pos']
+        self.picker_initial_pos = self.config.picker_initial_pos
         self.camera_intrinsic_matrix, self.camera_extrinsic_matrix = \
             get_camera_matrix(
                 camera_pos, 
@@ -147,6 +147,7 @@ class ClothFunnelEnv(Arena):
             config=init_state_params, 
             state=init_state_params)
         #print('set scene done')
+        #print('pciker initial pos', self.picker_initial_pos)
         self.pickers.reset(self.picker_initial_pos)
         #print('picker reset done')
 
@@ -316,11 +317,12 @@ class ClothFunnelEnv(Arena):
         signal = signal[:, [0, 2, 1, 3]]
         self.pickers.step(signal)
         self._step_sim()
-        info = {
-            'observation': self._get_obs(),
-        }
-
+        
+        info = {}
         if process_info:
+            info = {
+                'observation': self._get_obs(),
+            }
             info = self._process_info_(info)
         self.info = info
         return info
@@ -427,16 +429,17 @@ class ClothFunnelEnv(Arena):
         pos = self._get_picker_pos()
         return pos[:, :3].copy()
     
-    def _reset_end_effectors(self):
-        self.action_tool.movep(
-            self,
-            [[0.5, 0.5, -0.5], [-0.5, 0.5, -0.5]], 
-            vel=0.3)
+    # def _reset_end_effectors(self):
+    #     self.action_tool.movep(
+    #         self,
+    #         self.config.picker_initial_pos, 
+    #         vel=0.1)
         
     def _step_sim(self):
         pyflex.step()
+        a = self._render('rgb', background=True)
         if self.save_video:
-            self.video_frames.append(self._render('rgb', background=True))
+            self.video_frames.append(a)
         self.sim_step += 1
 
 
@@ -457,11 +460,10 @@ class ClothFunnelEnv(Arena):
         #self._update_camera(camera_name)
         #pyflex.step()
         #print('pyflex render start')
-        
-        img, depth_img = pyflex.render()
-
         if not background:
-            img, _ = pyflex.render_cloth()
+            img, depth_img = pyflex.render_cloth()
+        else:
+            img, depth_img = pyflex.render()
         ## print statistics of depth image
         #print('depth stats', depth_img.min(), depth_img.max(), depth_img.mean(), depth_img.std())
         #print('pyflex render done')#

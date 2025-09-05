@@ -7,7 +7,7 @@ def pixel_to_world(p, depth, cam_intrinsics, cam_pose, cam_size):
     # swap y and x
     p_norm = np.array([p_norm[1], p_norm[0]])
 
-    print('cam_size:', cam_size)
+    #print('cam_size:', cam_size)
     # Convert to pixel coordinates
     pixel_x = p_norm[0] * cam_size[0]
     pixel_y = p_norm[1] * cam_size[1]

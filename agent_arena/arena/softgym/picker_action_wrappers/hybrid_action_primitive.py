@@ -3,6 +3,7 @@ from gym.spaces import Box
 
 from .pixel_pick_and_fling import PixelPickAndFling
 from .pixel_pick_and_place import PixelPickAndPlace
+from .pixel_pick_and_drag import PixelPickAndDrag
 from gym.spaces import Dict, Discrete, Box
 
 class HybridActionPrimitive():
@@ -20,6 +21,7 @@ class HybridActionPrimitive():
         ### Environment has to be WorldPickAndFlingWrapper
         self.np_pnp = PixelPickAndPlace(**kwargs)
         self.np_pnf = PixelPickAndFling(**kwargs)
+        self.np_pnd = PixelPickAndDrag(**kwargs)
         #self.env = env
 
         
@@ -68,6 +70,10 @@ class HybridActionPrimitive():
             action = action['norm-pixel-pick-and-place']
             action['swap'] = swap
             info = self.np_pnp.step(env, action)
+        elif 'norm-pixel-pick-and-drag' in action:
+            action = action['norm-pixel-pick-and-drag']
+            action['swap'] = swap
+            info = self.np_pnd.step(env, action)
         elif 'no-op' in action and action['no-op']:
             info = env.get_info()
         else:

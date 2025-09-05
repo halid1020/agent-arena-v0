@@ -5,7 +5,7 @@ from ...softgym.picker_action_wrappers.world_pick_and_place \
     import WorldPickAndPlace
 from ..envs.camera_utils import norm_pixel2world
 
-class PixelPickAndPlace():
+class PixelPickAndDrag():
 
     def __init__(self, 
                  action_horizon=20,
@@ -85,7 +85,7 @@ class PixelPickAndPlace():
         swap = action['swap'] if 'swap' in action else False
         #print('swap:', swap)
         pick_0 = np.asarray(action['pick_0'])
-        place_0 = np.asarray(action['place_0'])
+        place_0 = pick_0 # np.asarray(action['place_0'])
         if swap:
             pick_0 = pick_0[::-1]
             place_0 = place_0[::-1]
@@ -107,14 +107,7 @@ class PixelPickAndPlace():
             pick_1_depth = self.camera_height
             place_1_depth = self.camera_height
             action['single_operator'] = True
-        
-        ref_a = np.array([1, -1])
-        ref_b = np.array([1, 1])
-
-        if np.linalg.norm(pick_1[:2] - ref_a) > np.linalg.norm(pick_0[:2] - ref_a):
-            pick_0, pick_1 = pick_1, pick_0
-            place_0, place_1 = place_1, place_0
-
+            
         action_ = np.concatenate([pick_0, place_0, pick_1, place_1]).reshape(-1, 2)
 
         depths = np.array([
@@ -157,11 +150,6 @@ class PixelPickAndPlace():
         self.camera_intrinsics = env.camera_intrinsic_matrix
         self.camera_pose = env.camera_extrinsic_matrix
         self.camera_size = env.camera_size
-
-        # print('camera height:', self.camera_height)
-        # print('camera intrinsics:', self.camera_intrinsics)
-        # print('camera pose:', self.camera_pose)
-        # print('camera size:', self.camera_size)
 
         action_ = self.process(action)
         #print('action_:', action_)

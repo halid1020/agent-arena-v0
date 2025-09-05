@@ -18,7 +18,7 @@ class WorldPickAndPlace():
                  place_lower_bound=[-1, -1, 0],
                  place_upper_bound=[1, 1, 1],
 
-                 ready_pos = [[1, 1, 0.6], [1, 1, 0.6]],
+                 ready_pos = [[1, 1, 0.6], [-1, 1, 0.6]],
                  
                  lift_vel=0.05,
                  drag_vel=0.05,

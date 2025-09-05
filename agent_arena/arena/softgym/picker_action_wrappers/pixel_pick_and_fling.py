@@ -3,7 +3,7 @@ from gym.spaces import Box
 
 from ...softgym.picker_action_wrappers.world_pick_and_fling \
     import WorldPickAndFling
-
+from ..envs.camera_utils import norm_pixel2world
 from .utils import pixel_to_world
 
 class PixelPickAndFling():
@@ -89,26 +89,34 @@ class PixelPickAndFling():
     
     def process(self, action):
         #action = action['norm_pixel_pick_and_fling']
+
         p0 = np.asarray(action['pick_0'])
         p1 = np.asarray(action['pick_1'])
 
-        # p0[0], p0[1] = -0.7, 0.9
-        # p1[0], p1[1] = 0.3, -0.6
+       
 
-        # print('p0:', p0)
-        # print('p1:', p1)
+        ref_a = np.array([-1, 1])
+        ref_b = np.array([1, 1])
 
-        ## Assuming top-down view
-        # p0 = p0 * self.camera_to_world_ratio * self.camera_height
-        # p1 = p1 * self.camera_to_world_ratio * self.camera_height
-        # p0 = np.concatenate([p0, [self.pick_height]])
-        # p1 = np.concatenate([p1, [self.pick_height]])
-
+        if np.linalg.norm(p1[:2] - ref_a) > np.linalg.norm(p0[:2] - ref_a):
+            p0, p1 = p1, p0
+      
+        action_ = np.concatenate([p0, p1]).reshape(-1, 2)
         # convert to world coordinate
-        p0 = pixel_to_world(p0, self.camera_height-self.pick_height, 
-            self.camera_intrinsics, self.camera_pose, self.camera_size)
-        p1 = pixel_to_world(p1, self.camera_height-self.pick_height, 
-            self.camera_intrinsics, self.camera_pose, self.camera_size)
+        # print('p0', p0)
+        # print('p1', p1)
+        W, H = self.camera_size
+        p0_depth = self.camera_height  - self.pick_height
+        p1_depth = self.camera_height  - self.pick_height
+        depths = np.array([p0_depth, p1_depth])
+
+        convert_action = norm_pixel2world(
+                action_, np.asarray([H, W]),  
+                self.camera_intrinsics, self.camera_pose, depths) 
+        convert_action = convert_action.reshape(2, 3)
+
+        p0 = convert_action[0]
+        p1 = convert_action[1]
 
         # print('p0:', p0)
         # print('p1:', p1)

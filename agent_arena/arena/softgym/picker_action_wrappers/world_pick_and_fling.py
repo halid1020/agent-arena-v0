@@ -24,7 +24,7 @@ class WorldPickAndFling():
         hang_adjust_vel=0.005,
         stretch_adjust_vel=0.005,
         release_vel=1e-2,
-        ready_pos = [[1, 1, 0.6], [1, 1, 0.6]],
+        ready_pos = [[1, 1, 0.6], [-1, 1, 0.6]],
         no_cloth_vel = 0.3,
         adaptive_fling_momentum=1,
         lower_height=0.015,
@@ -112,12 +112,10 @@ class WorldPickAndFling():
     ## expect to recieve action as an dictionary with at least pick_0 and pick_1 positions
     def step(self, env, action):
         action = self.process(action)
-        #print('action', action)
-        #print('action', action_)
+
         pick_0_position = action['pick_0_position']
         pick_1_position = action['pick_1_position']
-        #self.camera_height = env.camera_height
-        #action = action_['action']
+        
         
         
         pick_positions = np.stack([pick_0_position, pick_1_position], axis=0)

@@ -47,6 +47,7 @@ class ClothFunnelEnv(Arena):
         #print('disp', config.disp)
         headless = not config.disp
         #print('headless', headless)
+        ##
         pyflex.init(headless, 
                     True, 
                     self.camera_config['cam_size'][0], 

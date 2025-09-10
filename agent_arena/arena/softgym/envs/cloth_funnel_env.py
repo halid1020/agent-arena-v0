@@ -60,7 +60,7 @@ class ClothFunnelEnv(Arena):
             picker_high=self.config.picker_high,
             grasp_mode=(self.config.grasp_mode if 'grasp_mode' in self.config.keys() else {'closest': 1.0}),
         )
-        self.particle_radius = self.scene_config['radius']
+        #self.particle_radius = self.scene_config['radius']
         self.action_tool = HybridActionPrimitive(
             action_horizon=self.config.horizon,
             drag_vel=0.01)
@@ -143,9 +143,11 @@ class ClothFunnelEnv(Arena):
 
         init_state_params['scene_config'] = self.scene_config
         init_state_params.update(self.default_config)
-        set_scene(
+        config = set_scene(
             config=init_state_params, 
             state=init_state_params)
+        self.particle_radius = config['scene_config']['radius']
+        self.pickers.particle_radius = self.particle_radius
         #print('set scene done')
         #print('pciker initial pos', self.picker_initial_pos)
         self.pickers.reset(self.picker_initial_pos)
@@ -392,22 +394,22 @@ class ClothFunnelEnv(Arena):
     
     
     
-    def _set_to_flatten(self, config, cloth_particle_radius=0.00625):
-        cloth_dimx, cloth_dimz = config['cloth_size']
-        N = cloth_dimx * cloth_dimz
-        px = np.linspace(
-            0, cloth_dimx * cloth_particle_radius, cloth_dimx)
-        py = np.linspace(
-            0, cloth_dimz * cloth_particle_radius, cloth_dimz)
-        xx, yy = np.meshgrid(px, py)
-        new_pos = np.empty(shape=(N, 4), dtype=np.float)
-        new_pos[:, 0] = xx.flatten()
-        new_pos[:, 1] = cloth_particle_radius
-        new_pos[:, 2] = yy.flatten()
-        new_pos[:, 3] = 1.
-        new_pos[:, :3] -= np.mean(new_pos[:, :3], axis=0)
-        pyflex.set_positions(new_pos.flatten())
-        return self._get_coverage()
+    # def _set_to_flatten(self, config, cloth_particle_radius=0.00625):
+    #     cloth_dimx, cloth_dimz = config['cloth_size']
+    #     N = cloth_dimx * cloth_dimz
+    #     px = np.linspace(
+    #         0, cloth_dimx * cloth_particle_radius, cloth_dimx)
+    #     py = np.linspace(
+    #         0, cloth_dimz * cloth_particle_radius, cloth_dimz)
+    #     xx, yy = np.meshgrid(px, py)
+    #     new_pos = np.empty(shape=(N, 4), dtype=np.float)
+    #     new_pos[:, 0] = xx.flatten()
+    #     new_pos[:, 1] = cloth_particle_radius
+    #     new_pos[:, 2] = yy.flatten()
+    #     new_pos[:, 3] = 1.
+    #     new_pos[:, :3] -= np.mean(new_pos[:, :3], axis=0)
+    #     pyflex.set_positions(new_pos.flatten())
+    #     return self._get_coverage()
 
     def _get_coverage(self):
         particle_positions = self._get_particle_positions()

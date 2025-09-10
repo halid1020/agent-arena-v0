@@ -98,7 +98,7 @@ class PixelPickAndFling():
         ref_a = np.array([-1, 1])
         ref_b = np.array([1, 1])
 
-        if np.linalg.norm(p1[:2] - ref_a) > np.linalg.norm(p0[:2] - ref_a):
+        if np.linalg.norm(p1[:2] - ref_a) < np.linalg.norm(p0[:2] - ref_a):
             p0, p1 = p1, p0
       
         action_ = np.concatenate([p0, p1]).reshape(-1, 2)

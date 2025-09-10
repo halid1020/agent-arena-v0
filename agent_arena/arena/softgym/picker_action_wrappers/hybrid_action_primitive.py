@@ -22,6 +22,9 @@ class HybridActionPrimitive():
         self.np_pnp = PixelPickAndPlace(**kwargs)
         self.np_pnf = PixelPickAndFling(**kwargs)
         self.np_pnd = PixelPickAndDrag(**kwargs)
+        kwargs['pregrasp_height'] = 0.25 # only difference from Pick and Place so far
+        kwargs['place_height'] = 0.15
+        self.np_fold = PixelPickAndPlace(**kwargs)
         #self.env = env
 
         
@@ -74,6 +77,10 @@ class HybridActionPrimitive():
             action = action['norm-pixel-pick-and-drag']
             action['swap'] = swap
             info = self.np_pnd.step(env, action)
+        elif 'norm-pixel-fold' in action:
+            action = action['norm-pixel-fold']
+            action['swap'] = swap
+            info = self.np_fold.step(env, action)
         elif 'no-op' in action and action['no-op']:
             info = env.get_info()
         else:

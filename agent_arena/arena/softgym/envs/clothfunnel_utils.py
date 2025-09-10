@@ -69,8 +69,8 @@ def load_cloth(path):
 
 
 def get_default_config(
-        particle_radius=0.0175,
-        cloth_stiffness = (0.75, .02, .02),
+        particle_radius= 0.01, #0.0175,
+        cloth_stiffness = (1, 0.2, 0.2), #(0.75, .02, .02),
         scale=0.8,
         ):
     config = {
@@ -92,7 +92,7 @@ def get_default_config(
             },
         'scene_config': {
             'scene_id': 2,
-            'radius': particle_radius * scale,
+            'radius': None,
             'buoyancy': 0,
             'numExtraParticles': 20000,
             'collisionDistance': 0.0006,
@@ -103,9 +103,6 @@ def get_default_config(
     }
 
     return config
-
-
-
 
 
 def set_scene(config,
@@ -122,11 +119,22 @@ def set_scene(config,
     
     env_idx = 0 if 'env_idx' not in config else config['env_idx']
 
-    # print('scene_id:', config['scene_config']['scene_id'])
-    # print('scene_config:', config['scene_config'])
+    # --- 🔹 auto-compute particle radius from mesh ---
+    verts = np.array(config['mesh_verts']).reshape(-1, 3)
+    stretch_edges = np.array(config['mesh_stretch_edges']).reshape(-1, 2)
+    avg_edge = np.mean([
+        np.linalg.norm(verts[i] - verts[j])
+        for (i, j) in stretch_edges
+    ])
+    particle_radius = config['scale'] * avg_edge  # rule of thumb: half of avg edge
+    config['scene_config']['radius'] = float(particle_radius)
 
+    print('scene_config (with radius):', config['scene_config'])
+
+    # --- set scene ---
     pyflex.set_scene_from_dict(config['scene_config']['scene_id'], config['scene_config'])
 
+    # --- add cloth mesh ---
     pyflex.add_cloth_mesh(
         position=config['cloth_pos'], 
         verts=config['mesh_verts'], 
@@ -138,37 +146,92 @@ def set_scene(config,
         uvs=config['mesh_nocs_verts'],
         mass=config['cloth_mass'])
 
-
+    # --- random cloth color ---
     random_state = np.random.RandomState(np.abs(int(np.sum(config['mesh_verts']))))
     hsv_color = [
         random_state.uniform(0.0, 1.0),
         random_state.uniform(0.0, 1.0),
         random_state.uniform(0.0, 1.0)
     ]
-
     rgb_color = colorsys.hsv_to_rgb(*hsv_color)
-    #print('CLOTH COLOR:', rgb_color)
     pyflex.change_cloth_color(rgb_color)
-    #print('Change cloth color')
 
+    # --- camera setup ---
     pyflex.set_camera_params_v2(config['camera_params'][config['camera_name']])
-
-    #print('Set camera params')
     step_sim_fn()
-    #print('Step sim')
 
+    # --- restore state if given ---
     if state is not None:
         pyflex.set_positions(state['particle_pos'])
         pyflex.set_velocities(state['particle_vel'])
         pyflex.set_shape_states(state['shape_pos'])
         pyflex.set_phases(state['phase'])
     
-    # particle_pos = config['init_particle_pos'].reshape(-1, 4)
-    # particle_pos[:, 0] = -particle_pos[:, 0]
-    # pyflex.set_positions(particle_pos)
+    return deepcopy(config)
+
+
+
+# def set_scene(config,
+#               state=None,
+#               render_mode='cloth',
+#               step_sim_fn=lambda: pyflex.step(),
+#               ):
+#     if render_mode == 'particle':
+#         render_mode = 1
+#     elif render_mode == 'cloth':
+#         render_mode = 2
+#     elif render_mode == 'both':
+#         render_mode = 3
+    
+#     env_idx = 0 if 'env_idx' not in config else config['env_idx']
+
+#     # print('scene_id:', config['scene_config']['scene_id'])
+#     print('scene_config:', config['scene_config'])
+
+#     pyflex.set_scene_from_dict(config['scene_config']['scene_id'], config['scene_config'])
+
+#     pyflex.add_cloth_mesh(
+#         position=config['cloth_pos'], 
+#         verts=config['mesh_verts'], 
+#         faces=config['mesh_faces'], 
+#         stretch_edges=config['mesh_stretch_edges'], 
+#         bend_edges=config['mesh_bend_edges'], 
+#         shear_edges=config['mesh_shear_edges'], 
+#         stiffness=config['cloth_stiff'], 
+#         uvs=config['mesh_nocs_verts'],
+#         mass=config['cloth_mass'])
+
+
+#     random_state = np.random.RandomState(np.abs(int(np.sum(config['mesh_verts']))))
+#     hsv_color = [
+#         random_state.uniform(0.0, 1.0),
+#         random_state.uniform(0.0, 1.0),
+#         random_state.uniform(0.0, 1.0)
+#     ]
+
+#     rgb_color = colorsys.hsv_to_rgb(*hsv_color)
+#     #print('CLOTH COLOR:', rgb_color)
+#     pyflex.change_cloth_color(rgb_color)
+#     #print('Change cloth color')
+
+#     pyflex.set_camera_params_v2(config['camera_params'][config['camera_name']])
+
+#     #print('Set camera params')
+#     step_sim_fn()
+#     #print('Step sim')
+
+#     if state is not None:
+#         pyflex.set_positions(state['particle_pos'])
+#         pyflex.set_velocities(state['particle_vel'])
+#         pyflex.set_shape_states(state['shape_pos'])
+#         pyflex.set_phases(state['phase'])
+    
+#     # particle_pos = config['init_particle_pos'].reshape(-1, 4)
+#     # particle_pos[:, 0] = -particle_pos[:, 0]
+#     # pyflex.set_positions(particle_pos)
 
     
-    return deepcopy(config)
+#     return deepcopy(config)
 
 def calculate_iou(mask1, mask2):
     if mask1.shape[0] > 128:

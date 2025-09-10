@@ -85,29 +85,31 @@ class PixelPickAndDrag():
         swap = action['swap'] if 'swap' in action else False
         #print('swap:', swap)
         pick_0 = np.asarray(action['pick_0'])
-        place_0 = pick_0 # np.asarray(action['place_0'])
+        place_0 = np.asarray(action['place_0'])
         if swap:
             pick_0 = pick_0[::-1]
             place_0 = place_0[::-1]
         pick_0_depth = action['pick_0_d'] if 'pick_0_d' in action else self.camera_height  - self.pick_height
         place_0_depth = action['place_0_d'] if 'place_0_d' in action else self.camera_height  - self.place_height
 
-        if 'pick_1' in action:
-            pick_1 = np.asarray(action['pick_1'])
-            place_1 = np.asarray(action['place_1'])
-            if swap:
-                pick_1 = pick_1[::-1]
-                place_1 = place_1[::-1]
-            pick_1_depth = action['pick_1_d'] if 'pick_1_d' in action else self.camera_height  - self.pick_height
-            place_1_depth = action['place_1_d'] if 'place_1_d' in action else self.camera_height - self.place_height
-            action['single_operator'] = False
-        else:
-            pick_1 = np.asarray(np.ones(2)) * 1.5
-            place_1 = np.asarray(np.ones(2)) * 1.5
-            pick_1_depth = self.camera_height
-            place_1_depth = self.camera_height
-            action['single_operator'] = True
-            
+ 
+        pick_1 = np.asarray(action['pick_1'])
+        place_1 = pick_1.copy()
+        if swap:
+            pick_1 = pick_1[::-1]
+            #place_1 = place_1[::-1]
+        pick_1_depth = action['pick_1_d'] if 'pick_1_d' in action else self.camera_height  - self.pick_height
+        place_1_depth = self.camera_height - self.pick_height
+        action['single_operator'] = False
+       
+        
+        ref_a = np.array([1, -1])
+        ref_b = np.array([1, 1])
+
+        if np.linalg.norm(pick_1[:2] - ref_a) > np.linalg.norm(pick_0[:2] - ref_a):
+            pick_0, pick_1 = pick_1, pick_0
+            place_0, place_1 = place_1, place_0
+
         action_ = np.concatenate([pick_0, place_0, pick_1, place_1]).reshape(-1, 2)
 
         depths = np.array([

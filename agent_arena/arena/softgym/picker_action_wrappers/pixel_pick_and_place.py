@@ -62,6 +62,8 @@ class PixelPickAndPlace():
         self.pre_grasp_vel = pre_grasp_vel
         self.drag_vel = drag_vel
         self.lift_vel = lift_vel
+
+        print('self.pregrasp_height', self.pregrasp_height)
         
 
 

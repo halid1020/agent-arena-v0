@@ -9,3 +9,4 @@
 8. make sure dreamer works in dm control suite.
 9. Create an example folder for showcasing the usage of this framework.
 10. Refactor all the environment we have so far with the arena framework
+11. add trimesh==4.4.1 for installation.

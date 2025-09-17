@@ -9,15 +9,15 @@ class ClothFunnelDomainBuilder():
     
         
     def build_from_config(domain, task, disp, horizon=8, rayid=0, ray=False):
-        object = domain.split('-')[-1]
+        object_ = domain.split('-')[-1]
         realadapt = domain.split('-')[-2]
         
 
         #TODO: set the correct config
         config = {
-            'object': object,
+            'object': object_,
             'picker_radius': 0.03, #0.015,
-            'particle_radius': 0.00625,
+            # 'particle_radius': 0.00625,
             'picker_threshold': 0.007, # 0.05,
             'picker_low': (-5, 0, -5),
             'picker_high': (5, 5, 5),

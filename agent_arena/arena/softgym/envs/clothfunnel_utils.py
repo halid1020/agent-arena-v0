@@ -76,8 +76,8 @@ def get_default_config(
     config = {
         'scale':scale,
         'cloth_pos': [0.0, 1.0, 0.0],
-        'cloth_size': [int(0.6 / particle_radius),
-                       int(0.368 / particle_radius)],
+        # 'cloth_size': [int(0.6 / particle_radius),
+        #                int(0.368 / particle_radius)],
         'cloth_stiff': cloth_stiffness,  # Stretch, Bend and Shear
         'camera_name': 'default_camera',
         'camera_params': {

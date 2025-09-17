@@ -19,6 +19,7 @@ class Arena(ABC):
         self.disp = False
         self.random_reset = True
         self.logger = DummyLogger()
+        self.eid = 0
 
         from .dummy_task import DummyTask
         self.task = DummyTask()
@@ -237,3 +238,9 @@ class Arena(ABC):
         """
         self.id = id
         self.ray_handle = {"val": id}
+
+    def get_mode(self):
+        return self.mode
+    
+    def get_episode_id(self):
+        return self.eid

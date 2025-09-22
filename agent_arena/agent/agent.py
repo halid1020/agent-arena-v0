@@ -21,7 +21,7 @@ class Agent(ABC):
     def set_log_dir(self, logdir: Any) -> None:
         """
         Set the log directory for the logger.
-.name, 
+        
         Args:
             logdir: The path to the log directory.
         """
@@ -67,8 +67,8 @@ class Agent(ABC):
         """
         return [True for _ in info_list]
 
-    @abstractmethod
-    def act(self, info_list: List[InformationType], update: bool = False) -> List[ActionType]:
+    
+    def act(self, info_list: List[InformationType], updates: List[bool]) -> List[ActionType]:
         """
         Produce actions given the current informations from the arena, update the internal state if required.
         
@@ -80,6 +80,13 @@ class Agent(ABC):
         Returns:
             A list containing the agent's action.
         """
+        actions = []
+        for info, upd in zip(info_list, updates):
+            actions.append(self.single_act(info, upd))
+        return actions
+
+    @abstractmethod
+    def single_act(self, info, update=False) -> ActionType:
         raise NotImplementedError
 
     def success(self) -> Dict[ArenaIdType, bool]:

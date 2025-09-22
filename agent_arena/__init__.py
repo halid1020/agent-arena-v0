@@ -15,3 +15,4 @@ from .api import build_arena, \
 
 from .utilities.perform_single import perform_single
 from .utilities.perform_parallel import perform_parallel
+from .utilities.visual_utils import save_video

@@ -173,12 +173,12 @@ def train_and_evaluate(agent: TrainableAgent, arena: Arena,
             total_update_steps = min(total_update_steps, eval_checkpoint)
     
         for u in range(start_update_step, total_update_steps-1, validation_interval):
-            agent.train(validation_interval, arena)
+            agent.train(validation_interval, [arena])
             agent.save()
             validate(agent, arena, u)
 
     else:
-        agent.train(arena)
+        agent.train([arena])
 
     
     logging.info('\n[ag_ar.train_and_evaluate] Finished training Agent "{}"'.format(agent.get_name()))

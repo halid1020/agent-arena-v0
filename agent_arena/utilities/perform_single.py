@@ -7,7 +7,7 @@ from .utils import check_memory_usage
 def perform_single(arena, agent, mode='eval', episode_config=None,
     collect_frames=False, end_success=True,
     update_agent_from_arena=lambda ag, ar: None,
-    max_steps=None):
+    max_steps=None, debug=False):
 
     if mode == 'eval':
         arena.set_eval()
@@ -67,7 +67,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     while not done:
         start_time = time.time()
         
-        action = agent.act([information])[0]
+        action = agent.single_act(information)
         steps += 1
         #print('perform action', action)
         phase = agent.get_phase()[0]
@@ -100,8 +100,8 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         actions.append(action)
         evals = arena.evaluate()
         
-        if 'normalised_coverage' in evals:
-            print('evals', evals['normalised_coverage'])
+        if debug:
+            print('evaluations', evals)
         
 
         agent.update([information], [action])

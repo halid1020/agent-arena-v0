@@ -6,9 +6,9 @@ from .agent import Agent
 
 class TrainableAgent(Agent):
     def __init__(self, config):
-        super().__init__(config)
-        self.name: str = "trainable-agent"
+        super().__init__(config, )
         self.mode = 'train'
+        self.name = 'trainable_agent'
         self.train_writer: TrainWriter = TrainWriter()
         self.loaded = False
 

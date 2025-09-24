@@ -11,7 +11,8 @@ from .utilities.logger.standard_logger import StandardLogger
 
 from .api import build_arena, \
     train_and_evaluate, build_transform, evaluate,\
-    retrieve_config, build_agent, run
+    retrieve_config, build_agent, run, retrieve_config_from_path,\
+    register_agent
 
 from .utilities.perform_single import perform_single
 from .utilities.perform_parallel import perform_parallel

@@ -118,6 +118,7 @@ class ConditionalResidualBlock1D(nn.Module):
             returns:
             out : [ batch_size x out_channels x horizon ]
         '''
+        #print('x.shape', x.shape)
         out = self.blocks[0](x)
         embed = self.cond_encoder(cond)
 

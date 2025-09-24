@@ -10,9 +10,10 @@ from ..utilities.types import ActionType, InformationType, \
 class Agent(ABC):
     def __init__(self, config: DotMap):
         self.config: DotMap = config
-        self.name: str = "agent"
+        self.name = "agent"
         self.internal_states: Dict[ArenaIdType, InformationType] = {}
         self.logger = DummyLogger()
+        
 
     def get_name(self) -> str:
         """Return the name of the agent. This will be used but not limited for logging."""

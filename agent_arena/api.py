@@ -26,13 +26,10 @@ from agent_arena.utilities.verbose import Verbose
 def load_yamls(file_path: str) -> typing.Dict[str, typing.Any]:
     return yaml.safe_load(Path(file_path).read_text())
 
-@dispatch(str)
-def retrieve_config(config_path: str) -> typing.Dict[str, typing.Any]:
+def retrieve_config_from_path(config_path: str) -> typing.Dict[str, typing.Any]:
     configs = load_yamls(config_path)
-
     return DotMap(configs)
 
-@dispatch(str, str, str)
 def retrieve_config(agent_name: str, arena_name:str, 
         config_name:str, config_dir: Optional[str]=None,
         ) -> typing.Dict[str, typing.Any]:
@@ -43,7 +40,7 @@ def retrieve_config(agent_name: str, arena_name:str,
     if config_dir == None: ## If None load from agent-arena trajecotry
         config_path = os.path.join(os.environ['AGENT_ARENA_PATH'], 'configuration', 'train_and_evaluate', config_path)
         if agent_name in AGENT_NEEDS_CONFIG.keys():
-            config = retrieve_config(config_path)
+            config = retrieve_config_from_path(config_path)
             config.oracle = False
         elif agent_name in AGENT_NO_CONFIG.keys():
             pass
@@ -52,13 +49,15 @@ def retrieve_config(agent_name: str, arena_name:str,
             config.oracle = True
     else: ## load from customised trajectory
         config_path = os.path.join(config_dir, config_path)
-        config = retrieve_config(config_path)
+        config = retrieve_config_from_path(config_path)
 
     
     
     #config.save_dir = os.path.join(log_dir, arena_name, agent_name, config_name)
     return config
 
+def register_agent(name: str, class_):
+    AGENT_NEEDS_CONFIG[name] = class_
 
 def build_transform(name: str, params: DotMap) -> Transform:
     return DATA_TRANSFORMER[name](params)
@@ -182,9 +181,5 @@ def train_and_evaluate(agent: TrainableAgent, arena: Arena,
 
     
     logging.info('\n[ag_ar.train_and_evaluate] Finished training Agent "{}"'.format(agent.get_name()))
-
-    # if eval_checkpoint >= 0:
-    #     logging.info('\n[ag_ar.train_and_evaluate] Load checkpoint {}'.format(eval_checkpoint))
-    #     agent.load_checkpoint(eval_checkpoint)
 
     evaluate(agent, arena, checkpoint=eval_checkpoint)

@@ -286,8 +286,12 @@ def plot_image_trajectory(obs,
     plt.close()
 
 
-### frames: S * H * W * 3 in RGB numpy
+### frames: S * H * W * 3 in RGB numpy, or list of H*W*3 RGB numpys
 def save_video(frames, path='', title='default'):
+
+    if isinstance(frames, list):
+        frames = np.stack(frames, axis=0)  # shape (T, H, W, C)
+
     frames = frames.clip(0, 255).astype(np.uint8)
     bgr_frames = [cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) for frame in frames]
 
@@ -310,7 +314,7 @@ def show_image(img, window_name=''):
 
 
 
-def save_numpy_as_gif(frames, filename, fps=200, scale=1.0, select_frames=1000):
+def save_numpy_as_gif(frames, path, filename, fps=200, scale=1.0, select_frames=1000):
     # from https://github.com/Xingyu-Lin/softgym/blob/master/softgym/utils/visualization.py
     """Creates a gif given a stack of images using moviepy
     Notes
@@ -334,8 +338,11 @@ def save_numpy_as_gif(frames, filename, fps=200, scale=1.0, select_frames=1000):
     """
 
     # ensure that the file has the .gif extension
-    fname, _ = os.path.splitext(filename)
-    filename = fname + '.gif'
+    #fname, _ = os.path.splitext(filename)
+    filename = filename + '.gif'
+    filename = os.path.join(path, filename)
+    if isinstance(frames, list):
+        frames = np.stack(frames, axis=0)  # shape (T, H, W, C)
 
     # copy into the color dimension if the images are black and white
     if frames.ndim == 3:

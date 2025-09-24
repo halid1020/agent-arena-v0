@@ -3,6 +3,7 @@ import time
 import cv2
 
 from .utils import check_memory_usage
+from .visual_utils import save_video, save_numpy_as_gif
 
 def perform_single(arena, agent, mode='eval', episode_config=None,
     collect_frames=False, end_success=True,
@@ -86,7 +87,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         if episode_config is not None and episode_config['save_video']:
             frame = np.asarray(arena.get_frames())
             if len(frame) != 0:
-                print('frame shape', frame.shape)
+                #print('frame shape', frame.shape)
                 ## resize frames where shorter side 256
                 H, W = frame[0].shape[0], frame[0].shape[1]
                 if H < W:
@@ -102,7 +103,9 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         
         if debug:
             print('evaluations', evals)
-        
+            frames_ = np.concatenate(frames)
+            save_video(frames_, path='./tmp', title='perform_single')
+            save_numpy_as_gif(frames_, path='./tmp', filename='perform_single')
 
         agent.update([information], [action])
         

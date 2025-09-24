@@ -7,7 +7,6 @@ import logging
 import psutil
 import cv2
 
-from scipy.ndimage import distance_transform_edt
 from scipy.ndimage import distance_transform_edt, sobel
 
 from tensorboardX import SummaryWriter as SumWriterX

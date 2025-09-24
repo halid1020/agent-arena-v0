@@ -140,9 +140,9 @@ class DiffusionAdapter(TrainableAgent):
         if self.config.dataset_mode != 'diffusion':
             transform_config = self.config.transform
             from agent_arena.api import build_transform
-            self.transform =  build_transform(transform_config.name, transform_config.params)
+            #self.transform =  build_transform(transform_config.name, transform_config.params)
         
-        self.update_step = -1
+        self.update_step = 0 #-1
         self.dataset_inited = False
         
         
@@ -156,7 +156,7 @@ class DiffusionAdapter(TrainableAgent):
                 action_horizon=self.config.action_horizon
             )
             self.stats = dataset.stats
-            self.transform = DiffusionTransform(self.config, self.stats)
+            #self.transform = DiffusionTransform(self.config, self.stats)
         elif self.config.dataset_mode == 'general':
             from agent_arena.utilities.trajectory_dataset import TrajectoryDataset
             # convert dotmap to dict
@@ -264,8 +264,8 @@ class DiffusionAdapter(TrainableAgent):
                 for k, v in observations.items():
                     observations[k] = np.stack(v)
                 for k, v in actions.items():
-                    print('k', k)
-                    print('action', v)
+                    # print('k', k)
+                    # print('action', v)
                     actions[k] = np.stack(v)
                 dataset.add_trajectory(observations, actions)
                 qbar.update(1)
@@ -391,9 +391,9 @@ class DiffusionAdapter(TrainableAgent):
                 raise ValueError('Invalid train mode')
         
         update_steps = min(#
-            self.config.total_update_steps - self.update_step-1,
+            self.config.total_update_steps - self.update_step,
             update_steps)
-        #print('train update steps', update_steps)
+        print('train update steps', update_steps)
         pbar = tqdm(range(update_steps), desc="Training")
 
         for i in pbar:
@@ -417,15 +417,15 @@ class DiffusionAdapter(TrainableAgent):
             #     plt.imsave('tmp/pre_pnp_rgb.png', pnp_rgb)
 
             if self.config.dataset_mode == 'diffusion':
-                nbatch = self.transform(nbatch, train=True)
+                nbatch = self.data_augmenter(nbatch, train=True)
             else:
                 obs = nbatch['observation']
                 action = nbatch['action']['default']
-                print('action', action.shape)
+                #print('action', action.shape)
                 nbatch = {v: k for v, k in obs.items()}
                 nbatch['action'] = action.reshape(*action.shape[:2], -1)
-                print('action after shape', nbatch['action'] .shape)
-                nbatch = self.transform(nbatch, train=True)
+                #print('action after shape', nbatch['action'] .shape)
+                nbatch = self.data_augmenter(nbatch, train=True)
 
             # print('nbatch rgb shape', nbatch['rgb'].shape)
 
@@ -485,7 +485,7 @@ class DiffusionAdapter(TrainableAgent):
 
             # sample noise to add to actions
             noise = torch.randn(nbatch['action'].shape, device=self.device)
-            print('noise shape', noise.shape)
+            #print('noise shape', noise.shape)
 
             # sample a diffusion iteration for each data point
             timesteps = torch.randint(
@@ -495,11 +495,11 @@ class DiffusionAdapter(TrainableAgent):
 
             # add noise to the clean images according to the noise magnitude at each diffusion iteration
             # (this is the forward diffusion process)
-            print('action before adding noise',  nbatch['action'].shape)
+            #print('action before adding noise',  nbatch['action'].shape)
             noisy_actions = self.noise_scheduler.add_noise(
                 nbatch['action'], noise, timesteps)
 
-            print('noisy actino shape', noisy_actions.shape)
+            #print('noisy actino shape', noisy_actions.shape)
 
             # predict the noise residual
             noise_pred = self.noise_pred_net(
@@ -633,7 +633,7 @@ class DiffusionAdapter(TrainableAgent):
             
             
 
-            action_pred = self.transform.postprocess(
+            action_pred = self.data_augmenter.postprocess(
                 {'action': ts_to_np(naction)})['action'][0]
             
             self.buffer_actions[info['arena_id']] = deque(
@@ -641,7 +641,7 @@ class DiffusionAdapter(TrainableAgent):
                 maxlen=self.config.action_horizon)
 
         action = self.buffer_actions[info['arena_id']]\
-            .popleft().reshape(action_shape)
+            .popleft().reshape(self.config.action_shape)
 
         # if 'readjust_pick' in self.config and self.config.readjust_pick:
         #     #print('readjusting pick')
@@ -741,10 +741,10 @@ class DiffusionAdapter(TrainableAgent):
 
         self.last_actions[info['arena_id']] = ret_action
 
-        return action
+        return ret_action
 
     def act(self, infos, updates):
-        action_shape = self.config.action_shape
+        
         ret_actions = []
 
         for info, upd in zip(infos, updates):
@@ -812,7 +812,7 @@ class DiffusionAdapter(TrainableAgent):
             input_data['vector_state'] = info['observation']['vector_state']\
                 .reshape(1, 1, *info['observation']['vector_state'].shape)
         
-        input_data = self.transform(input_data, train=False) 
+        input_data = self.data_augmenter(input_data, train=False) 
                                     #sim2real=info['sim2real'] if 'sim2real' in info else False)
         
         vis = input_data[self.config.input_obs].squeeze(0).squeeze(0)
@@ -833,7 +833,7 @@ class DiffusionAdapter(TrainableAgent):
             vector_state = input_data['vector_state'].squeeze(0).squeeze(0)
             obs['vector_state'] = vector_state
 
-        input_obs = self.transform.postprocess(obs)[self.config.input_obs]
+        input_obs = self.data_augmenter.postprocess(obs)[self.config.input_obs]
         self.internal_states[info['arena_id']].update(
             {'input_obs': input_obs.transpose(1,2,0),
              'input_type': self.config.input_obs}

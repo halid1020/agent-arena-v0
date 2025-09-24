@@ -65,6 +65,7 @@ class HybridActionPrimitive():
     ## It accpet action has shape (num_picker, 2, 3), where num_picker can be 1 or 2
     def step(self, env, action):
         self.action_step += 1
+        #print('action', action)
         swap = action['swap'] if 'swap' in action else False
         if 'norm-pixel-pick-and-fling' in action:
             action = action['norm-pixel-pick-and-fling']

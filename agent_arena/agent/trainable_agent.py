@@ -81,3 +81,6 @@ class TrainableAgent(Agent):
             TrainWriter: The train writer object.
         """
         return self.train_writer
+    
+    def set_data_augmenter(self, data_augmenter):
+        self.data_augmenter = data_augmenter

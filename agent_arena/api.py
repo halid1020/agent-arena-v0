@@ -170,8 +170,10 @@ def train_and_evaluate(agent: TrainableAgent, arena: Arena,
 
         if eval_checkpoint >= 0:
             total_update_steps = min(total_update_steps, eval_checkpoint)
-    
-        for u in range(start_update_step, total_update_steps-1, validation_interval):
+
+        print('total_update_steps', total_update_steps)
+        for u in range(start_update_step, total_update_steps, validation_interval):
+            print('u', u)
             agent.train(validation_interval, [arena])
             agent.save()
             validate(agent, arena, u)

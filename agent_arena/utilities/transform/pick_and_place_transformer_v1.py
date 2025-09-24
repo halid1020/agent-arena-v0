@@ -52,12 +52,14 @@ class PickAndPlaceTransformerV1:
                  single=False):
         #print('before preprocess goal-rgb', sample['goal-rgb'].shape)
         # batch is assumed to have the shape B*T*C*H*W
+        print('transform!!!!')
         allowed_keys = ['rgb', 'depth', 'mask', 'rgbd', 'goal-rgb', 
                         'goal-depth', 'goal-mask', 'action', 'reward', 'terminal']
         if 'observation' in sample_in:
             sample = {k: v for k, v in sample_in['observation'].items() if k in allowed_keys}
         else:
             sample = sample_in
+        
         if 'action' in sample_in:
             # if sample action is a dict
             if isinstance(sample_in['action'], dict):
@@ -67,6 +69,7 @@ class PickAndPlaceTransformerV1:
                     sample['action'] = sample_in['action']['norm-pixel-pick-and-place']
             ## flatten the last two dimension
             sample['action'] = sample['action'].reshape(sample['action'].shape[0], -1)
+            print('sample action', sample['action'].shape)
 
         for k, v in sample.items():
             #print(k, v.shape)
@@ -168,18 +171,6 @@ class PickAndPlaceTransformerV1:
                            'param': self.config.rgb_norm_param}, 
                 noise_factor=(self.config.rgb_noise_factor if process_rgb else 0))
             #print('after preprocess goal-rgb', sample['goal-rgb'].shape)
-
-        # from matplotlib import pyplot as plt
-        # plt.imshow(sample['depth'][0, 0].squeeze(0).cpu().numpy())
-        # plt.savefig('raw-depth.png')
-
-        # from matplotlib import pyplot as plt
-        # plt.imshow(sample['mask'][0, 0].squeeze(0).cpu().numpy())
-        # plt.savefig('raw-mask.png')
-
-        # from matplotlib import pyplot as plt
-        # plt.imshow(sample['goal-depth'][0, 0].squeeze(0).cpu().numpy())
-        # plt.savefig('raw-goal-depth.png')
 
         if 'depth' in sample:
             sample['depth'] = self._process_depth(
@@ -283,7 +274,7 @@ class PickAndPlaceTransformerV1:
                     .reshape(*sample['action'].shape)
                 
                 if torch.abs(sample['action']).max() > 1:
-                    print('max action', torch.abs(sample['action']).max())
+                    #print('max action', torch.abs(sample['action']).max())
                     continue
                 #sample['action'] = rotated_action
 

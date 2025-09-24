@@ -67,7 +67,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     while not done:
         start_time = time.time()
         
-        action = agent.single_act(information)
+        action = agent.single_act(information, update=False)
         steps += 1
         #print('perform action', action)
         phase = agent.get_phase()[0]

@@ -16,6 +16,8 @@ from diffusers.optimization import get_scheduler
 from diffusers.training_utils import EMAModel
 from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
 
+from omegaconf import DictConfig, ListConfig, OmegaConf
+
 from agent_arena.agent.oracle.builder import OracleBuilder
 from agent_arena import TrainableAgent
 from agent_arena.utilities.networks.utils import np_to_ts, ts_to_np
@@ -29,36 +31,46 @@ from .utils \
 from .networks import ConditionalUnet1D
 from .dataset import DiffusionDataset, normalize_data, unnormalize_data
 
+def omegaconf_to_plain_dict(cfg):
+    if isinstance(cfg, (DictConfig, ListConfig)):
+        return OmegaConf.to_container(cfg, resolve=True)  # nested dict/list
+    return cfg
+
 def dict_to_action_vector(dict_action, action_output_template):
     """
     Convert dictionary form of action back into flat vector form.
-
-    dict_action: dict filled with actual action values
-    action_output_template: same structure as config.action_output (lists of indices)
     """
-    # length of flat action = max index + 1
-    max_index = max(_max_index_in_dict(action_output_template))
+    #print('action_output_template', action_output_template)
+    indices = list(_max_index_in_dict(action_output_template))
+    if indices:
+        max_index = max(indices)
+    else:
+        raise ValueError(f"No indices found in action_output_template: {action_output_template}")
+
+    #print('max_index', max_index)
     action = np.zeros(max_index + 1, dtype=float)
 
     def fill_action(d_action, template):
         for k, v in template.items():
             if isinstance(v, dict):
                 fill_action(d_action[k], v)
-            elif isinstance(v, list):
-                # v = list of indices
+            elif isinstance(v, (list, ListConfig)) and len(v) > 0:
                 values = d_action[k]
                 action[np.array(v)] = values
 
     fill_action(dict_action, action_output_template)
     return action
 
+
 def _max_index_in_dict(d):
     """Helper to find all indices used in the template dict."""
     for v in d.values():
+        #print(type(v))
         if isinstance(v, dict):
             yield from _max_index_in_dict(v)
-        elif isinstance(v, list):
+        elif isinstance(v, (list, ListConfig)) and len(v) > 0:
             yield max(v)
+
 
 class DiffusionTransform():
 
@@ -137,9 +149,9 @@ class DiffusionAdapter(TrainableAgent):
         from .action_sampler import ActionSampler
         self.eval_action_sampler = ActionSampler[self.config.eval_action_sampler]()
 
-        if self.config.dataset_mode != 'diffusion':
-            transform_config = self.config.transform
-            from agent_arena.api import build_transform
+        # if self.config.dataset_mode != 'diffusion':
+            # transform_config = self.config.transform
+            # from agent_arena.api import build_transform
             #self.transform =  build_transform(transform_config.name, transform_config.params)
         
         self.update_step = 0 #-1
@@ -189,7 +201,7 @@ class DiffusionAdapter(TrainableAgent):
         arena = arenas[0] # assume only one arena
         from agent_arena.utilities.trajectory_dataset import TrajectoryDataset
             # convert dotmap to dict
-        config = self.config.dataset_config.toDict()
+        config = self.config.dataset_config #.toDict()
         config['io_mode'] = 'a'
         #print('config', config)
         dataset = TrajectoryDataset(**config)
@@ -239,7 +251,7 @@ class DiffusionAdapter(TrainableAgent):
                         v_ = dict_to_action_vector(v, self.config.action_save.get(k))
                         #print('v_', v_)
                         actions[k].append(v_)
-
+                #print('action', action)
                 info = arena.step(action)
                 policy.update(info, action)
                 info['reward'] = 0
@@ -723,7 +735,10 @@ class DiffusionAdapter(TrainableAgent):
 
         
         ## covert self.config.action_output to dict and copy it
-        ret_action = self.config.action_output.copy().toDict()
+        ret_action = self.config.action_output.copy() #.toDict()
+        if isinstance(ret_action, (DictConfig, ListConfig)):
+            ret_action = omegaconf_to_plain_dict(ret_action)
+
         action = action.flatten()
 
         ## recursively goes down the dictionary tree, when encounter list of integer number
@@ -733,7 +748,7 @@ class DiffusionAdapter(TrainableAgent):
             for k, v in ret_action.items():
                 if isinstance(v, dict):
                     replace_action(action, v)
-                elif isinstance(v, list):
+                elif isinstance(v, (list, ListConfig)):
                     #print('v', v)
                     ret_action[k] = action[v]
 

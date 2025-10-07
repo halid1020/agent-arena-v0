@@ -12,7 +12,7 @@ class Arena(ABC):
         Abstract class for defining an arena in a control problem.
     """
 
-    def __init__(self):
+    def __init__(self, config):
         self.name = "arena"
         self.mode = "train"
         self.setup_ray(id=0)

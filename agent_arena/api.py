@@ -71,7 +71,7 @@ def build_agent(
         name: str, 
         config: Optional[DotMap] = None) -> Agent:
     
-    if config is not None and config.oracle:
+    if config is not None and config.get("oracle", False):
         return OracleBuilder.build(name)
     # if arena is not None:
     #     config.action_space = arena.get_action_space()
@@ -88,8 +88,8 @@ def build_logger(name: str, save_dir: str) -> Logger:
 def run(agent: Agent, arena: Arena, mode:str, 
         episode_config: dict, checkpoint: int) -> bool:
     
-    filename = 'manupilation_{}'.format(checkpoint)
-    print('episode_config', episode_config)
+    
+    print(f'run {mode} episode_config', episode_config)
     
     if mode == 'eval' and arena.logger.check_exist(episode_config, filename):
         return
@@ -98,6 +98,12 @@ def run(agent: Agent, arena: Arena, mode:str,
                 collect_frames=episode_config['save_video'])
     
     if mode == 'eval':
+        filename = 'eval_checkpoint_{}'.format(checkpoint)
+        agent.logger(episode_config, res, filename)
+        arena.logger(episode_config, res, filename)
+    
+    if mode == 'val':
+        filename = 'val_checkpoint_{}'.format(checkpoint)
         agent.logger(episode_config, res, filename)
         arena.logger(episode_config, res, filename)
 
@@ -135,10 +141,9 @@ def validate(agent, arena, update_step):
             * The arena has `set_val` and `get_val_configs` methods to set the 
               arena to validation mode and get the validation configurations.
     '''
-
     val_configs = arena.get_val_configs() 
                 
-    for episode_config in tqdm(val_configs):
+    for episode_config in tqdm(val_configs, desc="Validating controller in the arena..."):
         run(agent, arena, 'val', episode_config, checkpoint=update_step)
     
 def train_and_evaluate(agent: TrainableAgent, arena: Arena,
@@ -166,17 +171,17 @@ def train_and_evaluate(agent: TrainableAgent, arena: Arena,
 
     if validation_interval > 0:
         assert total_update_steps > 0, 'Total update steps must be greater than 0'                    
-        start_update_step = agent.load()
+        start_update_step = agent.load() #If no checkpint, it will return 0 --> no training
 
         if eval_checkpoint >= 0:
             total_update_steps = min(total_update_steps, eval_checkpoint)
 
-        print('total_update_steps', total_update_steps)
+        #print('total_update_steps', total_update_steps)
         for u in range(start_update_step, total_update_steps, validation_interval):
-            print('u', u)
+            #print('u', u)
             agent.train(validation_interval, [arena])
             agent.save()
-            validate(agent, arena, u)
+            validate(agent, arena, u + validation_interval)
 
     else:
         agent.train([arena])

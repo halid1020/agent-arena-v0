@@ -25,6 +25,7 @@ from agent_arena.utilities.logger.logger_interface import Logger
 from matplotlib import pyplot as plt
 from agent_arena.utilities.visual_utils \
     import draw_pick_and_place
+from agent_arena.utilities.visual_utils import save_numpy_as_gif, save_video
 
 from .utils \
     import get_resnet, replace_bn_with_gn
@@ -76,7 +77,7 @@ class DiffusionTransform():
 
     def __init__(self, config, stats):
         self.config = config
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = self.config.get('device', 'cpu')
         self.stats = stats
         #self.save_dir = config.save_dir
 
@@ -216,12 +217,13 @@ class DiffusionAdapter(TrainableAgent):
         qbar.refresh()
         
         episode_id = dataset.num_trajectories()
+        train_configs = arena.get_train_configs()
         while dataset.num_trajectories() < self.config.num_demos:
             observations = {obs_type: [] for obs_type in dataset.obs_types}
             actions = {act_type: [] for act_type in dataset.action_types}
 
             policy.reset([arena.id])
-            info = arena.reset({'eid': episode_id})
+            info = arena.reset(train_configs[episode_id])
             policy.init(info)
             info['reward'] = 0
             done = info['done']
@@ -270,14 +272,23 @@ class DiffusionAdapter(TrainableAgent):
                         observations[k].append(v_)
                     else:
                         observations[k].append(v_)
-            
-            if info['success'] or self.config.add_all_demos:
+            #print('info eval', info['evaluation'])
+            if self.config.debug:
+                frames = arena.get_frames()
+                if len(frames) > 0:
+                    save_video(np.stack(arena.get_frames()), 'tmp', 'diffusion_demo')
+                    save_numpy_as_gif(
+                        np.stack(arena.get_frames()), 
+                        path='tmp',
+                        filename="diffusion_demo"
+                    )
+            if info['success'] or self.config.get('add_all_demos', False):
                 #print('add to trajectory')
                 for k, v in observations.items():
                     observations[k] = np.stack(v)
                 for k, v in actions.items():
                     # print('k', k)
-                    # print('action', v)
+                    print('action', v)
                     actions[k] = np.stack(v)
                 dataset.add_trajectory(observations, actions)
                 qbar.update(1)
@@ -348,8 +359,7 @@ class DiffusionAdapter(TrainableAgent):
 
         self._test_network()
 
-        self.device = torch.device('cuda' \
-            if torch.cuda.is_available() else 'cpu')
+        self.device = self.config.get('device', 'cpu')
         self.nets.to(self.device)
         
     def _test_network(self):
@@ -410,9 +420,11 @@ class DiffusionAdapter(TrainableAgent):
 
         for i in pbar:
 
-
+            print('i', i)
             # get a batch from dataloader
             nbatch = next(iter(self.dataloader))
+            print('nbatch action max', nbatch['action']['default'].max())
+            print('nbatch action min', nbatch['action']['default'].min())
             # print('nbatch keys', nbatch.keys())
 
             # if True:
@@ -438,6 +450,7 @@ class DiffusionAdapter(TrainableAgent):
                 nbatch['action'] = action.reshape(*action.shape[:2], -1)
                 #print('action after shape', nbatch['action'] .shape)
                 nbatch = self.data_augmenter(nbatch, train=True)
+            print('here')
 
             # print('nbatch rgb shape', nbatch['rgb'].shape)
 

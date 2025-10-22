@@ -3,6 +3,7 @@ import typing
 from typing import Optional
 from multipledispatch import dispatch
 import logging
+import json
 
 
 from dotmap import DotMap
@@ -20,6 +21,7 @@ from agent_arena.utilities.perform_single import perform_single
 from agent_arena import TrainableAgent, Agent, Arena
 from agent_arena.utilities.logger.logger_interface import Logger
 from agent_arena.utilities.verbose import Verbose
+from agent_arena.utilities.visual_utils import save_video, save_numpy_as_gif
 
 # Create Enum for Verbose
 
@@ -85,13 +87,60 @@ def build_logger(name: str, save_dir: str) -> Logger:
     logger = LOGGER[name](save_dir)
     return logger
 
+def save_best_results(results, frames, save_dir):
+    """
+    Save the best results (a list of dicts) to a JSON file.
+
+    Args:
+        results (list[dict]): List of result dictionaries to save.
+        save_dir (str): Directory where to save the results. 
+                        Defaults to current working directory.
+    """
+
+    save_dir = save_dir or os.getcwd()
+    os.makedirs(f"{save_dir}/best", exist_ok=True)
+
+    save_path = os.path.join(save_dir, 'best', "best_results.json")
+    print('save best results to ', save_path)
+
+    with open(save_path, "w") as f:
+        json.dump(results, f, indent=4)
+
+    for i, fra in enumerate(frames):
+        save_video(fra, path=f'{save_dir}/best', title=f'val_{i}')
+        save_numpy_as_gif(fra, path=f'{save_dir}/best', filename=f'val_{i}')
+
+def load_best_results(save_dir):
+    """
+    Load the best results from a JSON file.
+
+    Args:
+        save_dir (str): Directory where the best_results.json is stored.
+                        Defaults to current working directory.
+
+    Returns:
+        list[dict]: Loaded list of result dictionaries, or empty list if none found.
+    """
+    save_dir = save_dir or os.getcwd()
+    load_path = os.path.join(save_dir, 'best', "best_results.json")
+
+    if not os.path.exists(load_path):
+        return []
+
+    with open(load_path, "r") as f:
+        results = json.load(f)
+    print(f"Loaded best results from {load_path}")
+    return results
+
+
 def run(agent: Agent, arena: Arena, mode:str, 
-        episode_config: dict, checkpoint: int) -> bool:
+        episode_config: dict, checkpoint: int):
     
     
     print(f'run {mode} episode_config', episode_config)
     
-    if mode == 'eval' and arena.logger.check_exist(episode_config, filename):
+    eval_filename = 'eval_checkpoint_{}'.format(checkpoint)
+    if mode == 'eval' and arena.logger.check_exist(episode_config, eval_filename):
         return
    
     res = perform_single(arena, agent, mode=mode, episode_config=episode_config,
@@ -107,7 +156,7 @@ def run(agent: Agent, arena: Arena, mode:str,
         agent.logger(episode_config, res, filename)
         arena.logger(episode_config, res, filename)
 
-    return True
+    return True, res
 
 def evaluate(agent: Agent, arena: Arena, checkpoint: int) -> bool:
 
@@ -142,9 +191,16 @@ def validate(agent, arena, update_step):
               arena to validation mode and get the validation configurations.
     '''
     val_configs = arena.get_val_configs() 
-                
+    results = []  
+    frames = []          
     for episode_config in tqdm(val_configs, desc="Validating controller in the arena..."):
-        run(agent, arena, 'val', episode_config, checkpoint=update_step)
+        _, res = run(agent, arena, 'val', episode_config, checkpoint=update_step)
+        results.append(res['evaluation'])
+        frames.append(res['frames'])
+    return results, frames
+
+def compare_results(results_1, results_2, compare_func):
+    return compare_func(results_1, results_2)
     
 def train_and_evaluate(agent: TrainableAgent, arena: Arena,
                        validation_interval: int, total_update_steps: int, eval_checkpoint: int) -> bool:
@@ -181,7 +237,13 @@ def train_and_evaluate(agent: TrainableAgent, arena: Arena,
             #print('u', u)
             agent.train(validation_interval, [arena])
             agent.save()
-            validate(agent, arena, u + validation_interval)
+            
+            results, frames = validate(agent, arena, u + validation_interval)
+            #print('results', results)
+            best_results = load_best_results(agent.save_dir)
+            if len(best_results) == 0 or compare_results(results, best_results, arena.compare) > 0:
+                agent.save_best()
+                save_best_results(results, frames, agent.save_dir)
 
     else:
         agent.train([arena])

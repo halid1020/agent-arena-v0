@@ -244,3 +244,6 @@ class Arena(ABC):
     
     def get_episode_id(self):
         return self.eid
+
+    def compare(self, results_1, results_2):
+        return 0

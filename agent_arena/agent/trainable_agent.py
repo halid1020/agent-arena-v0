@@ -37,6 +37,10 @@ class TrainableAgent(Agent):
         """
         return -1
 
+    
+    def load_best(self, path: Optional[str] = None) -> int:
+        return -1
+
     def load_checkpoint(self, checkpoint: int) -> bool:
         """
         Load the agent from a specific checkpoint in its logger's log directory.
@@ -61,6 +65,9 @@ class TrainableAgent(Agent):
         Returns:
             bool: True if the saving is successful, False otherwise.
         """
+        raise NotImplementedError
+    
+    def save_best(self, path=None):
         raise NotImplementedError
 
     @abstractmethod

@@ -2,7 +2,7 @@
 name = "agent-arena-v0"
 version = "0.1.0"
 description = "Bimanual manipulation research environment."
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 
 authors = [
     { name = "Halid Kadi", email = "you@example.com" }
@@ -50,7 +50,7 @@ dependencies = [
     "pygame==2.6.1",
     "pymunk==6.8.1",
     "gdown==5.2.0",
-    "scipy>=1.13.0",
+    "scipy>=1.10.0",  # downgraded lower bound for Py3.10 compatibility
     "ur-rtde",
     "pyrealsense2"
 ]

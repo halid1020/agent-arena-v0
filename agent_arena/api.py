@@ -4,7 +4,7 @@ from typing import Optional
 from multipledispatch import dispatch
 import logging
 import json
-
+import shutil
 
 from dotmap import DotMap
 import ruamel.yaml as yaml
@@ -87,7 +87,7 @@ def build_logger(name: str, save_dir: str) -> Logger:
     logger = LOGGER[name](save_dir)
     return logger
 
-def save_best_results(results, frames, save_dir):
+def save_best_results(results, save_dir, checkpint):
     """
     Save the best results (a list of dicts) to a JSON file.
 
@@ -105,10 +105,16 @@ def save_best_results(results, frames, save_dir):
 
     with open(save_path, "w") as f:
         json.dump(results, f, indent=4)
+    
+    # TODO: 
 
-    for i, fra in enumerate(frames):
-        save_video(fra, path=f'{save_dir}/best', title=f'val_{i}')
-        save_numpy_as_gif(fra, path=f'{save_dir}/best', filename=f'val_{i}')
+    folder_name_to_copy = 'val_checkpoint_{}'.format(checkpoint)
+    src_path = os.path.join(save_dir, folder_name_to_copy)
+    dst_path = os.path.join(best_dir, folder_name_to_copy)
+    if os.path.exists(src_path):
+        shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+    else:
+        raise FileNotFoundError(f"Checkpoint folder not found: {src_path}")
 
 def load_best_results(save_dir):
     """
@@ -183,21 +189,21 @@ def evaluate(agent: Agent, arena: Arena, checkpoint: int) -> bool:
 
 def validate(agent, arena, update_step):
     '''
-        Validate the agent's current performance on the slected validation intial configuration of the arena.
+        Validate the agent's current performance on the selected validation initial configuration of the arena.
 
         This method requires:
             * The agent has `get_writer` method to log the validation results.
             * The arena has `set_val` and `get_val_configs` methods to set the 
               arena to validation mode and get the validation configurations.
     '''
-    val_configs = arena.get_val_configs() 
-    results = []  
-    frames = []          
+    val_configs = arena.get_val_configs()
+    print('val configs len', len(val_configs))
+    results = []          
     for episode_config in tqdm(val_configs, desc="Validating controller in the arena..."):
         _, res = run(agent, arena, 'val', episode_config, checkpoint=update_step)
         results.append(res['evaluation'])
-        frames.append(res['frames'])
-    return results, frames
+    return results
+
 
 def compare_results(results_1, results_2, compare_func):
     return compare_func(results_1, results_2)
@@ -238,12 +244,12 @@ def train_and_evaluate(agent: TrainableAgent, arena: Arena,
             agent.train(validation_interval, [arena])
             agent.save()
             
-            results, frames = validate(agent, arena, u + validation_interval)
+            results = validate(agent, arena, u + validation_interval)
             #print('results', results)
             best_results = load_best_results(agent.save_dir)
             if len(best_results) == 0 or compare_results(results, best_results, arena.compare) > 0:
                 agent.save_best()
-                save_best_results(results, frames, agent.save_dir)
+                save_best_results(results, agent.save_dir,  u + validation_interval)
 
     else:
         agent.train([arena])

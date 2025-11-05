@@ -26,6 +26,8 @@ class Arena(ABC):
         from .dummy_action_tool import DummyActionTool
         self.action_tool = DummyActionTool()
 
+ 
+
     def set_log_dir(self, logdir: str):
         """
         Set the log directory for the logger.
@@ -57,27 +59,41 @@ class Arena(ABC):
 
         self.disp = flg
 
+    def get_num_episodes(self) -> np.int:
+        if self.mode == 'eval':
+            return self.num_eval_trials
+        elif self.mode == 'val':
+            return self.num_val_trials
+        elif self.mode == 'train':
+            return self.num_train_trials
+        else:
+            raise NotImplementedError
+
     
-    @abstractmethod
-    def get_eval_configs(self) -> List[Dict[str, Any]]:
-        """
-        Get configurations for evaluation episodes.
+    def get_eval_configs(self):
+        eval_configs = [
+            {'eid': eid, 'tier': 0, 'save_video': True}
+            for eid in range(self.num_eval_trials)
+        ]
+        
+        return eval_configs
 
-        Returns:
-            List of configurations for evaluation episodes.
-        """
-        raise NotImplementedError
+    def get_train_configs(self):
+        train_configs = [
+            {'eid': eid, 'tier': 0, 'save_video': self.config.get('save_video', False)}
+            for eid in range(self.num_train_trials)
+        ]
+        
+        return train_configs
+
     
-    @abstractmethod
-    def get_val_configs(self) -> List[Dict[str, Any]]:
-        """
-        Get configurations for validation episodes.
-
-        Returns:
-            List of configurations for validation episodes.
-        """
-        raise NotImplementedError
-
+    def get_val_configs(self):
+        val_configs = [
+            {'eid': eid, 'tier': 0, 'save_video': True}
+            for eid in range(self.num_val_trials)
+        ]
+        
+        return val_configs
    
     # Core arena methods
     @abstractmethod

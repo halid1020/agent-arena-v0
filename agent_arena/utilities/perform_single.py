@@ -6,9 +6,13 @@ from .utils import check_memory_usage
 from .visual_utils import save_video, save_numpy_as_gif
 
 def perform_single(arena, agent, mode='eval', episode_config=None,
-    collect_frames=False, end_success=True,
+    collect_frames=False, end_success=True, 
+    save_info=False, save_internal_states=False,
     update_agent_from_arena=lambda ag, ar: None,
     max_steps=None, debug=False):
+    """
+        Return dictionary of lists
+    """
 
     if mode == 'eval':
         arena.set_eval()
@@ -26,14 +30,17 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
             agent.set_eval()
 
     res = {}
-    internal_states = []
-    information_list = []
+    if save_internal_states:
+        internal_states = []
+    if save_info:
+        information_list = []
     actions = []
     phases = []
     action_time = []
     res['evaluation'] = {}
     
     #arena.set_save_control_step_info(collect_frames)
+    frames = None
     if episode_config is not None and episode_config['save_video']:
         frames = []
        
@@ -47,7 +54,8 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     ##################################
 
     information['done'] = False
-    information_list.append(information)
+    if save_info:
+        information_list.append(information)
     agent.init([information])
 
     evals = arena.evaluate()
@@ -73,13 +81,15 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         #print('perform action', action)
         phase = agent.get_phase()[0]
         phases.append(phase)
-        internal_states.append(agent.get_state()[arena.id].copy())
+        if save_internal_states:
+            internal_states.append(agent.get_state()[arena.id].copy())
 
         end_time = time.time()
         elapsed_time = (end_time - start_time)
         action_time.append(elapsed_time)
         information = arena.step(action)
-        information_list.append(information)
+        if save_info:
+            information_list.append(information)
 
         check_memory_usage()
         #print('info keys', information.keys())
@@ -101,11 +111,13 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         actions.append(action)
         evals = arena.evaluate()
         
+        #print('evaluations', evals)
         if debug:
             print('evaluations', evals)
-            frames_ = np.concatenate(frames)
-            save_video(frames_, path='./tmp', title='perform_single')
-            save_numpy_as_gif(frames_, path='./tmp', filename='perform_single')
+            if frames is not None:
+                frames_ = np.concatenate(frames)
+                save_video(frames_, path='./tmp', title='perform_single')
+                save_numpy_as_gif(frames_, path='./tmp', filename='perform_single')
 
         agent.update([information], [action])
         
@@ -120,10 +132,13 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
        
     res['actions'] = actions #np.stack(actions)
     res['action_durations'] = np.asarray(action_time)
-    internal_states.append(agent.get_state()[arena.id].copy())
+    if save_internal_states:
+        internal_states.append(agent.get_state()[arena.id].copy())
     res['phases'] = np.stack(phases)
-    res['information'] = information_list
+    if save_info:
+        res['information'] = information_list
     if episode_config is not None and episode_config['save_video']:
         res['frames'] = np.concatenate(frames, axis=0)
-    res['internal_states'] = internal_states
+    if save_internal_states:
+        res['internal_states'] = internal_states
     return res

@@ -299,7 +299,8 @@ class TrajectoryDataset(Dataset):
 
         ret = {
             'observation': obs,
-            'action': actions
+            'action': actions,
+            'action_steps': end_idx - start_idx
         }
 
         if self.save_goal:

@@ -286,13 +286,17 @@ class DiffusionAdapter(TrainableAgent):
                 #print('add to trajectory')
                 for k, v in observations.items():
                     observations[k] = np.stack(v)
+                skip = False
                 for k, v in actions.items():
                     # print('k', k)
-                    print('action', v)
+                    if len(v) == 0:
+                        skip = True
+                        break
                     actions[k] = np.stack(v)
-                dataset.add_trajectory(observations, actions)
-                qbar.update(1)
-            
+                if not skip:
+                    dataset.add_trajectory(observations, actions)
+                    qbar.update(1)
+                
             episode_id += 1
             episode_id %= arena.get_num_episodes()
 
@@ -562,6 +566,12 @@ class DiffusionAdapter(TrainableAgent):
         ckpt_path = os.path.join(ckpt_path, f'net_{self.update_step}.pt')
         torch.save(self.nets.state_dict(), ckpt_path)
     
+    def save_best(self):
+        ckpt_path = os.path.join(self.save_dir, 'checkpoints')
+        os.makedirs(ckpt_path, exist_ok=True)
+        ckpt_path = os.path.join(ckpt_path, f'net_best.pt')
+        torch.save(self.nets.state_dict(), ckpt_path)
+    
     def load_checkpoint(self, checkpoint):
         #print('loading checkpoint', checkpoint)
         ckpt_path = os.path.join(self.save_dir, 'checkpoints', f'net_{checkpoint}.pt')
@@ -579,7 +589,7 @@ class DiffusionAdapter(TrainableAgent):
         #print('ckpt path', ckpt_path)
         os.makedirs(ckpt_path, exist_ok=True)
         ckpt_files = os.listdir(ckpt_path)
-        ckpt_files = [ckpt for ckpt in ckpt_files if ckpt.endswith('.pt')]
+        ckpt_files = [ckpt for ckpt in ckpt_files if ckpt.endswith('.pt') and ('best' not in ckpt)]
         ckpt_files = sorted(ckpt_files, key=lambda x: int(x.split('_')[1].split('.')[0]))
         
         if len(ckpt_files) == 0:
@@ -587,6 +597,20 @@ class DiffusionAdapter(TrainableAgent):
             return -1
         ckpt_file = ckpt_files[-1]
         ckpt_path = os.path.join(ckpt_path, ckpt_file)
+        self.nets.load_state_dict(torch.load(ckpt_path))
+
+        print(f'Loaded checkpoint: {ckpt_file}')
+        self.loaded = True
+        self.update_step = int(ckpt_file.split('_')[1].split('.')[0])
+        return self.update_step
+
+    def load_best(self):
+        
+        #print('loading checkpoint')
+        ## find the latest checkpoint
+        ckpt_path = os.path.join(self.save_dir, 'checkpoints')
+        
+        ckpt_path = os.path.join(ckpt_path, 'net_best.pt')
         self.nets.load_state_dict(torch.load(ckpt_path))
 
         print(f'Loaded checkpoint: {ckpt_file}')

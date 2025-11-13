@@ -11,6 +11,8 @@ authors = [
 readme = "README.md"
 
 dependencies = [
+    # Core scientific and ML stack
+    "numpy<2.0",  # ensure compatibility with pybullet and other compiled deps
     "pybind11>=2.12.0",
     "ruamel.yaml==0.17.40",
     "seaborn==0.13.2",
@@ -32,6 +34,7 @@ dependencies = [
     "shapely==2.0.6",
     "scikit-learn==1.5.2",
     "pyswarm==0.6",
+    "wandb==0.17.8",
     "transformations==2020.1.1",
     "pybullet==3.2.6",
     "circle-fit",
@@ -50,9 +53,13 @@ dependencies = [
     "pygame==2.6.1",
     "pymunk==6.8.1",
     "gdown==5.2.0",
-    "scipy>=1.10.0",  # downgraded lower bound for Py3.10 compatibility
+    "scipy>=1.10.0",
     "ur-rtde",
-    "pyrealsense2"
+    "pyrealsense2",
+    "omegaconf==2.3.0",  # needed for configuration management
+    "hydra-core==1.3.2",  # NEW: required for hydra_train.py
+    "robosuite==1.4.1",
+    "gymnasium==0.29.1"
 ]
 
 [project.optional-dependencies]

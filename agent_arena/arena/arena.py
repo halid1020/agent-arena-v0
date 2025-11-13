@@ -59,7 +59,7 @@ class Arena(ABC):
 
         self.disp = flg
 
-    def get_num_episodes(self) -> np.int:
+    def get_num_episodes(self) -> np.int32:
         if self.mode == 'eval':
             return self.num_eval_trials
         elif self.mode == 'val':

@@ -87,34 +87,42 @@ def build_logger(name: str, save_dir: str) -> Logger:
     logger = LOGGER[name](save_dir)
     return logger
 
-def save_best_results(results, save_dir, checkpint):
+def save_best_results(results, save_dir, checkpoint):
     """
     Save the best results (a list of dicts) to a JSON file.
 
     Args:
         results (list[dict]): List of result dictionaries to save.
-        save_dir (str): Directory where to save the results. 
-                        Defaults to current working directory.
+        save_dir (str): Directory where to save the results.
     """
 
     save_dir = save_dir or os.getcwd()
-    os.makedirs(f"{save_dir}/best", exist_ok=True)
+    best_path = os.path.join(save_dir, 'best')
+    os.makedirs(best_path, exist_ok=True)
 
-    save_path = os.path.join(save_dir, 'best', "best_results.json")
-    print('save best results to ', save_path)
+    json_file = os.path.join(best_path, "best_results.json")
+    print('Saving best results to', best_path)
 
-    with open(save_path, "w") as f:
+    with open(json_file, "w") as f:
         json.dump(results, f, indent=4)
-    
-    # TODO: 
 
-    folder_name_to_copy = 'val_checkpoint_{}'.format(checkpoint)
+    folder_name_to_copy = f'val_checkpoint_{checkpoint}'
     src_path = os.path.join(save_dir, folder_name_to_copy)
-    dst_path = os.path.join(best_dir, folder_name_to_copy)
-    if os.path.exists(src_path):
-        shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
-    else:
+    dst_path = best_path
+
+    if not os.path.exists(src_path):
         raise FileNotFoundError(f"Checkpoint folder not found: {src_path}")
+
+    # Copy contents safely for Python < 3.8 (no dirs_exist_ok)
+    for item in os.listdir(src_path):
+        s = os.path.join(src_path, item)
+        d = os.path.join(dst_path, item)
+        if os.path.isdir(s):
+            if os.path.exists(d):
+                shutil.rmtree(d)
+            shutil.copytree(s, d)
+        else:
+            shutil.copy2(s, d)
 
 def load_best_results(save_dir):
     """

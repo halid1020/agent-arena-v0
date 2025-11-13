@@ -1,5 +1,5 @@
 import os
-
+import gc
 import math
 import numpy as np
 
@@ -287,23 +287,29 @@ def plot_image_trajectory(obs,
 
 
 ### frames: S * H * W * 3 in RGB numpy, or list of H*W*3 RGB numpys
-def save_video(frames, path='', title='default'):
+
+def save_video(frames, path='', title='default', fps=30):
 
     if isinstance(frames, list):
-        frames = np.stack(frames, axis=0)  # shape (T, H, W, C)
-
-    frames = frames.clip(0, 255).astype(np.uint8)
-    bgr_frames = [cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) for frame in frames]
+        frames = np.asarray(frames, dtype=np.uint8)
+    else:
+        frames = frames.clip(0, 255).astype(np.uint8)
 
     if not os.path.exists(path):
         os.makedirs(path)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     _, H, W, _ = frames.shape
-    writter = cv2.VideoWriter(os.path.join(path, '%s.mp4' % title), fourcc, 30, (W, H))
-    for frame in bgr_frames:
-        writter.write(frame)
-    writter.release()
+    out_path = os.path.join(path, f"{title}.mp4")
+    writer = cv2.VideoWriter(out_path, fourcc, fps, (W, H))
+
+    for frame in frames:
+        writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+
+    writer.release()
+    del frames
+    return out_path
+
 
 def show_image(img, window_name=''):
     # Input image has to be displayable
@@ -313,49 +319,69 @@ def show_image(img, window_name=''):
     cv2.waitKey(1)
 
 
+def save_numpy_as_gif(frames, path, filename, fps=20, scale=1.0, select_frames=1000):
+    filename = os.path.join(path, f"{filename}.gif")
 
-def save_numpy_as_gif(frames, path, filename, fps=200, scale=1.0, select_frames=1000):
-    # from https://github.com/Xingyu-Lin/softgym/blob/master/softgym/utils/visualization.py
-    """Creates a gif given a stack of images using moviepy
-    Notes
-    -----
-    works with current Github version of moviepy (not the pip version)
-    https://github.com/Zulko/moviepy/commit/d4c9c37bc88261d8ed8b5d9b7c317d13b2cdf62e
-    Usage
-    -----
-    >>> X = randn(100, 64, 64)
-    >>> gif('test.gif', X)
-    Parameters
-    ----------
-    filename : string
-        The filename of the gif to write to
-    array : array_like
-        A numpy array that contains a sequence of images
-    fps : int
-        frames per second (default: 10)
-    scale : float
-        how much to rescale each image by (default: 1.0)
-    """
-
-    # ensure that the file has the .gif extension
-    #fname, _ = os.path.splitext(filename)
-    filename = filename + '.gif'
-    filename = os.path.join(path, filename)
     if isinstance(frames, list):
-        frames = np.stack(frames, axis=0)  # shape (T, H, W, C)
+        frames = np.asarray(frames, dtype=np.uint8)
 
-    # copy into the color dimension if the images are black and white
     if frames.ndim == 3:
-        frames = frames[..., np.newaxis] * np.ones(3)
-    ## select 1000 frames across the whole frames includig the beginning and the end
+        frames = np.repeat(frames[..., np.newaxis], 3, axis=-1)
+
     select_frames = min(select_frames, len(frames))
-    frames = frames[::len(frames)//select_frames]
+    step = max(1, len(frames)//select_frames)
+    frames = frames[::step]
 
-
-    # make the moviepy clip
     clip = ImageSequenceClip(list(frames), fps=fps).resize(scale)
     clip.write_gif(filename, fps=fps)
-    return clip
+    clip.close()
+    del clip, frames
+    gc.collect()
+
+    return filename
+
+# def save_numpy_as_gif(frames, path, filename, fps=200, scale=1.0, select_frames=1000):
+#     # from https://github.com/Xingyu-Lin/softgym/blob/master/softgym/utils/visualization.py
+#     """Creates a gif given a stack of images using moviepy
+#     Notes
+#     -----
+#     works with current Github version of moviepy (not the pip version)
+#     https://github.com/Zulko/moviepy/commit/d4c9c37bc88261d8ed8b5d9b7c317d13b2cdf62e
+#     Usage
+#     -----
+#     >>> X = randn(100, 64, 64)
+#     >>> gif('test.gif', X)
+#     Parameters
+#     ----------
+#     filename : string
+#         The filename of the gif to write to
+#     array : array_like
+#         A numpy array that contains a sequence of images
+#     fps : int
+#         frames per second (default: 10)
+#     scale : float
+#         how much to rescale each image by (default: 1.0)
+#     """
+
+#     # ensure that the file has the .gif extension
+#     #fname, _ = os.path.splitext(filename)
+#     filename = filename + '.gif'
+#     filename = os.path.join(path, filename)
+#     if isinstance(frames, list):
+#         frames = np.stack(frames, axis=0)  # shape (T, H, W, C)
+
+#     # copy into the color dimension if the images are black and white
+#     if frames.ndim == 3:
+#         frames = frames[..., np.newaxis] * np.ones(3)
+#     ## select 1000 frames across the whole frames includig the beginning and the end
+#     select_frames = min(select_frames, len(frames))
+#     frames = frames[::len(frames)//select_frames]
+
+
+#     # make the moviepy clip
+#     clip = ImageSequenceClip(list(frames), fps=fps).resize(scale)
+#     clip.write_gif(filename, fps=fps)
+#     return clip
 
 
 

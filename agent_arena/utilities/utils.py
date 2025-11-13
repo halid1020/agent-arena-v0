@@ -251,8 +251,8 @@ def check_memory_usage():
     #print(f"Current memory usage: {memory_percent}%")
 
     # Check if memory usage is above 90%
-    if memory_percent > 90:
-        print("Memory usage is above 90%. Stopping the program.")
+    if memory_percent > 95:
+        print("Memory usage is above 95%. Stopping the program.")
         # You can add additional cleanup or logging steps here if needed
         exit()
 

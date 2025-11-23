@@ -8,7 +8,7 @@ import pkg_resources
 
 import numpy as np
 import pybullet as p
-import pybullet_data
+
 import matplotlib.pyplot as plt
 
 from arena.deformable_raven.src.gripper import Gripper, Suction

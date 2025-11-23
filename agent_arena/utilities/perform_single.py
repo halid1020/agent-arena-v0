@@ -114,7 +114,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         #print('evaluations', evals)
         if debug:
             print('evaluations', evals)
-            if frames is not None:
+            if frames is not None and len(frame) > 0:
                 frames_ = np.concatenate(frames)
                 save_video(frames_, path='./tmp', title='perform_single')
                 save_numpy_as_gif(frames_, path='./tmp', filename='perform_single')
@@ -137,7 +137,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     res['phases'] = np.stack(phases)
     if save_info:
         res['information'] = information_list
-    if episode_config is not None and episode_config['save_video']:
+    if episode_config is not None and episode_config['save_video'] and len(frames) > 0:
         res['frames'] = np.concatenate(frames, axis=0)
     if save_internal_states:
         res['internal_states'] = internal_states

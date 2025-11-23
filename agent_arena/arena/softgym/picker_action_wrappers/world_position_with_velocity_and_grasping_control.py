@@ -4,7 +4,7 @@ class WorldPositionWithVelocityAndGraspingControl():
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
-        self.grasping = False
+        self.grasping = [False, False]
 
     def step(self, env, actions):
         ## this function requires the 
@@ -41,7 +41,7 @@ class WorldPositionWithVelocityAndGraspingControl():
                 
                 control_signal = np.hstack([delta, action[:, 4:5]])
                 #print('control_signal', control_signal)
-                info = env.control_picker(control_signal, process_info=(i == num_step-1))
+                info = env.control_picker(control_signal, process_info=False)#, process_info=(i == num_step-1))
                 curr_pos += delta
                 total_steps += 1
             
@@ -54,24 +54,26 @@ class WorldPositionWithVelocityAndGraspingControl():
     
     def movep(self, env, pos, vel):
         grasp_sign = 1 if not self.grasping else -1
+        grasp_signs = np.where(self.grasping, -1, 1).reshape(2, 1)
+        # TODO grasp_sign = 1 if not self.grasping else -1
         action =  np.concatenate(
             [
                 pos, 
                 np.array([vel]*2).reshape(2, -1),
-                np.array([grasp_sign]*2).reshape(2, -1)
+                grasp_signs
             ],     
             axis=1
         )
         info = self.step(env, [action])
         return info
     
-    def grasp(self, env):
-        self.grasping = True
+    def both_grasp(self, env):
+        self.grasping[0], self.grasping[1] = True, True
         picker_pos = env.get_picker_position()
         #print('picker_pos before grasp', picker_pos)
         return self.movep(env, picker_pos, 0.1)
     
-    def open_gripper(self, env):
-        self.grasping = False
+    def open_both_gripper(self, env):
+        self.grasping[0], self.grasping[1] = False, False
         picker_pos = env.get_picker_position()
         return self.movep(env, picker_pos, 0.1)

@@ -256,6 +256,7 @@ class ClothEnv(Arena):
             }
         self.flatten_obs = None
         self._t = 0  # Reset internal timer
+        self.action_step = 0
         self.last_info = None
         if 'save_video' not in episode_config:
             episode_config['save_video'] = False
@@ -303,6 +304,7 @@ class ClothEnv(Arena):
         self.evaluate_result = None
         info = self.action_tool.step(self, action)
         self.info = self._process_info(info)
+        self.action_step += 1
         return self.info
 
     def _process_info(self, info):
@@ -314,6 +316,7 @@ class ClothEnv(Arena):
         info['observation']['depth'] = cv2.resize(info['observation']['depth'], (H, W), interpolation=cv2.INTER_LINEAR).reshape(H, W, -1)
         info['observation']['mask'] = self._get_cloth_mask(resolution=(H, W))
         info['observation']['particle_position'] = self._get_particle_positions()
+        info['observation']['action_step'] = self.action_step
         info['goal'] = self.task.get_goal(self)
         if 'contour' in self.info_keys:
             info['observation']['contour'] = self.get_contour(resolution=(H, W))

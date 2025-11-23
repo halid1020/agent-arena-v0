@@ -73,3 +73,5 @@ torch = [
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+# TODO: add AGENT_ARENA_PATH

@@ -10,7 +10,7 @@ from .utilities.logger.logger_interface import Logger
 from .utilities.logger.standard_logger import StandardLogger
 
 from .api import build_arena, \
-    train_and_evaluate, build_transform, evaluate,\
+    train_and_evaluate_single, train_plural_eval_single, build_transform, evaluate,\
     retrieve_config, build_agent, run, retrieve_config_from_path,\
     register_agent
 

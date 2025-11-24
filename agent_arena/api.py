@@ -1,6 +1,6 @@
 import os
 import typing
-from typing import Optional
+from typing import Optional, List
 from multipledispatch import dispatch
 import logging
 import json
@@ -216,7 +216,7 @@ def validate(agent, arena, update_step):
 def compare_results(results_1, results_2, compare_func):
     return compare_func(results_1, results_2)
     
-def train_and_evaluate(agent: TrainableAgent, arena: Arena,
+def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
                        validation_interval: int, total_update_steps: int, eval_checkpoint: int) -> bool:
     '''
         Train the agent on the selected arena and evaluate the agent's performance on the selected 
@@ -266,3 +266,37 @@ def train_and_evaluate(agent: TrainableAgent, arena: Arena,
     logging.info('\n[ag_ar.train_and_evaluate] Finished training Agent "{}"'.format(agent.get_name()))
 
     evaluate(agent, arena, checkpoint=eval_checkpoint)
+
+
+def train_plural_eval_single(
+        agent: TrainableAgent, train_arenas: List[Arena], eval_arena: Arena, val_arena: Arena,
+        validation_interval: int, total_update_steps: int, eval_checkpoint: int) -> bool:
+    '''
+        Train a single agent on the list of arenas and evaluate the agent's performance on the single selected 
+        evaluation configurations of the arena.
+    '''
+
+    if validation_interval > 0:
+        assert total_update_steps > 0, 'Total update steps must be greater than 0'                    
+        start_update_step = agent.load() #If no checkpint, it will return 0 --> no training
+
+        if eval_checkpoint >= 0:
+            total_update_steps = min(total_update_steps, eval_checkpoint)
+
+        #print('total_update_steps', total_update_steps)
+        for u in range(start_update_step, int(total_update_steps), validation_interval):
+            #print('u', u)
+            agent.train(validation_interval, train_arenas)
+            agent.save()
+            
+            results = validate(agent, val_arena, u + validation_interval)
+            #print('results', results)
+            best_results = load_best_results(agent.save_dir)
+            if len(best_results) == 0 or compare_results(results, best_results, val_arena.compare) > 0:
+                agent.save_best()
+                save_best_results(results, agent.save_dir,  u + validation_interval)
+
+    else:
+        agent.train(train_arenas)
+
+    evaluate(agent, eval_arena, checkpoint=eval_checkpoint)

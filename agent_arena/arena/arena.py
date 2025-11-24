@@ -20,13 +20,18 @@ class Arena(ABC):
         self.random_reset = True
         self.logger = DummyLogger()
         self.eid = 0
+        self.action_horizon = config.action_horizon
 
         from .dummy_task import DummyTask
         self.task = DummyTask()
         from .dummy_action_tool import DummyActionTool
         self.action_tool = DummyActionTool()
 
- 
+    def set_id(self, id):
+        self.aid = id
+    
+    def get_id(self):
+        return self.aid
 
     def set_log_dir(self, logdir: str):
         """
@@ -48,6 +53,16 @@ class Arena(ABC):
         """
 
         return self.name
+    
+    def get_num_episodes(self):
+        if self.mode == 'eval':
+            return self.num_eval_trials
+        elif self.mode == 'val':
+            return self.num_val_trials
+        elif self.mode == 'train':
+            return self.num_train_trials
+        else:
+            raise NotImplementedError
     
     def set_disp(self, flg: bool):
         """
@@ -124,7 +139,6 @@ class Arena(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def get_frames(self) -> List[np.ndarray]:
         """
         Get the list of frames collected so far.
@@ -132,24 +146,13 @@ class Arena(ABC):
         Returns:
             List[np.ndarray]: List of frames.
         """
-        raise NotImplementedError
+        return self.video_frames
     
-    @abstractmethod
     def clear_frames(self):
         """
         Clear the list of collected frames.
         """
-        raise NotImplementedError
-    
-    @abstractmethod
-    def get_goal(self) -> InformationType:
-        """
-        Get the goal of the current episode.
-
-        Returns:
-            InformationType: Information about the current goal.
-        """
-        raise NotImplementedError
+        self.video_frames.clear()
     
     @abstractmethod
     def get_action_space() -> ActionSpaceType:
@@ -199,6 +202,10 @@ class Arena(ABC):
         """
         raise NotImplementedError
     
+    @abstractmethod
+    def compare(self, result_1, result_2):
+        raise NotImplementedError
+    
     def evaluate(self) -> Dict[str, Any]:
         """
         Evaluate the arena and return metrics.
@@ -208,7 +215,6 @@ class Arena(ABC):
         """
         return self.task.evaluate(self, metrics={})
     
-    @abstractmethod
     def get_action_horizon(self) -> int:
         """
         Get the action horizon (length of an episode) of the arena.
@@ -216,7 +222,7 @@ class Arena(ABC):
         Returns:
             int: The action horizon.
         """
-        raise NotImplementedError
+        return self.action_horizon
     
     def get_num_episodes(self) -> int:
         """
@@ -244,6 +250,9 @@ class Arena(ABC):
             action_tool: The action tool to be set.
         """
         self.action_tool = action_tool
+
+    def get_goal(self):
+        return self.task.get_goal()
     
     def success(self):
         return self.task.success(self)
@@ -263,3 +272,6 @@ class Arena(ABC):
 
     def compare(self, results_1, results_2):
         return 0
+    
+    def get_action_horizon(self):
+        return self.horizon

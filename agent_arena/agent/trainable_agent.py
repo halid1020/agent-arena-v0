@@ -3,13 +3,14 @@ from typing import Optional, List
 from ..arena.arena import Arena
 from ..utilities.utils import TrainWriter
 from .agent import Agent
+from .wandb_logger import WandbLogger
 
 class TrainableAgent(Agent):
     def __init__(self, config):
         super().__init__(config, )
         self.mode = 'train'
         self.name = 'trainable_agent'
-        self.train_writer: TrainWriter = TrainWriter()
+        #self.train_writer: TrainWriter = TrainWriter()
         self.loaded = False
 
     def train(self, update_steps: int, arenas: Optional[List[Arena]] = None) -> bool:
@@ -24,7 +25,14 @@ class TrainableAgent(Agent):
             bool: True if the training is successful, False otherwise.
         """
         return False
-
+    
+    def set_log_dir(self, logdir):
+        self.save_dir = logdir
+        self.logger = WandbLogger(logdir,
+            self.config.project_name,
+            name=self.config.exp_name,
+            config=dict(self.config))
+        
     def load(self, path: Optional[str] = None) -> int:
         """
         Load the latest agent checkpoint from the specified path or the logger's log directory.

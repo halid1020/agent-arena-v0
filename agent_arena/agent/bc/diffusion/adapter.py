@@ -21,7 +21,6 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 from agent_arena.agent.oracle.builder import OracleBuilder
 from agent_arena import TrainableAgent
 from agent_arena.utilities.networks.utils import np_to_ts, ts_to_np
-from agent_arena.utilities.logger.logger_interface import Logger
 from matplotlib import pyplot as plt
 from agent_arena.utilities.visual_utils \
     import draw_pick_and_place
@@ -133,7 +132,7 @@ class DiffusionAdapter(TrainableAgent):
         self.name = 'diffusion'
         self.config = config
         #self.save_dir = config.save_dir
-        self.logger = Logger()
+        #self.logger = Logger()
         self.internal_states = {}
         self.buffer_actions = {}
         self.last_actions = {}
@@ -223,6 +222,7 @@ class DiffusionAdapter(TrainableAgent):
             actions = {act_type: [] for act_type in dataset.action_types}
 
             policy.reset([arena.id])
+            print('[diffusion] reset episode id', episode_id)
             info = arena.reset(train_configs[episode_id])
             policy.init(info)
             info['reward'] = 0
@@ -424,11 +424,11 @@ class DiffusionAdapter(TrainableAgent):
 
         for i in pbar:
 
-            print('i', i)
+            # print('i', i)
             # get a batch from dataloader
             nbatch = next(iter(self.dataloader))
-            print('nbatch action max', nbatch['action']['default'].max())
-            print('nbatch action min', nbatch['action']['default'].min())
+            # print('nbatch action max', nbatch['action']['default'].max())
+            # print('nbatch action min', nbatch['action']['default'].min())
             # print('nbatch keys', nbatch.keys())
 
             # if True:
@@ -445,7 +445,7 @@ class DiffusionAdapter(TrainableAgent):
             #     plt.imsave('tmp/pre_pnp_rgb.png', pnp_rgb)
 
             if self.config.dataset_mode == 'diffusion':
-                nbatch = self.data_augmenter(nbatch, train=True)
+                nbatch = self.data_augmenter(nbatch, train=True, device=self.device)
             else:
                 obs = nbatch['observation']
                 action = nbatch['action']['default']
@@ -453,7 +453,7 @@ class DiffusionAdapter(TrainableAgent):
                 nbatch = {v: k for v, k in obs.items()}
                 nbatch['action'] = action.reshape(*action.shape[:2], -1)
                 #print('action after shape', nbatch['action'] .shape)
-                nbatch = self.data_augmenter(nbatch, train=True)
+                nbatch = self.data_augmenter(nbatch, train=True, device=self.device)
             print('here')
 
             # print('nbatch rgb shape', nbatch['rgb'].shape)
@@ -550,7 +550,7 @@ class DiffusionAdapter(TrainableAgent):
 
             ## write loss value to tqdm progress bar
             pbar.set_description(f"Training (loss: {loss.item():.4f})")
-            self.train_writer.add_scalar('train/loss', loss.item(), self.update_step)
+            self.logger.log({'train/loss': loss.item()}, step=self.update_step)
             self.update_step += 1
 
     def set_log_dir(self, logdir):
@@ -864,7 +864,8 @@ class DiffusionAdapter(TrainableAgent):
             input_data['vector_state'] = info['observation']['vector_state']\
                 .reshape(1, 1, *info['observation']['vector_state'].shape)
         
-        input_data = self.data_augmenter(input_data, train=False) 
+        print('input data keys', input_data.keys())
+        input_data = self.data_augmenter(input_data, train=False, device=self.device) 
                                     #sim2real=info['sim2real'] if 'sim2real' in info else False)
         
         vis = input_data[self.config.input_obs].squeeze(0).squeeze(0)

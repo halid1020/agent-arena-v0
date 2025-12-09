@@ -63,6 +63,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
 
     for k, v in evals.items():
         res['evaluation'][k] = [v]
+    res['evaluation']['success'] = [0]
 
     update_agent_from_arena(agent, arena)
 
@@ -123,11 +124,12 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         
         done = information['done'] or agent.terminate()[arena.id]
         done = done or (max_steps is not None and steps >= max_steps)
-
+        success = agent.success()[arena.id] or arena.success()
         if end_success:
-            done = done or agent.success()[arena.id] or arena.success() 
+            done = done or success  
         for k, v in evals.items():
             res['evaluation'][k].append(v)
+        res['evaluation']['success'].append(int(success)) # convert to int because of json dumping not accepting bool.
 
        
     res['actions'] = actions #np.stack(actions)

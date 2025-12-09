@@ -5,6 +5,7 @@ from multipledispatch import dispatch
 import logging
 import json
 import shutil
+import numpy as np
 
 from dotmap import DotMap
 import ruamel.yaml as yaml
@@ -195,6 +196,53 @@ def evaluate(agent: Agent, arena: Arena, checkpoint: int) -> bool:
     return True
 
 
+
+def log_validation_metrics(results, agent, step):
+    """
+    results: list of dicts.
+        each dict: { metric_name -> list_of_values_over_steps }
+    """
+
+    # ----- EPISODE LEVEL METRICS -----
+
+    # success: assume metric 'success' is 0/1 at end of episode
+    success_values = []
+    episode_lengths = []
+
+    for res in results:
+        # last entry per episode
+        success_values.append(int(res['success'][-1]))
+        # episode length as number of steps
+        episode_lengths.append(len(next(iter(res.values()))))
+
+    success_rate = float(np.mean(success_values)) if success_values else 0.0
+    avg_ep_len = float(np.mean(episode_lengths))
+    std_ep_len = float(np.std(episode_lengths))
+
+    # log episode metrics
+    agent.logger.log({
+        "val/success_rate": success_rate,
+        "val/avg_episode_length": avg_ep_len,
+        "val/std_episode_length": std_ep_len,
+    }, step=step)
+
+    # ----- STEP-WISE METRIC STATS -----
+
+    # for each metric, compute avg/std of the last step values across episodes
+    last_step_stats = {}
+
+    for metric_name in results[0].keys():  # assume all have same keys
+        vals = []
+        for res in results:
+            if metric_name in res:
+                vals.append(res[metric_name][-1])
+
+        if len(vals) > 0:
+            last_step_stats[f"val/{metric_name}_last_mean"] = float(np.mean(vals))
+            last_step_stats[f"val/{metric_name}_last_std"] = float(np.std(vals))
+
+    agent.logger.log(last_step_stats, step=step)
+
 def validate(agent, arena, update_step):
     '''
         Validate the agent's current performance on the selected validation initial configuration of the arena.
@@ -205,11 +253,12 @@ def validate(agent, arena, update_step):
               arena to validation mode and get the validation configurations.
     '''
     val_configs = arena.get_val_configs()
-    print('val configs len', len(val_configs))
+    print(f'[agent-arena] Validation episode configs size {len(val_configs)} at checkpoint {update_step}')
     results = []          
     for episode_config in tqdm(val_configs, desc="Validating controller in the arena..."):
         _, res = run(agent, arena, 'val', episode_config, checkpoint=update_step)
         results.append(res['evaluation'])
+    log_validation_metrics(results, agent, update_step)
     return results
 
 
@@ -234,11 +283,8 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
               arena to validation mode and get the validation configurations.
     '''
 
-    logging.info('\n[ag_ar.train_and_evaluate] Training Agent "{}"'.format(agent.get_name()))
-    print('action horizon', arena.get_action_horizon())
-    
+    print('\n[agent-arena] Training "{}" agent ...'.format(agent.get_name()))
     #validate(agent, arena, 0)
-
     if validation_interval > 0:
         assert total_update_steps > 0, 'Total update steps must be greater than 0'                    
         start_update_step = agent.load() #If no checkpint, it will return 0 --> no training
@@ -246,14 +292,14 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
         if eval_checkpoint >= 0:
             total_update_steps = min(total_update_steps, eval_checkpoint)
 
-        #print('total_update_steps', total_update_steps)
-        for u in range(start_update_step, total_update_steps, validation_interval):
-            #print('u', u)
+      
+        for u in range(start_update_step, int(total_update_steps), validation_interval):
+            arena.set_train()
             agent.train(validation_interval, [arena])
             agent.save()
             
             results = validate(agent, arena, u + validation_interval)
-            #print('results', results)
+
             best_results = load_best_results(agent.save_dir)
             if len(best_results) == 0 or compare_results(results, best_results, arena.compare) > 0:
                 agent.save_best()
@@ -263,7 +309,7 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
         agent.train([arena])
 
     
-    logging.info('\n[ag_ar.train_and_evaluate] Finished training Agent "{}"'.format(agent.get_name()))
+    print('\n[agent-arena] Finished training Agent "{}"'.format(agent.get_name()))
 
     evaluate(agent, arena, checkpoint=eval_checkpoint)
 

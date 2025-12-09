@@ -29,6 +29,7 @@ class Agent(ABC):
         self.logger.set_log_dir(logdir)
         print("Log directory for the agent is set to {}".format(logdir))
 
+
     def reset(self, arena_ids: List[ArenaIdType]) -> List[bool]:
         """
         Reset the agent before a new trial for the given arena_ids.

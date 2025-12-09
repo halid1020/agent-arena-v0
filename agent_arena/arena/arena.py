@@ -20,12 +20,13 @@ class Arena(ABC):
         self.random_reset = True
         self.logger = DummyLogger()
         self.eid = 0
-        self.action_horizon = config.action_horizon
+        self.action_horizon = config.get('action_horizon', -1)
 
         from .dummy_task import DummyTask
         self.task = DummyTask()
         from .dummy_action_tool import DummyActionTool
         self.action_tool = DummyActionTool()
+        self.aid = -1
 
     def set_id(self, id):
         self.aid = id
@@ -274,4 +275,4 @@ class Arena(ABC):
         return 0
     
     def get_action_horizon(self):
-        return self.horizon
+        return self.action_horizon

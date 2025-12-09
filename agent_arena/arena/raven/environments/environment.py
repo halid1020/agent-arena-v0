@@ -17,6 +17,10 @@ from ..utils import pybullet_utils
 from ..utils import utils
 
 import pybullet as p
+if not os.environ.get("DISPLAY"):
+    os.environ["PYBULLET_EGL"] = "1"
+else:
+    os.environ["PYBULLET_EGL"] = "0"
 
 PLACE_STEP = 0.0003
 PLACE_DELTA_THRESHOLD = 0.005

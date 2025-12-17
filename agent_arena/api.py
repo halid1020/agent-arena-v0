@@ -90,23 +90,31 @@ def build_logger(name: str, save_dir: str) -> Logger:
 
 def save_best_results(results, save_dir, checkpoint):
     """
-    Save the best results (a list of dicts) to a JSON file.
+    Save the best results (a list of dicts) and checkpoint id.
 
     Args:
         results (list[dict]): List of result dictionaries to save.
         save_dir (str): Directory where to save the results.
+        checkpoint (int or str): Checkpoint identifier.
     """
 
     save_dir = save_dir or os.getcwd()
     best_path = os.path.join(save_dir, 'best')
     os.makedirs(best_path, exist_ok=True)
 
+    # ---- save results ----
     json_file = os.path.join(best_path, "best_results.json")
-    print('Saving best results to', best_path)
+    print('[agent-arena] Saving best results to', best_path)
 
     with open(json_file, "w") as f:
         json.dump(results, f, indent=4)
 
+    # ---- save checkpoint id ----
+    checkpoint_file = os.path.join(best_path, "checkpoint.txt")
+    with open(checkpoint_file, "w") as f:
+        f.write(str(checkpoint) + "\n")
+
+    # ---- copy checkpoint folder ----
     folder_name_to_copy = f'val_checkpoint_{checkpoint}'
     src_path = os.path.join(save_dir, folder_name_to_copy)
     dst_path = best_path
@@ -114,7 +122,6 @@ def save_best_results(results, save_dir, checkpoint):
     if not os.path.exists(src_path):
         raise FileNotFoundError(f"Checkpoint folder not found: {src_path}")
 
-    # Copy contents safely for Python < 3.8 (no dirs_exist_ok)
     for item in os.listdir(src_path):
         s = os.path.join(src_path, item)
         d = os.path.join(dst_path, item)
@@ -149,7 +156,8 @@ def load_best_results(save_dir):
 
 
 def run(agent: Agent, arena: Arena, mode:str, 
-        episode_config: dict, checkpoint: int):
+        episode_config: dict, checkpoint: int,
+        policy_terminate: bool=True, env_success_stop: bool=True):
     
     
     print(f'run {mode} episode_config', episode_config)
@@ -159,7 +167,8 @@ def run(agent: Agent, arena: Arena, mode:str,
         return
    
     res = perform_single(arena, agent, mode=mode, episode_config=episode_config,
-                collect_frames=episode_config['save_video'])
+                collect_frames=episode_config['save_video'], save_info=True,
+                policy_terminate=policy_terminate, env_success_stop=env_success_stop)
     
     if mode == 'eval':
         filename = 'eval_checkpoint_{}'.format(checkpoint)
@@ -173,7 +182,8 @@ def run(agent: Agent, arena: Arena, mode:str,
 
     return True, res
 
-def evaluate(agent: Agent, arena: Arena, checkpoint: int) -> bool:
+def evaluate(agent: Agent, arena: Arena, checkpoint: int, 
+             policy_terminate: bool=True, env_success_stop: bool=True) -> bool:
 
     #arena.set_eval()
     
@@ -191,7 +201,8 @@ def evaluate(agent: Agent, arena: Arena, checkpoint: int) -> bool:
 
     for episode_config in tqdm(env_eval_configs):
         #print('checkpoint', checkpoint)
-        run(agent, arena, 'eval', episode_config, checkpoint=checkpoint)
+        run(agent, arena, 'eval', episode_config, checkpoint=checkpoint, 
+            policy_terminate=policy_terminate, env_success_stop=env_success_stop)
     
     return True
 
@@ -255,7 +266,7 @@ def validate(agent, arena, update_step):
     val_configs = arena.get_val_configs()
     print(f'[agent-arena] Validation episode configs size {len(val_configs)} at checkpoint {update_step}')
     results = []          
-    for episode_config in tqdm(val_configs, desc="Validating controller in the arena..."):
+    for episode_config in tqdm(val_configs, desc="[agent-arena] Validating controller in the arena..."):
         _, res = run(agent, arena, 'val', episode_config, checkpoint=update_step)
         results.append(res['evaluation'])
     log_validation_metrics(results, agent, update_step)
@@ -321,7 +332,7 @@ def train_plural_eval_single(
         Train a single agent on the list of arenas and evaluate the agent's performance on the single selected 
         evaluation configurations of the arena.
     '''
-
+    #validate(agent, val_arena, 0)
     if validation_interval > 0:
         assert total_update_steps > 0, 'Total update steps must be greater than 0'                    
         start_update_step = agent.load() #If no checkpint, it will return 0 --> no training

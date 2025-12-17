@@ -224,7 +224,7 @@ class WandbLogger(Logger):
 
     def write(self, fps=False, step=False):
         if not step:
-            step = self.step
+            step = self.update_step
 
         scalars = list(self._scalars.items())
         if fps:

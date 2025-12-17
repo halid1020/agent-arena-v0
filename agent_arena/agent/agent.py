@@ -12,7 +12,7 @@ class Agent(ABC):
         self.config: DotMap = config
         self.name = "agent"
         self.internal_states: Dict[ArenaIdType, InformationType] = {}
-        self.logger = DummyLogger()
+        
         
 
     def get_name(self) -> str:
@@ -26,6 +26,7 @@ class Agent(ABC):
         Args:
             logdir: The path to the log directory.
         """
+        self.logger = DummyLogger()
         self.logger.set_log_dir(logdir)
         print("Log directory for the agent is set to {}".format(logdir))
 

@@ -6,9 +6,10 @@ from .utils import check_memory_usage
 from .visual_utils import save_video, save_numpy_as_gif
 
 def perform_single(arena, agent, mode='eval', episode_config=None,
-    collect_frames=False, end_success=True, 
+    collect_frames=False,
     save_info=False, save_internal_states=False,
     update_agent_from_arena=lambda ag, ar: None,
+    env_success_stop=True, policy_terminate=True,
     max_steps=None, debug=False):
     """
         Return dictionary of lists
@@ -122,10 +123,12 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
 
         agent.update([information], [action])
         
-        done = information['done'] or agent.terminate()[arena.id]
+        done = information['done']
+        if policy_terminate:
+            done |= agent.terminate()[arena.id]
         done = done or (max_steps is not None and steps >= max_steps)
         success = agent.success()[arena.id] or arena.success()
-        if end_success:
+        if env_success_stop:
             done = done or success  
         for k, v in evals.items():
             res['evaluation'][k].append(v)

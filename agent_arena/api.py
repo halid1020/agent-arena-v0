@@ -1,8 +1,6 @@
 import os
 import typing
 from typing import Optional, List
-from multipledispatch import dispatch
-import logging
 import json
 import shutil
 import numpy as np
@@ -21,8 +19,6 @@ from agent_arena.registration.logger import LOGGER
 from agent_arena.utilities.perform_single import perform_single
 from agent_arena import TrainableAgent, Agent, Arena
 from agent_arena.utilities.logger.logger_interface import Logger
-from agent_arena.utilities.verbose import Verbose
-from agent_arena.utilities.visual_utils import save_video, save_numpy_as_gif
 
 # Create Enum for Verbose
 
@@ -160,7 +156,7 @@ def run(agent: Agent, arena: Arena, mode:str,
         policy_terminate: bool=True, env_success_stop: bool=True):
     
     
-    print(f'run {mode} episode_config', episode_config)
+    print(f'[agent-arena, run] Run mode {mode} on episode_config', episode_config)
     
     eval_filename = 'eval_checkpoint_{}'.format(checkpoint)
     if mode == 'eval' and arena.logger.check_exist(episode_config, eval_filename):
@@ -187,7 +183,7 @@ def evaluate(agent: Agent, arena: Arena, checkpoint: int,
 
     #arena.set_eval()
     
-    logging.info('[ag_ar.evaluate] Start evaluating Agent "{}" on\n     Arena "{}"'.\
+    print('[agent-arena, evaluate] Start evaluating Agent "{}" on\n     Arena "{}"'.\
             format(agent.get_name(), arena.get_name()))
     
     env_eval_configs = arena.get_eval_configs()
@@ -254,7 +250,7 @@ def log_validation_metrics(results, agent, step):
 
     agent.logger.log(last_step_stats, step=step)
 
-def validate(agent, arena, update_step):
+def validate(agent, arena, update_step, policy_terminate=True, env_success_stop=True):
     '''
         Validate the agent's current performance on the selected validation initial configuration of the arena.
 
@@ -264,10 +260,11 @@ def validate(agent, arena, update_step):
               arena to validation mode and get the validation configurations.
     '''
     val_configs = arena.get_val_configs()
-    print(f'[agent-arena] Validation episode configs size {len(val_configs)} at checkpoint {update_step}')
+    print(f'[agent-arena, validate] Validation episode configs size {len(val_configs)} at checkpoint {update_step}')
     results = []          
     for episode_config in tqdm(val_configs, desc="[agent-arena] Validating controller in the arena..."):
-        _, res = run(agent, arena, 'val', episode_config, checkpoint=update_step)
+        _, res = run(agent, arena, 'val', episode_config, checkpoint=update_step, 
+                     policy_terminate=policy_terminate, env_success_stop=env_success_stop)
         results.append(res['evaluation'])
     log_validation_metrics(results, agent, update_step)
     return results
@@ -277,7 +274,8 @@ def compare_results(results_1, results_2, compare_func):
     return compare_func(results_1, results_2)
     
 def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
-                       validation_interval: int, total_update_steps: int, eval_checkpoint: int) -> bool:
+                       validation_interval: int, total_update_steps: int, eval_checkpoint: int,
+                       policy_terminate=True, env_success_stop=True) -> bool:
     '''
         Train the agent on the selected arena and evaluate the agent's performance on the selected 
         evaluation configurations of the arena.
@@ -294,7 +292,7 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
               arena to validation mode and get the validation configurations.
     '''
 
-    print('\n[agent-arena] Training "{}" agent ...'.format(agent.get_name()))
+    print('\n[agent-arena, train_and_evaluate_single] Training "{}" agent ...'.format(agent.get_name()))
     #validate(agent, arena, 0)
     if validation_interval > 0:
         assert total_update_steps > 0, 'Total update steps must be greater than 0'                    
@@ -309,7 +307,8 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
             agent.train(validation_interval, [arena])
             agent.save()
             
-            results = validate(agent, arena, u + validation_interval)
+            results = validate(agent, arena, u + validation_interval, 
+                               policy_terminate=policy_terminate, env_success_stop=env_success_stop)
 
             best_results = load_best_results(agent.save_dir)
             if len(best_results) == 0 or compare_results(results, best_results, arena.compare) > 0:
@@ -320,9 +319,10 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
         agent.train([arena])
 
     
-    print('\n[agent-arena] Finished training Agent "{}"'.format(agent.get_name()))
+    print('\n[agent-arena, train_and_evaluate_single] Finished training Agent "{}"'.format(agent.get_name()))
 
-    evaluate(agent, arena, checkpoint=eval_checkpoint)
+    evaluate(agent, arena, checkpoint=eval_checkpoint, 
+             policy_terminate=policy_terminate, env_success_stop=env_success_stop)
 
 
 def train_plural_eval_single(

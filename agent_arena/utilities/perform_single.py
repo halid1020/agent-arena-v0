@@ -59,11 +59,11 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         information_list.append(information)
     agent.init([information])
 
-    evals = arena.evaluate()
+    evals = information['evaluation']
 
 
     for k, v in evals.items():
-        res['evaluation'][k] = [v]
+        res['evaluation'][k] = [round(v, 4)]
     res['evaluation']['success'] = [0]
 
     update_agent_from_arena(agent, arena)
@@ -115,7 +115,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         
         #print('evaluations', evals)
         if debug:
-            print('evaluations', evals)
+            print('[agent-arena, perform_single] evaluations', evals)
             if frames is not None and len(frame) > 0:
                 frames_ = np.concatenate(frames)
                 save_video(frames_, path='./tmp', title='perform_single')
@@ -131,7 +131,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         if env_success_stop:
             done = done or success  
         for k, v in evals.items():
-            res['evaluation'][k].append(v)
+            res['evaluation'][k].append(round(v, 4))
         res['evaluation']['success'].append(int(success)) # convert to int because of json dumping not accepting bool.
 
        

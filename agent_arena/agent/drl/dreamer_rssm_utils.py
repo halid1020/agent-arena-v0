@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-from agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 
 
 def get_feat(state, config):

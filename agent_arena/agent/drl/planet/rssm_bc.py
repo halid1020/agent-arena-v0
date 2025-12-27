@@ -3,7 +3,7 @@ import torch
 from torch.nn import functional as F
 
 from agent.algorithm.dreamer_rssm import *
-from agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 from agent.planet.rssm import RSSM
 from agent.behaviour_cloning.algo import BehaviourCloning
 import api as ag_ar

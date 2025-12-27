@@ -3,7 +3,7 @@ import torchvision
 import torch.nn.functional as F
 import numpy as np
 
-from agent_arena.agent.utilities.torch_utils import np_to_ts, ts_to_np
+from agent_arena.torch_utils import np_to_ts, ts_to_np
 
 
 def preprocess_rgb(observation, bit_depth=5, noise_factor=0.0):

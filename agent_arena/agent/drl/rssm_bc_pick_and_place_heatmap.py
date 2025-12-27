@@ -10,7 +10,7 @@ from pathlib import Path
 from dotmap import DotMap
 
 from agent.algorithm.dreamer_rssm import *
-from agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 # from logger.visualisation_utils import *
 from agent.algorithm.rssm_bc import RSSM_BC
 # from agent.transformations.pick_and_place_heatmap_transformer import get_action_from_heatmap, create_heatmap

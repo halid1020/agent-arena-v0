@@ -3,7 +3,7 @@ class Logger():
     def __init__(self):
         self.log_dir = './tmp'
     
-    def set_log_dir(self, log_dir):
+    def set_log_dir(self, log_dir, project_name, exp_name):
         self.log_dir = log_dir
 
     def __call__(self, episode_config, result, filename=None):

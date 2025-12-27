@@ -16,7 +16,7 @@ from torch.distributions.kl import kl_divergence
 from torch.distributions import Normal
 import logging
 
-from agent_arena.agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 from agent_arena.registration.dataset import *
 from agent_arena.agent.oracle.builder import OracleBuilder
 from agent_arena.utilities.visual_utils import plot_pick_and_place_trajectory

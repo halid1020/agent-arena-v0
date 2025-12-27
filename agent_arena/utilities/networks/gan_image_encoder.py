@@ -1,4 +1,4 @@
-from agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 from utilities.networks.residual_block import ResidualBlock
 
 class GANImageEncoder(nn.Module):

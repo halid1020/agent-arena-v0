@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import random
 
-from agent_arena.agent.utilities.torch_utils import np_to_ts, ts_to_np
+from agent_arena.torch_utils import np_to_ts, ts_to_np
 from .utils import preprocess_rgb, postprocess_rgb, gaussian_kernel
 
 

@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-from agent_arena.agent.utilities.torch_utils import ts_to_np
+from agent_arena.torch_utils import ts_to_np
 from agent_arena.utilities.transform.pick_and_place_transformer import PickAndPlaceTransformer
 
 def gaussian_kernel(size, sigma):

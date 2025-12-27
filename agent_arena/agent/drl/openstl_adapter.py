@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from utilities.torch_utils import *
+from agent_arena.torch_utils import *
 from tqdm import tqdm
 
 from openstl.api import BaseExperiment

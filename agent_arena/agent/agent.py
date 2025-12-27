@@ -19,7 +19,7 @@ class Agent(ABC):
         """Return the name of the agent. This will be used but not limited for logging."""
         return self.name
 
-    def set_log_dir(self, logdir: Any) -> None:
+    def set_log_dir(self, logdir: Any, project_name: str, exp_name: str) -> None:
         """
         Set the log directory for the logger.
         
@@ -27,7 +27,7 @@ class Agent(ABC):
             logdir: The path to the log directory.
         """
         self.logger = DummyLogger()
-        self.logger.set_log_dir(logdir)
+        self.logger.set_log_dir(logdir, project_name, exp_name)
         print("Log directory for the agent is set to {}".format(logdir))
 
 

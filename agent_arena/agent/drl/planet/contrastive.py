@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from .networks import ImageEncoder
 # from registration.data_transformer import DATA_TRANSFORMER
-from agent_arena.agent.utilities.torch_utils import soft_update_params
+from agent_arena.torch_utils import soft_update_params
 
 class ContrastiveEncoder(nn.Module):
     """

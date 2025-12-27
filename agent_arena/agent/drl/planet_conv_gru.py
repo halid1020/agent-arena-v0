@@ -16,7 +16,7 @@ from torch.nn import functional as F
 import torch.distributions as td
 import torchvision
 
-from agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 # from logger.visualisation_utils import plot_trajectory
 from torch.autograd import Variable
 

@@ -1,5 +1,5 @@
 import torch.distributions as td
-from agent_arena.agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 
 
 def trajectory_return(trajectory, agent):

@@ -10,7 +10,7 @@ from torch import nn
 from torch.nn import functional as F
 import torch.distributions as td
 
-from agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 from agent.utilities.torch_networks import *
 from agent.algorithm.dreamer_rssm_utils import *
 # from logger.visualisation_utils import *

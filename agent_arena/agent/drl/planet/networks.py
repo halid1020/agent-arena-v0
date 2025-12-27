@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from agent_arena.agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 
 class ImageDecoder(nn.Module):
         __constants__ = ['embedding_size', 'image_dim']

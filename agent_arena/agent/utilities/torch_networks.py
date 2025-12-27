@@ -6,7 +6,7 @@ from torch import nn, optim
 from torch.nn import functional as F
 import torch.distributions as td
 
-from agent.utilities.torch_utils import *
+from agent_arena.torch_utils import *
 
 class ActionHead(nn.Module):
 

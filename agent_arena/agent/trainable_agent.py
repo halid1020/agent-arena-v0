@@ -26,11 +26,11 @@ class TrainableAgent(Agent):
         """
         return False
     
-    def set_log_dir(self, logdir):
+    def set_log_dir(self, logdir, project_name="agent_arena", exp_name="tmp"):
         self.save_dir = logdir
         self.logger = WandbLogger(logdir,
-            self.config.project_name,
-            name=self.config.exp_name,
+            project_name,
+            name=exp_name,
             config=dict(self.config))
         
     def load(self, path: Optional[str] = None) -> int:

@@ -68,16 +68,22 @@ def build_arena(name: str, ray=False) -> Arena:
 # find ways to get read of arena.
 def build_agent(
         name: str, 
-        config: Optional[DotMap] = None) -> Agent:
+        config: Optional[DotMap] = None,
+        save_dir=None,
+        project_name='agent_arena',
+        exp_name='tmp') -> Agent:
     
     if config is not None and config.get("oracle", False):
-        return OracleBuilder.build(name)
+        agent = OracleBuilder.build(name)
     # if arena is not None:
     #     config.action_space = arena.get_action_space()
     if name in AGENT_NEEDS_CONFIG.keys():
-        return AGENT_NEEDS_CONFIG[name](config)
+        agent = AGENT_NEEDS_CONFIG[name](config)
     else:
-        return AGENT_NO_CONFIG[name](config)
+        agent =  AGENT_NO_CONFIG[name](config)
+    agent.set_log_dir(save_dir, project_name, exp_name)
+    return agent
+
 
 def build_logger(name: str, save_dir: str) -> Logger:
     os.makedirs(save_dir, exist_ok=True)

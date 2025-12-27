@@ -34,14 +34,14 @@ class Arena(ABC):
     def get_id(self):
         return self.aid
 
-    def set_log_dir(self, logdir: str):
+    def set_log_dir(self, logdir: str, project_name:str, exp_name: str):
         """
         Set the log directory for the logger.
 
         Args:
             logdir: The path to the log directory.
         """
-        self.logger.set_log_dir(logdir)
+        self.logger.set_log_dir(logdir, project_name, exp_name)
         print("Log directory for the arena is set to {}".format(logdir))
 
     ##### The following is used by api #####

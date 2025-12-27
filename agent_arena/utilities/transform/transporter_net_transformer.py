@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import random
 import cv2
-from agent_arena.agent.utilities.torch_utils import np_to_ts, ts_to_np
+from agent_arena.torch_utils import np_to_ts, ts_to_np
 from agent_arena.utilities.transform.utils import *
 from agent_arena.utilities.visual_utils import draw_pick_and_place
 

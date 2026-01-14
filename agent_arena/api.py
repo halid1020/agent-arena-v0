@@ -185,7 +185,8 @@ def run(agent: Agent, arena: Arena, mode:str,
     return True, res
 
 def evaluate(agent: Agent, arena: Arena, checkpoint: int, 
-             policy_terminate: bool=True, env_success_stop: bool=True) -> bool:
+             policy_terminate: bool=True, load_best: bool=False,
+             env_success_stop: bool=True) -> bool:
 
     #arena.set_eval()
     
@@ -195,11 +196,15 @@ def evaluate(agent: Agent, arena: Arena, checkpoint: int,
     env_eval_configs = arena.get_eval_configs()
     #print('checkpoint', checkpoint)
     if isinstance(agent, TrainableAgent):
-        if checkpoint >= 0:
-            print('load_checkpoint', checkpoint)
+        if load_best:
+            checkpoint = agent.load_best()
+        elif checkpoint >= 0:
+            
             agent.load_checkpoint(checkpoint)
         else:
             checkpoint = agent.load()
+        
+    print('[agent-arena, evaluate] Load_checkpoint', checkpoint) #-2 represent best
 
     for episode_config in tqdm(env_eval_configs):
         #print('checkpoint', checkpoint)

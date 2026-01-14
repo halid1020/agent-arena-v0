@@ -29,8 +29,8 @@ def main():
     agent = ag_ar.build_agent('random')
 
     log_dir = './tmp/test_arena'
-    arena.set_log_dir(log_dir)
-    agent.set_log_dir(log_dir)
+    arena.set_log_dir(log_dir, project_name='test', exp_name='random_push_T')
+    agent.set_log_dir(log_dir, project_name='test', exp_name='random_push_T')
 
     ag_ar.run(agent, arena, 'eval',
         episode_config={

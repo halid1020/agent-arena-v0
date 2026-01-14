@@ -79,8 +79,9 @@ class StandardLogger(Logger):
                     self.log_dir, 
                     filename, 
                     'performance_visualisation',
-                    'episode_{}'.format(eid)
-                )
+                ),
+                filename= 'episode_{}'.format(eid)
+                
             )
         
     

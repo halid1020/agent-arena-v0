@@ -9,24 +9,24 @@ from ...utilities.logger.standard_logger import StandardLogger
 
 class OpenAIGymArena(Arena):
 
-    def __init__(self, domain, **kwargs):
+    def __init__(self, config):
 
-        super().__init__()
+        super().__init__(config)
 
-        self._domain = domain
+        self._domain = config.domain
         self._max_env_step = 20000
         self._action_repeat = 1
         self.logger = StandardLogger()
 
         
-        if domain == 'pushT':
+        if config.domain == 'pushT':
             from .envs.pushT import PushTImageEnv
-            self._env =  PushTImageEnv(**kwargs)
+            self._env =  PushTImageEnv(**config)
             self._max_env_step = 1000
         else:
-            self._env = gym.make(domain)
+            self._env = gym.make(config.domain)
 
-        if kwargs['disp'] == 'True':
+        if config.disp == True:
             self.set_disp(True)
         else:
             self.set_disp(False)
@@ -79,6 +79,7 @@ class OpenAIGymArena(Arena):
 
         info = {'action_space': self._env.action_space, 
                 'observation': obs,
+                'evaluation': self.evaluate(),
                 'done': False}
         if self._domain == 'pushT':
             info['observation']['rgb'] = obs['image']
@@ -125,6 +126,7 @@ class OpenAIGymArena(Arena):
         info = {
             'done': done,
             'reward': reward,
+            'evaluation': self.evaluate(),
             'action_space': self._env.action_space, 
             'observation': obs}
         if self._domain == 'pushT':

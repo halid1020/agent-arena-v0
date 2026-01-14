@@ -5,7 +5,7 @@ description = "Bimanual manipulation research environment."
 requires-python = ">=3.10"
 
 authors = [
-    { name = "Halid Kadi", email = "you@example.com" }
+    { name = "Halid A. Kadi", email = "halidkadi.robot@gmail.com" }
 ]
 
 readme = "README.md"

@@ -1,18 +1,21 @@
+from dotmap import DotMap
+
 class OpenAIGymBuilder():
 
 
     def build(config_str):
 
         config = OpenAIGymBuilder.parse_config_str(config_str)
-        return OpenAIGymBuilder.build_from_config(**config)
+        config = DotMap(config)
+        return OpenAIGymBuilder.build_from_config(config)
     
-    def build_from_config(domain, **kwargs):
+    def build_from_config(config):
         from ..openAI_gym.wrapper \
             import OpenAIGymArena
         
-        kwargs['pixel_observation'] = True
+        config.pixel_observation = True
         
-        return OpenAIGymArena(domain, **kwargs)
+        return OpenAIGymArena(config)
     
 
     def parse_config_str(config_str):

@@ -15,6 +15,10 @@ class RandomPolicy(Agent):
                 raise ValueError('action_space not found in info')
         
         return actions
-
+    
+    def single_act(self, info, update=False):
+        action_space = info['action_space']
+        return action_space.sample()
+    
     def get_name(self):
         return 'random'

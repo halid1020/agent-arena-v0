@@ -93,6 +93,7 @@ Log directory for the agent is set to None
 Log directory for the arena is set to ./tmp/test_arena
 Log directory for the agent is set to ./tmp/test_arena
 [agent-arena, run] Run mode eval on episode_config {'eid': 0, 'save_video': True}
+MoviePy - Building file ./tmp/test_arena/eval_checkpoint_-1/performance_visualisation/episode_0.gif with imageio.
 ```
 
 The visualisation results is geneated at `./tmp/test_arena` folder.

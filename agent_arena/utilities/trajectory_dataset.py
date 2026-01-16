@@ -16,13 +16,29 @@ class TrajectoryDataset(Dataset):
                  num_trj=None, data_dir: Optional[str]=None,
                  transform=None, cache_in_memory: bool = False): # <--- Added flag here
         """
-        Initialize the dataset.
-        
         Args:
+
             cache_in_memory (bool): If True, loads the entire dataset into RAM (numpy arrays) 
-                                    to speed up training (avoids disk I/O per batch).
-            ... (other args)
+                                        to speed up training (avoids disk I/O per batch).
+
+            zarr_path (str): Path to the Zarr directory.
+
+            seq_length (Optional[int]): The fixed sequence length to sample. Set to None if whole_trajectory is True.
+
+            cross_trajectory (bool): If True, allow sampling across trajectory boundaries. Ignored if whole_trajectory is True.
+
+            mode (str): 'r' for read-only, 'a' for read/write append mode, 'w' for write mode (create new or overwrite).
+
+            obs_shapes (Dict[str, Tuple]): Dictionary of observation shapes for each observation type (required for 'w' mode).
+
+            action_shapes (Dict[str, Tuple]): Dictionary of action shapes for each action type (required for 'w' mode).
+
+            whole_trajectory (bool): If True, sample whole trajectories instead of fixed-length sequences.
+
+            splot_raitos (list of floats): Eval, val, and train.
+
         """
+
         self.whole_trajectory = whole_trajectory
         self.sample_mode = sample_mode
         self.sample_terminal = sample_terminal

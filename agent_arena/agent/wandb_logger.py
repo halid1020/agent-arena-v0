@@ -77,6 +77,7 @@ class WandbLogger(Logger):
             resume=effective_resume,
             dir=str(logdir)
         )
+        self.step = 0
 
     def _compute_fps(self, step):
         now = time.time()
@@ -104,9 +105,6 @@ class WandbLogger(Logger):
     def log(self, metrics, step=None, fps=10) -> None:
         """
         Logs scalars, images, and videos (supports numpy arrays or file paths).
-        - Scalars: logged directly.
-        - File paths: logged as wandb.Image or wandb.Video depending on file extension.
-        - NumPy arrays: automatically converted to wandb.Video.
         """
         if self.wandb is None:
             return
@@ -120,19 +118,22 @@ class WandbLogger(Logger):
                     # Ensure dtype uint8 in [0,255]
                     if value.dtype != np.uint8:
                         value = np.clip(value * 255, 0, 255).astype(np.uint8)
-                    processed_metrics[key] = self.wandb.Video(value, fps=fps, format="mp4")
+                    # FIX: Use wandb.Video, not self.wandb.Video
+                    processed_metrics[key] = wandb.Video(value, fps=fps, format="mp4")
                 else:
-                    processed_metrics[key] = value  # fallback, maybe scalar array
+                    processed_metrics[key] = value
                 
             # 2. Handle file paths (e.g., image or video files)
             elif isinstance(value, str) and os.path.exists(value):
                 ext = os.path.splitext(value)[-1].lower()
                 if ext in [".mp4", ".avi", ".mov"]:
-                    processed_metrics[key] = self.wandb.Video(value, fps=fps, format="mp4")
+                    # FIX: Use wandb.Video
+                    processed_metrics[key] = wandb.Video(value, fps=fps, format="mp4")
                 elif ext in [".gif", ".png", ".jpg", ".jpeg"]:
-                    processed_metrics[key] = self.wandb.Image(value)
+                    # FIX: Use wandb.Image (This caused your specific error)
+                    processed_metrics[key] = wandb.Image(value)
                 else:
-                    processed_metrics[key] = value  # unsupported file type
+                    processed_metrics[key] = value
             
             # 3. Scalars or other numeric values
             else:

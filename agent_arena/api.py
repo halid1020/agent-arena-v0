@@ -175,7 +175,7 @@ def run(agent: Agent, arena: Arena, mode:str,
     if mode == 'eval':
         filename = 'eval_checkpoint_{}'.format(checkpoint)
         agent.logger(episode_config, res, filename)
-        arena.logger(episode_config, res, filename, agent.logger)
+        arena.logger(episode_config, res, filename)
     
     if mode == 'val':
         filename = 'val_checkpoint_{}'.format(checkpoint)

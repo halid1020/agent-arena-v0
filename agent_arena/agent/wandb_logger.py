@@ -109,6 +109,10 @@ class WandbLogger(Logger):
         if self.wandb is None:
             return
         
+        if step == None:
+            step = self.step
+        self.step = step
+        
         processed_metrics = {}
         for key, value in metrics.items():
             # 1. Handle numpy arrays (e.g., video frames)

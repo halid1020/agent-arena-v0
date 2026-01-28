@@ -10,10 +10,12 @@ from agent_arena import StandardLogger
 
 ENV_ASSETS_DIR = os.environ["RAVENS_ASSETS_DIR"]
 
-class RavenEnvWrapper(Arena):
+class RavenEnvAdapter(Arena):
 
-    def __init__(self, task, disp=False):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
+        task = config.task
+        disp= config.get('disp', False)
         self._env = Environment(
             ENV_ASSETS_DIR,
             disp=disp,
@@ -40,9 +42,7 @@ class RavenEnvWrapper(Arena):
             self.eval_params[i]['save_video'] = True
         
         self.logger = StandardLogger()
-
-        #self.action_horizon = 30
-    
+        
     def get_name(self):
         return "Raven"
 
@@ -122,7 +122,8 @@ class RavenEnvWrapper(Arena):
         info['done'] = False
         info['arena'] = self
         info['arena_id'] = self.id
-        
+        info['evaluation'] = self.evaluate()
+        info['action_space'] = self.get_action_space()
         
         return info
     
@@ -156,6 +157,9 @@ class RavenEnvWrapper(Arena):
         info['others'] = other_info
         info['arena'] = self
         info['arena_id'] = self.id
+
+        info['evaluation'] = self.evaluate()
+        info['action_space'] = self.get_action_space()
 
         if reward >= 0.99:
             info['success'] = True
@@ -193,11 +197,6 @@ class RavenEnvWrapper(Arena):
         self.disp = flg
 
     
-   
-    
-    # # TODO
-    # def set_save_control_step_info(self, flg):
-    #     self._save_control_step_info = flg
 
     def get_control_step_info(self):
         

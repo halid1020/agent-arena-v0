@@ -1,5 +1,5 @@
-from agent_arena.agent.oracle.raven.oracle_raven_policy_wrapper \
-    import OracleRavenPolicyWrapper
+from agent_arena.agent.oracle.raven.raven_oracle_policy_adapter \
+    import RavenOraclePolicyAdapter
 from dotmap import DotMap
 
 class OracleRavenPolicyBuilder():
@@ -10,7 +10,7 @@ class OracleRavenPolicyBuilder():
         return OracleRavenPolicyBuilder.build_from_config(config)
     
     def build_from_config(config):
-        return OracleRavenPolicyWrapper(config)
+        return RavenOraclePolicyAdapter(config)
     
     def parse_config_str(config_str):
         config = {}

@@ -1,4 +1,5 @@
-from .wrapper import RavenEnvWrapper
+from .raven_env_adapter import RavenEnvAdapter
+from dotmap import DotMap
 
 class RavenBuilder():
 
@@ -12,7 +13,11 @@ class RavenBuilder():
             disp = True
         else:
             disp = False
-        env = RavenEnvWrapper(task, disp)
+        config = DotMap({
+            'task': task,
+            'disp': disp
+        })
+        env = RavenEnvAdapter(config)
         return env
 
     def parse_config_str(config_str):

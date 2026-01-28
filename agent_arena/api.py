@@ -20,7 +20,6 @@ from agent_arena.utilities.perform_single import perform_single
 from agent_arena import TrainableAgent, Agent, Arena
 from agent_arena.utilities.logger.logger_interface import Logger
 
-# Create Enum for Verbose
 
 def load_yamls(file_path: str) -> typing.Dict[str, typing.Any]:
     return yaml.safe_load(Path(file_path).read_text())
@@ -157,16 +156,37 @@ def load_best_results(save_dir):
     return results
 
 
-def run(agent: Agent, arena: Arena, mode:str, 
+def run(agent: Agent, arena: Arena, mode: str, 
         episode_config: dict, checkpoint: int,
         policy_terminate: bool=True, env_success_stop: bool=True):
+    """
+    Executes an episode (or check if it already exists) and logs the results.
+
+    Args:
+        agent (Agent): The agent instance to be evaluated or trained.
+        arena (Arena): The environment instance where the agent interacts.
+        mode (str): Execution mode. Options: 'train', 'eval', or 'val'.
+        episode_config (dict): Configuration for the specific episode (e.g., 'eid', 'save_video').
+        checkpoint (int): The checkpoint iteration number associated with the agent's weights.
+        policy_terminate (bool, optional): If True, allows the agent to decide when to stop the episode. Defaults to True.
+        env_success_stop (bool, optional): If True, the episode ends immediately upon environment success. Defaults to True.
+
+    Returns:
+        tuple: (bool, dict or None)
+            - bool: True if the episode was run, False if it was skipped (e.g., log already exists).
+            - dict: The result dictionary 'res' containing frames, actions, and evaluation metrics. Returns None if skipped.
+    """
+    
+    print(f'[agent-arena, run] Run mode {mode} on episode_config', episode_config)
+    
+    eval_filename = 'eval_checkpoint_{}'.format(checkpoint)
     
     
     print(f'[agent-arena, run] Run mode {mode} on episode_config', episode_config)
     
     eval_filename = 'eval_checkpoint_{}'.format(checkpoint)
     if mode == 'eval' and arena.logger.check_exist(episode_config, eval_filename):
-        return
+        return False, None
    
     res = perform_single(arena, agent, mode=mode, episode_config=episode_config,
                 collect_frames=episode_config['save_video'], save_info=True,
@@ -343,7 +363,7 @@ def train_plural_eval_single(
         Train a single agent on the list of arenas and evaluate the agent's performance on the single selected 
         evaluation configurations of the arena.
     '''
-    #validate(agent, val_arena, 0)
+
     if validation_interval > 0:
         assert total_update_steps > 0, 'Total update steps must be greater than 0'                    
         start_update_step = agent.load() #If no checkpint, it will return 0 --> no training
@@ -351,14 +371,12 @@ def train_plural_eval_single(
         if eval_checkpoint >= 0:
             total_update_steps = min(total_update_steps, eval_checkpoint)
 
-        #print('total_update_steps', total_update_steps)
         for u in range(start_update_step, int(total_update_steps), validation_interval):
-            #print('u', u)
             agent.train(validation_interval, train_arenas)
             agent.save()
             
             results = validate(agent, val_arena, u + validation_interval)
-            #print('results', results)
+
             best_results = load_best_results(agent.save_dir)
             if len(best_results) == 0 or compare_results(results, best_results, val_arena.compare) > 0:
                 agent.save_best()

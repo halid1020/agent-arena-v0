@@ -11,8 +11,33 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
     update_agent_from_arena=lambda ag, ar: None,
     env_success_stop=True, policy_terminate=True,
     max_steps=None, debug=False):
+    
     """
-        Return dictionary of lists
+    Runs a single episode loop, stepping the environment and agent until termination.
+
+    Args:
+        arena (Arena): The environment instance.
+        agent (Agent): The agent instance.
+        mode (str, optional): 'train', 'eval', or 'val'. Affects logging and behavior. Defaults to 'eval'.
+        episode_config (dict, optional): Configuration for the episode reset (e.g., seed/ID). Defaults to None.
+        collect_frames (bool, optional): If True, captures RGB frames from the arena. Defaults to False.
+        save_info (bool, optional): If True, saves step-by-step environment info dicts. Defaults to False.
+        save_internal_states (bool, optional): If True, saves the agent's internal state at every step. Defaults to False.
+        update_agent_from_arena (function, optional): Callback to update agent using arena info before the loop starts. 
+        env_success_stop (bool, optional): If True, episode ends when `arena.success()` is True. Defaults to True.
+        policy_terminate (bool, optional): If True, episode ends when `agent.terminate()` is True. Defaults to True.
+        max_steps (int, optional): Maximum allowed steps per episode. Defaults to None (infinite).
+        debug (bool, optional): If True, prints verbose evaluation info and saves debug GIFs. Defaults to False.
+
+    Returns:
+        dict: A dictionary 'res' containing:
+            - 'evaluation': Dictionary of metrics (e.g., success, reward) over steps.
+            - 'actions': List of actions taken.
+            - 'action_durations': List of time taken for each action.
+            - 'phases': List of agent phases.
+            - 'frames': (Optional) Numpy array of recorded video frames.
+            - 'information': (Optional) List of environment info dictionaries.
+            - 'internal_states': (Optional) List of agent internal states.
     """
 
     if mode == 'eval':

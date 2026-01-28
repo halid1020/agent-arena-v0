@@ -44,6 +44,8 @@ from agent_arena.agent.planning.mpc.rect_fabric.pick_and_place_cloth_contour_mpc
 
 from agent_arena.agent.random_policy import RandomPolicy
 
+from agent_arena.agent.oracle.raven.raven_oracle_policy_adapter import RavenOraclePolicyAdapter
+
 AGENT_NEEDS_CONFIG = {  
     # 'dreamer-planning': Dreamer,
     'planet-clothpick': RSSM,
@@ -69,7 +71,8 @@ AGENT_NEEDS_CONFIG = {
     'rect_fabric_cloth_contour_mpc': RectFabricPickPlaceClothContourMPC,
     'rect_fabric_cloth_contour_mpc_step_goals': RectFabricPickPlaceClothContourMPCStepGoals,
 
-    'cloth-funnel': ClothFunnel
+    'cloth-funnel': ClothFunnel,
+    'raven-oracle': RavenOraclePolicyAdapter
     
 }
 

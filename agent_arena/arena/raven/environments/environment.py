@@ -38,25 +38,20 @@ class Environment(gym.Env):
                  task=None,
                  disp=False,
                  shared_memory=False,
-                 hz=240):
-        """Creates OpenAI Gym-style environment with PyBullet.
-
-        Args:
-          assets_root: root directory of assets.
-          task: the task to use. If None, the user must call set_task for the
-            environment to work properly.
-          disp: show environment with PyBullet's built-in display viewer.
-          shared_memory: run with shared memory.
-          hz: PyBullet physics simulation step speed. Set to 480 for deformables.
-
-        Raises:
-          RuntimeError: if pybullet cannot load fileIOPlugin.
-        """
+                 hz=240,
+                 agent_cams=None,
+                 hide_arm_rgb=False):
+        """Creates OpenAI Gym-style environment with PyBullet."""
         self.pix_size = 0.003125
         self.obj_ids = {'fixed': [], 'rigid': [], 'deformable': []}
         self.homej = np.array([-1, -0.5, 0.5, -0.5, -0.5, 0]) * np.pi
-        self.agent_cams = cameras.RealSenseD415.CONFIG
 
+        if agent_cams is not None:
+            self.agent_cams = agent_cams
+        else:
+            self.agent_cams = cameras.RealSenseD415.CONFIG
+            
+        self.hide_arm_rgb = hide_arm_rgb
         self.assets_root = assets_root
 
         color_tuple = [
@@ -297,13 +292,6 @@ class Environment(gym.Env):
     @property
     def info(self):
         """Environment info variable with object poses, dimensions, and colors."""
-
-        # Some tasks create and remove zones, so ignore those IDs.
-        # removed_ids = []
-        # if (isinstance(self.task, tasks.names['cloth-flat-notarget']) or
-        #         isinstance(self.task, tasks.names['bag-alone-open'])):
-        #   removed_ids.append(self.task.zone_id)
-
         info = {}  # object id : (position, rotation, dimensions)
         for obj_ids in self.obj_ids.values():
             for obj_id in obj_ids:
@@ -372,12 +360,44 @@ class Environment(gym.Env):
         return joints
 
     def _get_obs(self):
+        
+        # --- MODIFIED: Teleport Logic ---
+        ee_body_pos, ee_body_rot = None, None
+        ee_base_pos, ee_base_rot = None, None
+        
+        if self.hide_arm_rgb:
+            # 1. Teleport Robot Base
+            p.resetBasePositionAndOrientation(self.ur5, [0, -100, 0], [0, 0, 0, 1])
+
+            # 2. Teleport End Effector Body (Tip)
+            if hasattr(self, 'ee') and hasattr(self.ee, 'body'):
+                ee_body_pos, ee_body_rot = p.getBasePositionAndOrientation(self.ee.body)
+                p.resetBasePositionAndOrientation(self.ee.body, [0, -100, 0], [0, 0, 0, 1])
+                
+            # 3. Teleport End Effector Base (The Black Circle)
+            if hasattr(self, 'ee') and hasattr(self.ee, 'base'):
+                ee_base_pos, ee_base_rot = p.getBasePositionAndOrientation(self.ee.base)
+                p.resetBasePositionAndOrientation(self.ee.base, [0, -100, 0], [0, 0, 0, 1])
+
         # Get RGB-D camera image observations.
         obs = {'color': (), 'depth': ()}
         for config in self.agent_cams:
             color, depth, _ = self.render_camera(config)
             obs['color'] += (color,)
             obs['depth'] += (depth,)
+
+        # --- MODIFIED: Restore Logic ---
+        if self.hide_arm_rgb:
+            # 4. Restore Robot Base
+            p.resetBasePositionAndOrientation(self.ur5, [0, 0, 0], [0, 0, 0, 1])
+            
+            # 5. Restore End Effector Body
+            if ee_body_pos is not None:
+                p.resetBasePositionAndOrientation(self.ee.body, ee_body_pos, ee_body_rot)
+                
+            # 6. Restore End Effector Base
+            if ee_base_pos is not None:
+                p.resetBasePositionAndOrientation(self.ee.base, ee_base_pos, ee_base_rot)
 
         return obs
 

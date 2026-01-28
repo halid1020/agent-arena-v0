@@ -4,11 +4,26 @@ import agent_arena as ag_ar
 import math
 import os
 import matplotlib
-import numpy as np # Added for shape checking
+import numpy as np
 
 # Force non-interactive backend
 matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
+
+def format_action_text(action):
+    """Formats the action dictionary into a concise string."""
+    if isinstance(action, dict):
+        # Ravens actions usually have 'pose0' (pick) and 'pose1' (place)
+        # We'll extract just the position (x, y) for brevity
+        text_parts = []
+        if 'pose0' in action:
+            p0 = action['pose0'][0]
+            text_parts.append(f"P0:({p0[0]:.2f},{p0[1]:.2f})")
+        if 'pose1' in action:
+            p1 = action['pose1'][0]
+            text_parts.append(f"P1:({p1[0]:.2f},{p1[1]:.2f})")
+        return "\n".join(text_parts) if text_parts else str(action)
+    return str(action)
 
 def main():
     
@@ -24,7 +39,13 @@ def main():
     print('Initialising Environment {}'.format(args.arena))
 
     disp = args.disp == 1
-    arena = ag_ar.build_arena(f"{args.arena},disp:{disp}", ray=False)
+    
+    # 1. Define the config string with top_down mode and 128 resolution
+    arena_config = f"{args.arena},disp:{disp},view_mode:top_down,img_res:128"
+    
+    print(f"Building arena with config: {arena_config}") 
+    arena = ag_ar.build_arena(arena_config, ray=False)
+    
     arena.set_eval()
 
     # Initialise Expert Policy
@@ -46,9 +67,9 @@ def main():
     ### Plotting Logic
     if 'information' in res and len(res['information']) > 0:
         infos = res['information']
+        actions = res.get('actions', []) # Retrieve actions list
         total_steps = len(infos)
         
-        # Subsample if necessary
         MAX_PLOT_FRAMES = 60 
         step = max(1, math.ceil(total_steps / MAX_PLOT_FRAMES))
         
@@ -70,35 +91,41 @@ def main():
 
         for i, idx in enumerate(plot_indices):
             ax = axes[i]
-            
             try:
+                # --- Image Handling ---
                 image_data = infos[idx]['color']
+                image_data = np.array(image_data) 
                 
-                # --- FIX STARTS HERE ---
-                # Check if image_data has 4 dimensions (e.g., 3 cameras, H, W, C)
-                # If so, pick the first image [0]
-                image_data = np.array(image_data) # Ensure it's a numpy array
                 if image_data.ndim == 4:
                     image_data = image_data[0]
-                # --- FIX ENDS HERE ---
 
                 ax.imshow(image_data)
                 ax.set_title(f'Step {idx}')
+
+                # --- TODO RESOLVED: Action Text Overlay ---
+                # Check if an action exists for this index
+                if idx < len(actions):
+                    action_str = format_action_text(actions[idx])
+                    
+                    # Place text at top-left (x=5, y=10) in image coordinates
+                    # bbox creates the black background with white text
+                    ax.text(5, 10, action_str, 
+                            color='white', 
+                            fontsize=8, 
+                            verticalalignment='top',
+                            bbox=dict(facecolor='black', alpha=0.7, edgecolor='none', pad=1))
+                            
             except KeyError:
                 print(f"Warning: 'color' key missing at step {idx}")
                 ax.text(0.5, 0.5, 'No Data', ha='center')
-            
             ax.axis('off')
 
-        # Clean up unused axes
         for i in range(num_plots, len(axes)):
             axes[i].axis('off')
 
         plt.tight_layout()
-        
         os.makedirs(log_dir, exist_ok=True)
         save_path = os.path.join(log_dir, f'episode_{args.eid}_color_summary.png')
-        
         plt.savefig(save_path, bbox_inches='tight')
         print(f"Figure saved to: {save_path}")
         plt.close(fig)

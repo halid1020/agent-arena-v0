@@ -89,7 +89,7 @@ class Suction(Gripper):
 
         # Load suction gripper base model (visual only).
         pose = ((0.487, 0.109, 0.438), p.getQuaternionFromEuler((np.pi, 0, 0)))
-        base = pybullet_utils.load_urdf(
+        self.base = base =pybullet_utils.load_urdf(
             p, os.path.join(self.assets_root, SUCTION_BASE_URDF), pose[0], pose[1])
         p.createConstraint(
             parentBodyUniqueId=robot,

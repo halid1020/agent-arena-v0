@@ -7,6 +7,7 @@ from .environments.environment import Environment
 from . import tasks
 from .utils.video_recorder import VideoRecorder
 from agent_arena import StandardLogger
+import pybullet as p
 
 ENV_ASSETS_DIR = os.environ["RAVENS_ASSETS_DIR"]
 
@@ -15,16 +16,45 @@ class RavenEnvAdapter(Arena):
     def __init__(self, config):
         super().__init__(config)
         task = config.task
-        disp= config.get('disp', False)
+        disp = config.get('disp', False)
+        
+        # Camera Configuration
+        img_res = config.get('img_res', None)
+        view_mode = config.get('view_mode', 'standard') 
+        
+        custom_cams = None
+        hide_arm = False  # Default to showing the arm
+
+        if view_mode == 'top_down':
+            # 1. Enable arm hiding for top-down views
+            hide_arm = True
+            
+            if img_res is not None:
+                img_res = int(img_res)
+                scale = img_res / 480.0
+                focal_len = 450.0 * scale
+                cx, cy = img_res / 2.0, img_res / 2.0
+                rotation = p.getQuaternionFromEuler([0, np.pi, -np.pi/2])
+                
+                custom_cams = [{
+                    'image_size': (img_res, img_res),
+                    'position': np.array([0.5, 0, 0.7]), 
+                    'rotation': rotation,
+                    'zrange': (0.1, 2.0),
+                    'noise': False,
+                    'intrinsics': (focal_len, 0, cx, 0, focal_len, cy, 0, 0, 1)
+                }]
+
+        # 2. Pass hide_arm_rgb to Environment
         self._env = Environment(
             ENV_ASSETS_DIR,
             disp=disp,
             shared_memory=False,
-            hz=240)
+            hz=240,
+            agent_cams=custom_cams,
+            hide_arm_rgb=hide_arm) 
         
-        self._control_step_info = {
-            'frame': []
-        }
+        self._control_step_info = {'frame': []}
         self.disp = disp
         
         self._task = tasks.names[task]()
@@ -36,13 +66,15 @@ class RavenEnvAdapter(Arena):
             verbose=False)
         self._task.primitive._set_video_recorder(self._vid_rec)
         self.set_train()
+        
+        # Standard logging setup...
         self.eval_params = [{'eid': i, 'save_video': False} for i in range(30)]
         self.val_params = [{'eid': 30+i, 'save_video': False} for i in range(3)]
         for i in range(10):
             self.eval_params[i]['save_video'] = True
         
         self.logger = StandardLogger()
-        
+
     def get_name(self):
         return "Raven"
 
@@ -83,13 +115,10 @@ class RavenEnvAdapter(Arena):
         }
 
     def reset(self, episode_config=None):
-
         self._step = 0
         self._total_reward = 0
-
-        if 'save_video' not in episode_config.keys():
-            episode_config['save_video'] = False
-
+        if 'save_video' not in episode_config.keys(): episode_config['save_video'] = False
+        
         if episode_config == None:
             self.episode_id = np.random.randint(0, 1000)
             save_video = False
@@ -103,12 +132,7 @@ class RavenEnvAdapter(Arena):
         else:
             self._vid_rec.record_mp4 = False
 
-        #self.episode_id = episode_config['eid'] if episode_config else None
         config_id = self.episode_id*2 + (0 if self.training else 1)
-        
-
-       
-        
         np.random.seed(config_id)
         self._env.seed(config_id)
         self._env.set_task(self._task)
@@ -124,7 +148,27 @@ class RavenEnvAdapter(Arena):
         info['arena_id'] = self.id
         info['evaluation'] = self.evaluate()
         info['action_space'] = self.get_action_space()
-        
+        return info
+
+    def step(self, action):
+        obs, reward, done, other_info = self._env.step(action)
+        self._step  += 1
+        self._total_reward += reward
+        info = {}
+        info['observation'] = {
+            'color': obs['color'],
+            'depth': obs['depth'],
+            'rgb': obs['color'][0]
+        }
+        info['done'] = ((self._step >= self._task.max_steps) or (self.success()))
+        info['reward'] = reward
+        info['others'] = other_info
+        info['arena'] = self
+        info['arena_id'] = self.id
+        info['evaluation'] = self.evaluate()
+        info['action_space'] = self.get_action_space()
+        if reward >= 0.99: info['success'] = True
+        else: info['success'] = False
         return info
     
     def get_episode_id(self):
@@ -136,37 +180,6 @@ class RavenEnvAdapter(Arena):
     def get_goal(self):
         return {}
 
-    def step(self, action):
-
-        obs, reward, done, other_info = self._env.step(action)
-        self._step  += 1
-
-        self._total_reward += reward
-
-        info = {}
-        
-
-        info['observation'] = {
-            'color': obs['color'],
-            'depth': obs['depth'],
-            'rgb': obs['color'][0]
-        }
-
-        info['done'] = ((self._step >= self._task.max_steps) or (self.success()))
-        info['reward'] = reward
-        info['others'] = other_info
-        info['arena'] = self
-        info['arena_id'] = self.id
-
-        info['evaluation'] = self.evaluate()
-        info['action_space'] = self.get_action_space()
-
-        if reward >= 0.99:
-            info['success'] = True
-        else:
-            info['success'] = False
-
-        return info
     
     def evaluate(self):
 
@@ -198,34 +211,23 @@ class RavenEnvAdapter(Arena):
 
     
 
-    def get_control_step_info(self):
-        
-        self._control_step_info['frame'] = np.stack(self._vid_rec.frames)
-        return self._control_step_info
+    def success(self):
+        return self._total_reward > 1-1e-6
+
+    
+
+    def get_control_step_info(self): 
+            self._control_step_info['frame'] = np.stack(self._vid_rec.frames)
+            return self._control_step_info
     
     def reset_control_step_info(self, flg=True):
         if flg:
             self._control_step_info['frame'] = []
             self._vid_rec.record_mp4 = True
             self._vid_rec.__enter__()
-            
         else:
-           self._vid_rec.record_mp4 = False
-
-    def success(self):
-        return self._total_reward > 1-1e-6
-
+            self._vid_rec.record_mp4 = False
     
-
-    ###
-    ### Arena specific functions
-    ###
-
     def __getattr__(self, attr):
-        if attr in ["obj_ids", "render_camera", "add_object"]:
-            return getattr(self._env, attr)
-        else:
-            raise AttributeError(f"'EnvWrapper' object has no attribute '{attr}'")
-
-    # def render_camera(self, config):
-    #     return self._env.render_camera(config)
+        if attr in ["obj_ids", "render_camera", "add_object"]: return getattr(self._env, attr)
+        else: raise AttributeError(f"'EnvWrapper' object has no attribute '{attr}'")

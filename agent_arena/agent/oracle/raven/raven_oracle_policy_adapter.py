@@ -10,7 +10,7 @@ class RavenOraclePolicyAdapter(Agent):
     def __init__(self, config):
         super().__init__(config)
         self._policy = None
-        self.task = config.task
+        # self.task = config.task
         
     
     def single_act(self, info, update=False):

@@ -12,7 +12,10 @@ from pathlib import Path
 
 from agent_arena.agent.oracle.builder import OracleBuilder
 from agent_arena.arena.builder import ArenaBuilder
-from agent_arena.agent.register import AGENT_NEEDS_CONFIG, AGENT_NO_CONFIG
+
+from agent_arena.agent.registration import AGENT_NEEDS_CONFIG, AGENT_NO_CONFIG
+from agent_arena.arena.registration import ARENAS
+
 from agent_arena.utilities.transform.register import DATA_TRANSFORMER
 from agent_arena.utilities.transform.transform import Transform
 from agent_arena.registration.logger import LOGGER
@@ -57,13 +60,27 @@ def retrieve_config(agent_name: str, arena_name:str,
 def register_agent(name: str, class_):
     AGENT_NEEDS_CONFIG[name] = class_
 
+def register_arena(name: str, class_):
+    ARENAS[name] = class_
+
 def build_transform(name: str, params: DotMap) -> Transform:
     return DATA_TRANSFORMER[name](params)
 
 def build_arena(name: str, ray=False) -> Arena:
     return ArenaBuilder.build(name, ray=ray)
 
+def build_arena(
+        name: str, 
+        config: Optional[DotMap] = None,
+        save_dir=None,
+        project_name='agent_arena',
+        exp_name='tmp') -> Arena:
+    
+    arena = ARENAS[name](config)
+    arena.set_log_dir(save_dir, project_name, exp_name)
+    return arena
 
+    
 # find ways to get read of arena.
 def build_agent(
         name: str, 

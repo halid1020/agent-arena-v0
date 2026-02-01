@@ -20,7 +20,8 @@ class RavenEnvAdapter(Arena):
         
         # Camera Configuration
         img_res = config.get('img_res', None)
-        view_mode = config.get('view_mode', 'standard') 
+        view_mode = config.get('view_mode', 'standard')
+        
         
         custom_cams = None
         hide_arm = False  # Default to showing the arm
@@ -58,6 +59,7 @@ class RavenEnvAdapter(Arena):
         self.disp = disp
         
         self._task = tasks.names[task]()
+        self.action_horizon = config.get('action_horizon', self._task.max_steps)
         self._vid_rec = VideoRecorder(
             save_dir='.',
             episode_idx=None,
@@ -68,36 +70,36 @@ class RavenEnvAdapter(Arena):
         self.set_train()
         
         # Standard logging setup...
-        self.eval_params = [{'eid': i, 'save_video': False} for i in range(30)]
-        self.val_params = [{'eid': 30+i, 'save_video': False} for i in range(3)]
-        for i in range(10):
-            self.eval_params[i]['save_video'] = True
+        self.num_eval_trials = 30
+        self.num_val_trials = 10
+        self.num_train_trials = 1000
+
+        self.eval_params = [{'eid': i, 'save_video': True} for i in range(self.num_eval_trials)]
+        self.val_params = [{'eid': i, 'save_video': True} for i in range(self.num_val_trials)]
+        self.train_params = [{'eid': i, 'save_video': False} for i in range(self.num_train_trials)]
+
         
         self.logger = StandardLogger()
 
     def get_name(self):
         return "Raven"
 
-    # TODO: make this function requried for the interface
     def get_action_horizon(self):
-        return self._task.max_steps
+        return self.action_horizon
 
     def get_mode(self):
-        if self.training:
-            return "train"
-        else:
-            return "eval"
+        return self.mode
 
     def get_action_space(self):
         return self._env.action_space
 
     def set_eval(self):
         self._task._set_mode('test')
-        self.training = False
+        self.mode = 'eval'
 
     def set_train(self):
         self._task._set_mode('train')
-        self.training = True
+        self.mode = 'train'
 
     def get_action_space(self):
         return self._env.action_space
@@ -107,10 +109,11 @@ class RavenEnvAdapter(Arena):
         return self._env.action_space.sample()
 
     def get_no_op(self):
+        # Access position_bounds through the internal _env object
         return {
-            'pose0': (self.position_bounds.high, 
+            'pose0': (self._env.position_bounds.high, 
                       np.array([0., 0., 0., 1.], dtype=np.float32)),
-            'pose1': (self.position_bounds.high,
+            'pose1': (self._env.position_bounds.high,
                       np.array([0., 0., 0., 1.], dtype=np.float32))
         }
 
@@ -132,8 +135,12 @@ class RavenEnvAdapter(Arena):
         else:
             self._vid_rec.record_mp4 = False
 
-        config_id = self.episode_id*2 + (0 if self.training else 1)
-        np.random.seed(config_id)
+        config_id = self.episode_id # eval: 0 - 100
+        if self.mode == 'val': # 100 - 200
+            config_id += 100
+        elif self.mode == 'train': # 200 ->
+            config_id += 200
+
         self._env.seed(config_id)
         self._env.set_task(self._task)
         obs = self._env.reset()
@@ -160,15 +167,17 @@ class RavenEnvAdapter(Arena):
             'depth': obs['depth'],
             'rgb': obs['color'][0]
         }
-        info['done'] = ((self._step >= self._task.max_steps) or (self.success()))
+        info['done'] = self._step >= self.action_horizon
         info['reward'] = reward
         info['others'] = other_info
         info['arena'] = self
         info['arena_id'] = self.id
         info['evaluation'] = self.evaluate()
         info['action_space'] = self.get_action_space()
-        if reward >= 0.99: info['success'] = True
-        else: info['success'] = False
+        if reward >= 0.99: 
+            info['success'] = True
+        else: 
+            info['success'] = False
         return info
     
     def get_episode_id(self):
@@ -194,6 +203,9 @@ class RavenEnvAdapter(Arena):
     
     def get_val_configs(self):
         return self.val_params
+    
+    def get_train_configs(self):
+        return self.train_params
 
     def get_frames(self):
         return np.stack(self._vid_rec.frames)
@@ -210,11 +222,9 @@ class RavenEnvAdapter(Arena):
         self.disp = flg
 
     
-
     def success(self):
         return self._total_reward > 1-1e-6
 
-    
 
     def get_control_step_info(self): 
             self._control_step_info['frame'] = np.stack(self._vid_rec.frames)

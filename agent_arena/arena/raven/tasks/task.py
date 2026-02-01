@@ -71,9 +71,11 @@ class Task():
             _, hmap, obj_mask = self.get_true_image(env)
 
             # Unpack next goal step.
-            #print('goals', self.goals)
-
-            objs, matches, targs, replace, rotations, _, _, _ = self.goals[0]
+            
+            if len(self.goals) == 0:
+                return env.get_no_op()
+            else:
+                objs, matches, targs, replace, rotations, _, _, _ = self.goals[0]
 
             # Match objects to targets without replacement.
             if not replace:
@@ -180,6 +182,9 @@ class Task():
         reward, info = 0, {}
 
         # Unpack next goal step.
+        if len(self.goals) == 0:
+            return 1, {}
+        
         objs, matches, targs, _, _, metric, params, max_reward = self.goals[0]
 
         # Evaluate by matching object poses.

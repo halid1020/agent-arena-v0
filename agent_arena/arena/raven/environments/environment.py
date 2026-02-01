@@ -198,18 +198,28 @@ class Environment(gym.Env):
         Returns:
           (obs, reward, done, info) tuple containing MDP step data.
         """
+
+        dict_action = None
+        if action is not None:
+            dict_action = {
+                'pose0': (action[:3], action[3:7]),
+                'pose1': (action[7:10], action[10:14])
+            }
+
+            #print('dict actoin', dict_action)
+
         if action is not None:
             timeout = self.task.primitive(
-                self.movej, self.movep, self.ee, **action)
+                self.movej, self.movep, self.ee, **dict_action)
 
             # Exit early if action times out. We still return an observation
             # so that we don't break the Gym API contract.
             if timeout:
-                obs = {'color': (), 'depth': ()}
+                obs = {'color': [], 'depth': []}
                 for config in self.agent_cams:
                     color, depth, _ = self.render_camera(config)
-                    obs['color'] += (color,)
-                    obs['depth'] += (depth,)
+                    obs['color'].append(color)
+                    obs['depth'].append(depth)
                 return obs, 0.0, True, self.info
 
         # Step simulator asynchronously until objects settle.

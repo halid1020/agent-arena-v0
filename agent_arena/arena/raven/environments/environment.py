@@ -390,11 +390,12 @@ class Environment(gym.Env):
                 p.resetBasePositionAndOrientation(self.ee.base, [0, -100, 0], [0, 0, 0, 1])
 
         # Get RGB-D camera image observations.
-        obs = {'color': (), 'depth': ()}
+        obs = {'color': (), 'depth': (), 'mask': ()}
         for config in self.agent_cams:
-            color, depth, _ = self.render_camera(config)
+            color, depth, segm = self.render_camera(config)
             obs['color'] += (color,)
             obs['depth'] += (depth,)
+            obs['mask'] += (segm,)
 
         # --- MODIFIED: Restore Logic ---
         if self.hide_arm_rgb:

@@ -13,7 +13,7 @@ from pathlib import Path
 from agent_arena.agent.oracle.builder import OracleBuilder
 from agent_arena.arena.builder import ArenaBuilder
 
-from agent_arena.agent.registration import AGENT_NEEDS_CONFIG, AGENT_NO_CONFIG
+from agent_arena.agent.registration import AGENTS
 from agent_arena.arena.registration import ARENAS
 
 from agent_arena.utilities.transform.register import DATA_TRANSFORMER
@@ -70,33 +70,85 @@ def build_arena(name: str, ray=False) -> Arena:
     return ArenaBuilder.build(name, ray=ray)
 
 def build_arena(
-        name: str, 
+        name: str,
         config: Optional[DotMap] = None,
-        save_dir=None,
-        project_name='agent_arena',
-        exp_name='tmp') -> Arena:
-    
+        save_dir: Optional[str] = None,
+        project_name: str = 'agent_arena',
+        exp_name: str = 'tmp') -> Arena:
+    """
+    Constructs and configures an environment arena.
+
+    This factory function initializes an arena instance based on the provided
+    registry name, applies the given configuration, and sets up the directory
+    structure for logging.
+
+    Args:
+        name: The registry key string identifying the arena class to instantiate.
+            Must be a key present in the global `ARENAS` registry.
+        config: A DotMap containing configuration parameters for the arena.
+            Defaults to None.
+        save_dir: The root directory path where logs and artifacts will be saved.
+            If None, the logger may use a default temporary location or
+            suppress file output depending on implementation. Defaults to None.
+        project_name: The name of the project, used for organizing logs within
+            the save directory. Defaults to 'agent_arena'.
+        exp_name: The specific experiment name, creating a subdirectory under
+            the project folder. Defaults to 'tmp'.
+
+    Returns:
+        Arena: An initialized instance of the requested Arena subclass, ready
+            for interaction.
+
+    Raises:
+        KeyError: If `name` is not found in the `ARENAS` registry.
+    """
     arena = ARENAS[name](config)
     arena.set_log_dir(save_dir, project_name, exp_name)
     return arena
 
-    
-# find ways to get read of arena.
+
 def build_agent(
-        name: str, 
+        name: str,
         config: Optional[DotMap] = None,
-        save_dir=None,
-        project_name='agent_arena',
-        exp_name='tmp') -> Agent:
-    
+        save_dir: Optional[str] = None,
+        project_name: str = 'agent_arena',
+        exp_name: str = 'tmp') -> Agent:
+    """
+    Constructs and configures an agent instance.
+
+    This factory function handles the instantiation of agents, including special
+    handling for oracle agents and those requiring specific configuration injections.
+    It also initializes the agent's logging system.
+
+    Args:
+        name: The registry key string identifying the agent class to instantiate.
+            Must be present in either `AGENT_NEEDS_CONFIG` or `AGENT_NO_CONFIG`,
+            or handled by `OracleBuilder`.
+        config: A DotMap containing hyperparameters and initialization settings
+            for the agent. Defaults to None.
+        save_dir: The root directory path where the agent's logs and model
+            checkpoints will be saved. Defaults to None.
+        project_name: The name of the project, used for hierarchical logging.
+            Defaults to 'agent_arena'.
+        exp_name: The specific experiment name, used for hierarchical logging.
+            Defaults to 'tmp'.
+
+    Returns:
+        Agent: An initialized instance of the requested Agent subclass.
+
+    Raises:
+        KeyError: If `name` is not found in the supported agent registries.
+    """
     if config is not None and config.get("oracle", False):
         agent = OracleBuilder.build(name)
-    # if arena is not None:
-    #     config.action_space = arena.get_action_space()
-    if name in AGENT_NEEDS_CONFIG.keys():
-        agent = AGENT_NEEDS_CONFIG[name](config)
-    else:
-        agent =  AGENT_NO_CONFIG[name](config)
+    
+    # if name in AGENT_NEEDS_CONFIG.keys():
+        
+    # else:
+    #     agent = AGENT_NO_CONFIG[name](config)
+
+    agent = AGENTS[name](config)
+    
     agent.set_log_dir(save_dir, project_name, exp_name)
     return agent
 

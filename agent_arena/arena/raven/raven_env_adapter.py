@@ -22,7 +22,6 @@ class RavenEnvAdapter(Arena):
         img_res = config.get('img_res', None)
         view_mode = config.get('view_mode', 'standard')
         
-        
         custom_cams = None
         hide_arm = False  # Default to showing the arm
 
@@ -39,7 +38,7 @@ class RavenEnvAdapter(Arena):
                 
                 custom_cams = [{
                     'image_size': (img_res, img_res),
-                    'position': np.array([0.5, 0, 0.7]), 
+                    'position': np.array([0.5, 0, 1.0]), 
                     'rotation': rotation,
                     'zrange': (0.1, 2.0),
                     'noise': False,
@@ -78,7 +77,6 @@ class RavenEnvAdapter(Arena):
         self.val_params = [{'eid': i, 'save_video': True} for i in range(self.num_val_trials)]
         self.train_params = [{'eid': i, 'save_video': False} for i in range(self.num_train_trials)]
 
-        
         self.logger = StandardLogger()
 
     def get_name(self):
@@ -100,9 +98,6 @@ class RavenEnvAdapter(Arena):
     def set_train(self):
         self._task._set_mode('train')
         self.mode = 'train'
-
-    def get_action_space(self):
-        return self._env.action_space
     
     def sample_random_action(self):
         ## sample random action from action space
@@ -116,6 +111,16 @@ class RavenEnvAdapter(Arena):
             'pose1': (self._env.position_bounds.high,
                       np.array([0., 0., 0., 1.], dtype=np.float32))
         }
+
+    def _get_binary_mask(self, raw_segm):
+        """Helper to create a binary mask (scene objects vs background)."""
+        # Gather IDs of all task-relevant objects (excluding table/plane/robot)
+        valid_ids = []
+        for cat in ['fixed', 'rigid', 'deformable']:
+            valid_ids.extend(self._env.obj_ids[cat])
+        
+        # Create binary mask: 1 where ID matches a valid object, 0 otherwise
+        return np.isin(raw_segm, valid_ids).astype(np.uint8)
 
     def reset(self, episode_config=None):
         self._step = 0
@@ -144,10 +149,17 @@ class RavenEnvAdapter(Arena):
         self._env.seed(config_id)
         self._env.set_task(self._task)
         obs = self._env.reset()
+
+        # Process segmentation
+        raw_segm = obs['mask'][0]
+        binary_mask = self._get_binary_mask(raw_segm)
+
         info = {}
         info['observation'] = {
             'color': obs['color'],
             'depth': obs['depth'],
+            'segm': raw_segm,       # Original segmentation (object IDs)
+            'mask': binary_mask,    # Binary mask (0/1)
             'rgb': obs['color'][0],
         }
         info['done'] = False
@@ -158,13 +170,33 @@ class RavenEnvAdapter(Arena):
         return info
 
     def step(self, action):
+        
+        if isinstance(action, dict):
+            # Expects structure: {'pose0': (pos, rot), 'pose1': (pos, rot)}
+            # pose0/1: ((x,y,z), (qx,qy,qz,qw))
+            p0_pos, p0_rot = action['pose0']
+            p1_pos, p1_rot = action['pose1']
+            
+            # Concatenate into flat [pos0, rot0, pos1, rot1] array
+            action = np.concatenate([
+                p0_pos, p0_rot, 
+                p1_pos, p1_rot
+            ])
+
         obs, reward, done, other_info = self._env.step(action)
         self._step  += 1
         self._total_reward += reward
+
+        # Process segmentation
+        raw_segm = obs['mask'][0]
+        binary_mask = self._get_binary_mask(raw_segm)
+
         info = {}
         info['observation'] = {
             'color': obs['color'],
             'depth': obs['depth'],
+            'segm': raw_segm,       # Original segmentation (object IDs)
+            'mask': binary_mask,    # Binary mask (0/1)
             'rgb': obs['color'][0]
         }
         info['done'] = self._step >= self.action_horizon
@@ -189,13 +221,10 @@ class RavenEnvAdapter(Arena):
     def get_goal(self):
         return {}
 
-    
     def evaluate(self):
-
         res = {
             'total_reward': self._total_reward,
         }
-
         return res
     
     def get_eval_configs(self):
@@ -220,11 +249,9 @@ class RavenEnvAdapter(Arena):
             # shared_memory=True,
             hz=480)
         self.disp = flg
-
     
     def success(self):
         return self._total_reward > 1-1e-6
-
 
     def get_control_step_info(self): 
             self._control_step_info['frame'] = np.stack(self._vid_rec.frames)

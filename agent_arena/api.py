@@ -274,35 +274,54 @@ def run(agent: Agent, arena: Arena, mode: str,
     return True, res
 
 def evaluate(agent: Agent, arena: Arena, checkpoint: int, 
-             policy_terminate: bool=True, load_best: bool=False,
-             env_success_stop: bool=True) -> bool:
+             policy_terminate: bool = True,
+             env_success_stop: bool = True) -> bool:
+    """
+    Evaluates a specific checkpoint of an agent within a given arena.
 
-    #arena.set_eval()
+    This function loads the specified model checkpoint into the agent (if the agent 
+    is trainable) and iterates through the arena's evaluation configurations to 
+    assess performance.
+
+    Args:
+        agent (Agent): The agent instance to be evaluated.
+        arena (Arena): The environment or arena instance where the evaluation 
+            takes place.
+        checkpoint (int): The specific model checkpoint to load. 
+            Accepted special values:
+            * -1: Load the most recent checkpoint.
+            * -2: Load the best-performing checkpoint (if supported).
+            * >= 0: Load the checkpoint corresponding to this specific step.
+        policy_terminate (bool, optional): If True, allows the policy/agent to 
+            decide when to terminate an episode (e.g., stopping signal). 
+            Defaults to True.
+        env_success_stop (bool, optional): If True, the environment will 
+            terminate the episode immediately upon satisfying the success condition. 
+            Defaults to True.
+
+    Returns:
+        bool: Returns True upon the successful completion of the evaluation loop.
+    """
     
     print('[agent-arena, evaluate] Start evaluating Agent "{}" on\n     Arena "{}"'.\
             format(agent.get_name(), arena.get_name()))
     
     env_eval_configs = arena.get_eval_configs()
-    #print('checkpoint', checkpoint)
     if isinstance(agent, TrainableAgent):
-        if load_best:
+        if checkpoint == -2:
             checkpoint = agent.load_best()
         elif checkpoint >= 0:
-            
             agent.load_checkpoint(checkpoint)
         else:
-            checkpoint = agent.load()
+            checkpoint = agent.load() # load the last one.
         
     print('[agent-arena, evaluate] Load_checkpoint', checkpoint) #-2 represent best
 
     for episode_config in tqdm(env_eval_configs):
-        #print('checkpoint', checkpoint)
         run(agent, arena, 'eval', episode_config, checkpoint=checkpoint, 
             policy_terminate=policy_terminate, env_success_stop=env_success_stop)
     
     return True
-
-
 
 def log_validation_metrics(results, agent, step):
     """
@@ -373,24 +392,46 @@ def validate(agent, arena, update_step, policy_terminate=True, env_success_stop=
 def compare_results(results_1, results_2, compare_func):
     return compare_func(results_1, results_2)
     
-def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
-                       validation_interval: int, total_update_steps: int, eval_checkpoint: int,
-                       policy_terminate=True, env_success_stop=True) -> bool:
-    '''
-        Train the agent on the selected arena and evaluate the agent's performance on the selected 
-        evaluation configurations of the arena.
+def train_and_evaluate_single(
+    agent: TrainableAgent, arena: Arena,
+    validation_interval: int, total_update_steps: int, 
+    eval_last_check: bool = False, eval_best_check: bool = True,
+    policy_terminate: bool = True, env_success_stop: bool = True) -> bool:
+    """
+    Trains an agent on a single arena, performs periodic validation, and runs 
+    final evaluations.
 
-        This method requires:
-            * The agent has `train` method with `arena` and `update_steps` as arguments to train the agent,
-            * The agent has `load` method to load the agent's model.
-            * The agent has `load_checkpoint` method to load the agent's model from a checkpoint.
-            * The agent has `get_name` method to get the agent's name.
-            * The agent has `get_writer` method to log the validation results.
-            * The arena has `set_eval` and `get_eval_configs` methods to set the 
-              arena to evaluation mode and get the evaluation configurations.
-            * The arena has `set_val` and `get_val_configs` methods to set the 
-              arena to validation mode and get the validation configurations.
-    '''
+    This function manages the full training lifecycle: loading existing checkpoints, 
+    running the training loop, performing validation checks at set intervals to 
+    identify the best model, and running final evaluations on the last and/or 
+    best checkpoints.
+
+    Args:
+        agent (TrainableAgent): The agent to be trained. The agent is expected 
+            to implement `train`, `load`, `save`, `save_best`, and `load_best`.
+        arena (Arena): The environment wrapper used for training and validation.
+        validation_interval (int): The frequency (in update steps) at which 
+            validation is performed. If 0, validation is skipped during training.
+        total_update_steps (int): The target total number of update steps for 
+            the training session.
+        eval_last_check (bool, optional): If True, runs the `evaluate` function 
+            on the final checkpoint after training concludes. Defaults to False.
+        eval_best_check (bool, optional): If True, runs the `evaluate` function 
+            on the best-performing checkpoint (saved during validation) after 
+            training concludes. Defaults to True.
+        policy_terminate (bool, optional): If True, allows the policy to trigger 
+            episode termination during validation/evaluation steps. Defaults to True.
+        env_success_stop (bool, optional): If True, validation/evaluation episodes 
+            end immediately upon success. Defaults to True.
+
+    Returns:
+        bool: Returns True (implicitly) when the training and evaluation pipeline 
+        completes.
+
+    Raises:
+        AssertionError: If `validation_interval` is set (>0) but `total_update_steps` 
+        is invalid (<=0).
+    """
 
     print('\n[agent-arena, train_and_evaluate_single] Training "{}" agent ...'.format(agent.get_name()))
     #validate(agent, arena, 0)
@@ -398,10 +439,6 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
         assert total_update_steps > 0, 'Total update steps must be greater than 0'                    
         start_update_step = agent.load() #If no checkpint, it will return 0 --> no training
 
-        if eval_checkpoint >= 0:
-            total_update_steps = min(total_update_steps, eval_checkpoint)
-
-      
         for u in range(start_update_step, int(total_update_steps), validation_interval):
             arena.set_train()
             agent.train(validation_interval, [arena])
@@ -421,9 +458,15 @@ def train_and_evaluate_single(agent: TrainableAgent, arena: Arena,
     
     print('\n[agent-arena, train_and_evaluate_single] Finished training Agent "{}"'.format(agent.get_name()))
 
-    evaluate(agent, arena, checkpoint=eval_checkpoint, 
-             policy_terminate=policy_terminate, env_success_stop=env_success_stop)
+    if eval_last_check:
+        evaluate(agent, arena, checkpoint=-1, 
+                policy_terminate=policy_terminate, env_success_stop=env_success_stop)
 
+    if eval_best_check:
+        evaluate(agent, arena, checkpoint=-2, 
+                policy_terminate=policy_terminate, env_success_stop=env_success_stop)
+    
+    return True
 
 def train_plural_eval_single(
         agent: TrainableAgent, train_arenas: List[Arena], eval_arena: Arena, val_arena: Arena,

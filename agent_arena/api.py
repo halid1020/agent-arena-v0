@@ -58,7 +58,7 @@ def retrieve_config(agent_name: str, arena_name:str,
     return config
 
 def register_agent(name: str, class_):
-    AGENT_NEEDS_CONFIG[name] = class_
+    AGENTS[name] = class_
 
 def register_arena(name: str, class_):
     ARENAS[name] = class_

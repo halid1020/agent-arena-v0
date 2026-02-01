@@ -46,7 +46,7 @@ from agent_arena.agent.random_policy import RandomPolicy
 
 from agent_arena.agent.oracle.raven.raven_oracle_policy_adapter import RavenOraclePolicyAdapter
 
-AGENT_NEEDS_CONFIG = {  
+AGENTS = {  
     # 'dreamer-planning': Dreamer,
     'planet-clothpick': RSSM,
     'planet': RSSM,
@@ -72,11 +72,8 @@ AGENT_NEEDS_CONFIG = {
     'rect_fabric_cloth_contour_mpc_step_goals': RectFabricPickPlaceClothContourMPCStepGoals,
 
     'cloth-funnel': ClothFunnel,
-    'raven-oracle': RavenOraclePolicyAdapter
+    'raven-oracle': RavenOraclePolicyAdapter,
     
-}
-
-AGENT_NO_CONFIG = {
     'random': RandomPolicy,
     'human-pixel-pick-and-place-1': PnPHuman1,
     'human-pixel-pick-and-place-2': PnPHuman2,
@@ -85,5 +82,8 @@ AGENT_NO_CONFIG = {
     'human-pixel-multi-primitive': PixelMultiPrimitive,
 }
 
+# AGENT_NO_CONFIG = {
+    
+# }
 
 

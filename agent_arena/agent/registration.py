@@ -44,8 +44,14 @@ from agent_arena.agent.planning.mpc.rect_fabric.pick_and_place_cloth_contour_mpc
 
 from agent_arena.agent.random_policy import RandomPolicy
 
-from agent_arena.agent.oracle.raven.raven_oracle_policy_adapter import RavenOraclePolicyAdapter
-from agent_arena.agent.random.raven_random_policy import RavenRandomPolicy
+from agent_arena.agent.oracle.raven.raven_oracle_policy_adapter \
+    import RavenOraclePolicyAdapter
+from agent_arena.agent.random.raven_random_policy \
+    import RavenRandomPolicy
+from agent_arena.agent.oracle.raven.raven_pixel_oracle_policy_adapter \
+    import RavenPixelOraclePolicyAdapter
+from agent_arena.agent.random.raven_pixel_random_policy \
+    import RavenPixelRandomPolicy
 
 AGENTS = {  
     # 'dreamer-planning': Dreamer,
@@ -73,8 +79,11 @@ AGENTS = {
     'rect_fabric_cloth_contour_mpc_step_goals': RectFabricPickPlaceClothContourMPCStepGoals,
 
     'cloth-funnel': ClothFunnel,
+
     'raven-oracle': RavenOraclePolicyAdapter,
+    'raven-pixel-oracle': RavenPixelOraclePolicyAdapter,
     'raven-random': RavenRandomPolicy,
+    'raven-pixel-random': RavenPixelRandomPolicy,
     
     'random': RandomPolicy,
     'human-pixel-pick-and-place-1': PnPHuman1,

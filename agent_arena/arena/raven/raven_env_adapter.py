@@ -1,15 +1,17 @@
 import os
 import numpy as np
+import pybullet as p
+import pickle
+import matplotlib.pyplot as plt
+import random
 
 from agent_arena.arena.arena import Arena
+from agent_arena import StandardLogger
 
 from .environments.environment import Environment
 from . import tasks
 from .utils.video_recorder import VideoRecorder
-from agent_arena import StandardLogger
-import pybullet as p
-import pickle
-import matplotlib.pyplot as plt
+
 
 ENV_ASSETS_DIR = os.environ["RAVENS_ASSETS_DIR"]
 
@@ -166,6 +168,8 @@ class RavenEnvAdapter(Arena):
         # --- STEP 2: Actual Agent Reset ---
         # We must re-seed and reset to ensure the agent starts from the exact same state
         # as the goal demonstration started.
+        np.random.seed(config_id)
+        random.seed(config_id)
         self._env.seed(config_id)
         self._env.set_task(self._task)
         obs = self._env.reset()
@@ -311,6 +315,10 @@ class RavenEnvAdapter(Arena):
     def _generate_goal(self, config_id):
         """Generates a goal trajectory using the Oracle policy."""
         goal_traj = []
+
+        # --- FIX: Force Global Determinism ---
+        np.random.seed(config_id)
+        random.seed(config_id)
         
         # 1. Reset Env for the Oracle
         self._env.seed(config_id)

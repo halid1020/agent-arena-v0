@@ -60,6 +60,16 @@ class Task():
     # Oracle Agent
     # -------------------------------------------------------------------------
 
+
+    def get_no_op(self, env):
+        # Access position_bounds through the internal _env object
+        return {
+            'pose0': (env.position_bounds.high, 
+                      np.array([0., 0., 0., 1.], dtype=np.float32)),
+            'pose1': (env.position_bounds.high,
+                      np.array([0., 0., 0., 1.], dtype=np.float32))
+        }
+
     def oracle(self, env):
         """Oracle agent."""
         OracleAgent = collections.namedtuple('OracleAgent', ['act'])
@@ -73,7 +83,7 @@ class Task():
             # Unpack next goal step.
             
             if len(self.goals) == 0:
-                return env.get_no_op()
+                return self.get_no_op(env)
             else:
                 objs, matches, targs, replace, rotations, _, _, _ = self.goals[0]
 

@@ -75,16 +75,6 @@ class Arena(ABC):
 
         self.disp = flg
 
-    def get_num_episodes(self) -> np.int32:
-        if self.mode == 'eval':
-            return self.num_eval_trials
-        elif self.mode == 'val':
-            return self.num_val_trials
-        elif self.mode == 'train':
-            return self.num_train_trials
-        else:
-            raise NotImplementedError
-
     
     def get_eval_configs(self):
         eval_configs = [

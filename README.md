@@ -87,13 +87,21 @@ python test_arena.py
 You should see the program print the basic configuration of the environments with the 20 steps output of the actions and evaluation looks like this,  and the evaluation metrics should get better:
 
 ```
-Initialising Environment openAI-gym|domain:pushT
-action space Box(0.0, 512.0, (2,), float64)
-Log directory for the agent is set to None
-Log directory for the arena is set to ./tmp/test_arena
-Log directory for the agent is set to ./tmp/test_arena
+--- Configuration ---
+Arena:      openAI-gym
+Policy:     random
+Episode ID: 0
+Log Dir:    ./tmp/test_pushT_random
+---------------------
+
+Building Arena: openAI-gym...
+Log directory for the arena is set to ./tmp/test_pushT_random
+Building Agent: random...
+Log directory for the agent is set to ./tmp/test_pushT_random
+Running episode 0...
 [agent-arena, run] Run mode eval on episode_config {'eid': 0, 'save_video': True}
-MoviePy - Building file ./tmp/test_arena/eval_checkpoint_-1/performance_visualisation/episode_0.gif with imageio.
+[agent-arena, run] Run mode eval on episode_config {'eid': 0, 'save_video': True}
+MoviePy - Building file ./tmp/test_pushT_random/eval_checkpoint_-1/performance_visualisation/episode_0.gif with imageio..
 ```
 
 The visualisation results is geneated at `./tmp/test_arena` folder.

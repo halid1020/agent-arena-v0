@@ -116,7 +116,7 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         """
         pick_u, pick_v, place_u, place_v, theta = pixel_action
         
-        depth_map = self.last_obs['depth'][0]
+        depth_map = self.last_obs['depth']
         
         # Calculate 3D Positions
         pick_pos = self._deproject_pixel(pick_u, pick_v, depth_map)

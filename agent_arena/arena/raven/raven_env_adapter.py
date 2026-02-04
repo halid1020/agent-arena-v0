@@ -11,7 +11,7 @@ from agent_arena import StandardLogger
 from .environments.environment import Environment
 from . import tasks
 from .utils.video_recorder import VideoRecorder
-
+from .tasks import cameras
 
 ENV_ASSETS_DIR = os.environ["RAVENS_ASSETS_DIR"]
 
@@ -26,6 +26,14 @@ class RavenEnvAdapter(Arena):
         self.goal_dir = config.get('goal_dir', 'tmp/raven_goals')
         self.add_final_goal_to_obs = config.get('add_final_goal_to_obs', False)
         self.goals = [] # Store current episode's goal trajectory
+
+        self.goal_cam_config = None
+        
+        self.use_default_goal_cam = config.get('use_default_goal_cam', False)
+        if self.use_default_goal_cam:
+            # The default RealSenseD415 config is a list; we take the first one.
+            self.goal_cam_config = cameras.RealSenseD415.CONFIG[0]
+
         # -------------------------------
 
         # Camera Configuration
@@ -281,7 +289,9 @@ class RavenEnvAdapter(Arena):
     
     def _inject_goal_info(self, info):
         """Helper to inject goal data into the info dictionary."""
+        # print('[debug] inject goal info function')
         if len(self.goals) > 0:
+            # print('[debug] injecting')
             final_goal_step = self.goals[-1]
             
             # 1. info['goal'] contains the final state of the demonstration
@@ -295,6 +305,7 @@ class RavenEnvAdapter(Arena):
             # 3. Flattened goal obs if requested
             if self.add_final_goal_to_obs:
                 for k, v in final_goal_step['observation'].items():
+                    #print('v.shape', v.shape)
                     info['observation'][f'goal_{k}'] = v
                     # Duplicate key with hyphen if needed for compatibility
                     info['observation'][f'goal-{k}'] = v 
@@ -306,7 +317,7 @@ class RavenEnvAdapter(Arena):
         binary_mask = self._get_binary_mask(raw_segm)
         return {
             'color': obs['color'],
-            'depth': obs['depth'],
+            'depth': obs['depth'][0],
             'segm': raw_segm,
             'mask': binary_mask,
             'rgb': obs['color'][0],
@@ -316,7 +327,7 @@ class RavenEnvAdapter(Arena):
         """Generates a goal trajectory using the Oracle policy."""
         goal_traj = []
 
-        # --- FIX: Force Global Determinism ---
+        # Fix Determinism
         np.random.seed(config_id)
         random.seed(config_id)
         
@@ -325,8 +336,20 @@ class RavenEnvAdapter(Arena):
         self._env.set_task(self._task)
         obs = self._env.reset()
         
-        # Add initial state
-        goal_traj.append({'observation': self._process_obs(obs)})
+        # --- NEW: Check if we need to render from a different camera for the goal ---
+        init_step_obs = self._process_obs(obs)
+        if self.goal_cam_config is not None:
+             print('Goal Camera!!')
+             # Manually render the specific goal view
+             g_color, g_depth, g_segm = self._env.render_camera(self.goal_cam_config)
+             # Update the processed observation with this view
+             init_step_obs['color'] = (g_color,)
+             init_step_obs['rgb'] = g_color
+             init_step_obs['depth'] = g_depth
+             init_step_obs['segm'] = g_segm
+             init_step_obs['mask'] = self._get_binary_mask(g_segm)
+
+        goal_traj.append({'observation': init_step_obs})
 
         # 2. Initialize Oracle
         oracle = self._task.oracle(self._env)
@@ -335,28 +358,34 @@ class RavenEnvAdapter(Arena):
         
         # 3. Run Episode
         while not done:
-            # Oracle acts on raw obs
             action = oracle.act(obs, None) 
             
-            # If oracle returns None (no op/done), break
-            if action is None:
-                break
+            if action is None: break
             
-            # --- FIX: Flatten dictionary action to array ---
-            # The Oracle returns a dict, but env.step() wants a flat array
             if isinstance(action, dict):
                 p0_pos, p0_rot = action['pose0']
                 p1_pos, p1_rot = action['pose1']
                 action = np.concatenate([p0_pos, p0_rot, p1_pos, p1_rot])
-            # -----------------------------------------------
                 
             obs, _, done, _ = self._env.step(action)
-            goal_traj.append({'observation': self._process_obs(obs)})
+            
+            # --- NEW: Process step observation with custom camera check ---
+            step_obs = self._process_obs(obs)
+            if self.goal_cam_config is not None:
+                 g_color, g_depth, g_segm = self._env.render_camera(self.goal_cam_config)
+                 step_obs['color'] = (g_color,)
+                 step_obs['rgb'] = g_color
+                 step_obs['depth'] = g_depth
+                 step_obs['segm'] = g_segm
+                 step_obs['mask'] = self._get_binary_mask(g_segm)
+
+            goal_traj.append({'observation': step_obs})
             
         return goal_traj
     
     def _load_or_generate_goal(self, config_id):
         """Loads goal from disk or generates it if missing."""
+        print('[RavenEnvAdapter, _load_or_generate_goal]', config_id)
         task_name = self._task.__class__.__name__
         episode_goal_dir = os.path.join(self.goal_dir, task_name, f"ep_{config_id}")
         

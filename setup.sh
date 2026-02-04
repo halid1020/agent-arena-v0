@@ -13,5 +13,3 @@ export RAVENS_ASSETS_DIR=${AGENT_ARENA_PATH}/arena/raven/environments/assets
 
 ### Deformable Raven
 export DEFORMABLE_RAVEN_ASSETS_DIR=${AGENT_ARENA_PATH}/arena/deformable_raven/src/assets
-
-pip install .

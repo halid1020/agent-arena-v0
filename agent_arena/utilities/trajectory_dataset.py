@@ -271,9 +271,32 @@ class TrajectoryDataset(Dataset):
             obs_data_ = obs_data.reshape(-1, *self.obs_config[obs_type]['shape'])
             self.observation[obs_type].append(obs_data_)
 
+        # for action_type, action_data in actions.items():
+        #     print('action data', action_data)
+        #     action_data = np.concatenate([action_data, np.zeros_like(action_data[:1])])
+        #     self.action[action_type].append(action_data)
+
+        # --- 2. Process Actions (FIXED) ---
         for action_type, action_data in actions.items():
-            action_data = np.concatenate([action_data, np.zeros_like(action_data[:1])])
+            # Convert list -> Numpy array BEFORE manipulation
+            if isinstance(action_data, list):
+                action_data = np.array(action_data) # Result: (T, ActionDim)
+
+            # Ensure strict shape matching (T, *Shape)
+            # This handles cases where data might be (T,) vs (T, 1)
+            action_shape = self.act_config[action_type]['shape']
+            action_data = action_data.reshape(-1, *action_shape)
+
+            # Pad with one zero-action at the end (to match observation length if required)
+            # Creates a (1, *Shape) zero array
+            padding = np.zeros((1, *action_shape), dtype=action_data.dtype)
+            
+            # Concatenate along time axis (Axis 0)
+            action_data = np.concatenate([action_data, padding], axis=0)
+            
+            # Now append to Zarr (Dimensions will strictly match)
             self.action[action_type].append(action_data)
+
         
         if self.save_goal:
             for goal_type, goal_data in goals.items():

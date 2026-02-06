@@ -43,6 +43,7 @@ from agent_arena.agent.planning.mpc.rect_fabric.pick_and_place_cloth_contour_mpc
     import RectFabricPickPlaceClothContourMPCStepGoals
 
 from agent_arena.agent.random_policy import RandomPolicy
+from agent_arena.agent.random.mask_biased_pixel_random_pick_and_place_policy import MaskBiasedPixelPickAndPlacePolicy
 
 from agent_arena.agent.oracle.raven.raven_oracle_policy_adapter \
     import RavenOraclePolicyAdapter
@@ -86,6 +87,8 @@ AGENTS = {
     'raven-pixel-random': RavenPixelRandomPolicy,
     
     'random': RandomPolicy,
+    'mask-biased-pixel-random-pick-and-place': MaskBiasedPixelPickAndPlacePolicy,
+
     'human-pixel-pick-and-place-1': PnPHuman1,
     'human-pixel-pick-and-place-2': PnPHuman2,
     'human-pixel-pick-and-fling': PnFHuman,

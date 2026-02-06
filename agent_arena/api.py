@@ -60,14 +60,17 @@ def retrieve_config(agent_name: str, arena_name:str,
 def register_agent(name: str, class_):
     AGENTS[name] = class_
 
+def get_arena_class(name: str):
+    return ARENAS[name]
+
 def register_arena(name: str, class_):
     ARENAS[name] = class_
 
 def build_transform(name: str, params: DotMap) -> Transform:
     return DATA_TRANSFORMER[name](params)
 
-def build_arena(name: str, ray=False) -> Arena:
-    return ArenaBuilder.build(name, ray=ray)
+# def build_arena(name: str, ray=False) -> Arena:
+#     return ArenaBuilder.build(name, ray=ray)
 
 def build_arena(
         name: str,

@@ -119,7 +119,7 @@ class GarmentFlatteningTask(Task):
         pos = arena._get_particle_positions()
         goal_pos = arena.get_canon_particle_position()
         flipped_goal_pos = goal_pos.copy()
-        flipped_goal_pos[:, 0] = -1 * flipped_goal_pos[:, 0]
+        flipped_goal_pos[:, 0] = -1 * canon_IoUflipped_goal_pos[:, 0]
         disance_1 = np.mean(np.linalg.norm(pos - goal_pos, axis=1))
         disance_2 = np.mean(np.linalg.norm(pos - flipped_goal_pos, axis=1))
         return min(disance_1, disance_2)

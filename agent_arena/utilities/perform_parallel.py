@@ -9,15 +9,42 @@ import agent_arena.api as ag_ar
 from .utils import check_memory_usage
 
 
-def setup_arenas(arena_name, num_processes=16):
-
+def setup_arenas(arena_name, arena_config, num_processes=16):
+    print(f"[agent_arena, setup_arena] Setting up arenas: {arena_name}")
     gpu_per_process = torch.cuda.device_count() / num_processes
-    print('gpu_per_process', gpu_per_process)
+    print('[agent_arena, setup_arena] gpu_per_process', gpu_per_process)
+    
     arenas = [ray.remote(ag_ar.build_arena).options(
         num_gpus=gpu_per_process,
-        num_cpus=0.2).remote(f'{arena_name},disp:0', ray=True)
+        num_cpus=0.2).remote(
+            name=arena_name,
+            config=arena_config,
+        )
         for _ in range(num_processes)]
+    
     arenas = ray.get(arenas)
+    return arenas
+
+def setup_arenas_with_class(arena_class, arena_config, num_processes=16):
+    #print(f"[agent_arena, setup_arena] Setting up arenas: {arena_name}")
+    gpu_per_process = torch.cuda.device_count() / num_processes
+    print('[agent_arena, setup_arena] gpu_per_process', gpu_per_process)
+    
+    # CHECK: Is this already a Ray Actor?
+    # Ray Actors have an 'options' method. Regular classes do not.
+    if hasattr(arena_class, 'options'):
+        remote_cls = arena_class
+    else:
+        remote_cls = ray.remote(arena_class)
+
+    # Use 'remote_cls' instead of 'ray.remote(arena_class)'
+    arenas = [remote_cls.options(
+        num_gpus=gpu_per_process,
+        num_cpus=0.2).remote(
+            arena_config,
+        )
+        for _ in range(num_processes)]
+    
     return arenas
 
 

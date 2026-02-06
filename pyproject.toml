@@ -68,8 +68,10 @@ torch = [
     "torch==2.4.1",
     "torchvision==0.19.1",
     "torchaudio==2.4.1",
-    "diffusers==0.30.3",
-    "transformers==4.57.5"
+    "diffusers==0.36.0",
+    "transformers==5.0.0"
+    "accelerate==1.12.0"
+
 ]
 
 [build-system]

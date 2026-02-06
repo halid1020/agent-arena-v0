@@ -75,6 +75,16 @@ class Arena(ABC):
 
         self.disp = flg
 
+    def get_num_episodes(self) -> np.int32:
+        if self.mode == 'eval':
+            return self.num_eval_trials
+        elif self.mode == 'val':
+            return self.num_val_trials
+        elif self.mode == 'train':
+            return self.num_train_trials
+        else:
+            raise NotImplementedError
+
     
     def get_eval_configs(self):
         eval_configs = [
@@ -214,15 +224,7 @@ class Arena(ABC):
             int: The action horizon.
         """
         return self.action_horizon
-    
-    def get_num_episodes(self) -> int:
-        """
-        Get the number of possible episodes in the arena under the current mode.
 
-        Returns:
-            int: The number of possible episodes, or -1 if undefined.
-        """
-        return -1
 
     def set_task(self, task):
         """

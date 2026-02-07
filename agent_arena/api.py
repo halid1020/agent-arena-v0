@@ -161,6 +161,24 @@ def build_logger(name: str, save_dir: str) -> Logger:
     logger = LOGGER[name](save_dir)
     return logger
 
+def print_tree(data, indent=0):
+    """Recursively prints a nested dictionary/list structure as a tree."""
+    spacing = "  " * indent
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, (dict, list)):
+                print(f"{spacing}kl_ {key}:")
+                print_tree(value, indent + 1)
+            else:
+                print(f"{spacing}kl_ {key}: {value}")
+    elif isinstance(data, list):
+        for i, item in enumerate(data):
+            if isinstance(item, (dict, list)):
+                print(f"{spacing}[Item {i}]")
+                print_tree(item, indent + 1)
+            else:
+                print(f"{spacing}- {item}")
+
 def save_best_results(results, save_dir, checkpoint):
     """
     Save the best results (a list of dicts) and checkpoint id.
@@ -175,12 +193,29 @@ def save_best_results(results, save_dir, checkpoint):
     best_path = os.path.join(save_dir, 'best')
     os.makedirs(best_path, exist_ok=True)
 
+    # ---- print to terminal in tree structure ----
+    print("\n" + "="*50)
+    print(f"[agent-arena] PREVIEWING RESULTS FOR CHECKPOINT {checkpoint}:")
+    print("="*50)
+    print_tree(results)
+    print("="*50 + "\n")
+
     # ---- save results ----
     json_file = os.path.join(best_path, "best_results.json")
     print('[agent-arena] Saving best results to', best_path)
+    
 
+    def numpy_converter(obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        raise TypeError(f"Type {type(obj)} is not serializable")
+    
     with open(json_file, "w") as f:
-        json.dump(results, f, indent=4)
+        json.dump(results, f, indent=4, default=numpy_converter)
 
     # ---- save checkpoint id ----
     checkpoint_file = os.path.join(best_path, "checkpoint.txt")

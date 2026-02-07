@@ -258,7 +258,7 @@ class RavenEnvAdapter(Arena):
         return self.train_params
 
     def get_frames(self):
-        if len(self._vid_rec.frames):
+        if len(self._vid_rec.frames) == 0:
             return []
         return np.stack(self._vid_rec.frames)
     

@@ -11,7 +11,7 @@ class StandardLogger(Logger):
     def __init__(self):
         super().__init__()
     
-    def __call__(self, episode_config, result, filename=None):
+    def __call__(self, episode_config, result, filename=None, wandb_logger=None):
 
         eid, save_video = episode_config['eid'], episode_config['save_video']
 
@@ -49,12 +49,6 @@ class StandardLogger(Logger):
             header= (False if written else True)
         )
 
-        # pt(
-        #     result['rgb'], # TODO: this is envionrment specific 
-        #     title='Episode {}'.format(eid), 
-        #     # rewards=result['rewards'], 
-        #     save_png = True, save_path=os.path.join(self.log_dir, filename, 'performance_visualisation'))
-        
         if save_goal:
 
             mpimg.imsave(

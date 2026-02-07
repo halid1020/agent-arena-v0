@@ -6,7 +6,7 @@ class Logger():
     def set_log_dir(self, log_dir, project_name, exp_name):
         self.log_dir = log_dir
 
-    def __call__(self, episode_config, result, filename=None):
+    def __call__(self, episode_config, result, filename=None, wandb_logger=None):
         pass
     
     def check_exist(self, episode_config, filename=None):

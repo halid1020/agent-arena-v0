@@ -1,0 +1,270 @@
+import unittest
+import numpy as np
+import os
+import shutil
+import tempfile
+from torch.utils.data import DataLoader
+
+# Import your class here. Assuming it's in a file named `trajectory_dataset.py`
+# If it's in the same file, just leave the import as is.
+# from trajectory_dataset import TrajectoryDataset 
+
+# --- Mocking the class import for the purpose of this script ---
+# (In your real setup, just import your actual class)
+from agent_arena import TrajectoryDataset
+
+class TestTrajectoryDataset(unittest.TestCase):
+
+    def setUp(self):
+        # Create a temporary directory for test data
+        self.test_dir = tempfile.mkdtemp()
+        self.data_path = "test_dataset.zarr"
+        self.full_path = os.path.join(self.test_dir, self.data_path)
+
+        # Standard Configs
+        self.obs_config = {
+            'rgb': {'shape': (3, 32, 32), 'output_key': 'rgb'},
+            'depth': {'shape': (1, 32, 32), 'output_key': 'depth'}
+        }
+        self.act_config = {
+            'default': {'shape': (4,), 'output_key': 'action'}
+        }
+        self.goal_config = {
+            'target_rgb': {'shape': (3, 32, 32), 'output_key': 'goal_rgb'}
+        }
+
+    def tearDown(self):
+        # Clean up the temporary directory
+        shutil.rmtree(self.test_dir)
+
+    def generate_dummy_data(self, num_steps=10):
+        """Helper to generate consistent dummy data"""
+        obs = {
+            'rgb': np.random.randn(num_steps + 1, 3, 32, 32).astype(np.float32),
+            'depth': np.random.randn(num_steps + 1, 1, 32, 32).astype(np.float32)
+        }
+        act = {
+            'default': np.random.randn(num_steps, 4).astype(np.float32)
+        }
+        goal = {
+            'target_rgb': np.random.randn(1, 3, 32, 32).astype(np.float32)
+        }
+        return obs, act, goal
+
+    # =========================================================================
+    # TEST 1: Basic Write and Read
+    # =========================================================================
+    def test_write_and_read(self):
+        print("\n--- Test 1: Basic Write and Read ---")
+        
+        # 1. Create and Write
+        dataset = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='w',
+            obs_config=self.obs_config,
+            act_config=self.act_config,
+            goal_config=self.goal_config,
+            save_goal=True
+        )
+
+        obs1, act1, goal1 = self.generate_dummy_data(10)
+        dataset.add_trajectory(obs1, act1, goal1)
+        
+        obs2, act2, goal2 = self.generate_dummy_data(15)
+        dataset.add_trajectory(obs2, act2, goal2)
+
+        self.assertEqual(dataset.num_trajectories(), 2)
+        self.assertEqual(dataset.get_total_timesteps(), 10 + 15)
+
+        # 2. Reload in Read Mode
+        dataset_r = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='r',
+            obs_config=self.obs_config,
+            act_config=self.act_config,
+            goal_config=self.goal_config,
+            save_goal=True,
+            whole_trajectory=True
+        )
+
+        # Verify Content of Trajectory 0
+        traj0 = dataset_r.get_trajectory(0)
+        np.testing.assert_array_almost_equal(traj0['observation']['rgb'], obs1['rgb'])
+        np.testing.assert_array_almost_equal(traj0['action']['action'], act1['default'])
+        np.testing.assert_array_almost_equal(traj0['goal']['goal_rgb'], goal1['target_rgb'])
+        
+        print("Write/Read verification successful.")
+
+    # =========================================================================
+    # TEST 2: Caching Logic
+    # =========================================================================
+    def test_caching_logic(self):
+        print("\n--- Test 2: In-Memory Caching ---")
+        
+        # Initialize with cache_in_memory=True
+        dataset = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='w',
+            obs_config=self.obs_config,
+            act_config=self.act_config,
+            cache_in_memory=True
+        )
+
+        obs, act, _ = self.generate_dummy_data(10)
+        
+        # Add trajectory (should update both Zarr and Cache)
+        dataset.add_trajectory(obs, act)
+
+        # Verify Cache is populated
+        self.assertIsInstance(dataset.obs_source['rgb'], np.ndarray)
+        self.assertEqual(dataset.obs_source['rgb'].shape[0], 11)
+        
+        # Verify correctness
+        np.testing.assert_array_almost_equal(dataset.obs_source['rgb'], obs['rgb'])
+        print("Caching logic successful.")
+
+    # =========================================================================
+    # TEST 3: Sampling Modes (Seq, Whole, Cross)
+    # =========================================================================
+    def test_sampling_modes(self):
+        print("\n--- Test 3: Sampling Modes ---")
+        
+        # Setup Data: Trj1 (Length 10), Trj2 (Length 5)
+        dataset = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='w',
+            obs_config=self.obs_config,
+            act_config=self.act_config
+        )
+        dataset.add_trajectory(*self.generate_dummy_data(10)[:2])
+        dataset.add_trajectory(*self.generate_dummy_data(5)[:2])
+
+        # A. Fixed Sequence Length
+        # Trj1 has 10 steps. Seq=2. Valid starts: 0 to 8 (indices)
+        dataset_seq = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='r',
+            obs_config=self.obs_config,
+            act_config=self.act_config,
+            seq_length=2,
+            cache_in_memory=True
+        )
+        
+        # Check an item
+        item = dataset_seq[0]
+        self.assertEqual(item['observation']['rgb'].shape[0], 3) # Seq=2 means 3 frames (t, t+1, t+2)
+        self.assertEqual(item['action']['action'].shape[0], 2)
+        
+        # B. Whole Trajectory
+        dataset_whole = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='r',
+            obs_config=self.obs_config,
+            act_config=self.act_config,
+            whole_trajectory=True
+        )
+        self.assertEqual(len(dataset_whole), 2) # Should act like list of trajectories
+        item_whole = dataset_whole[1]
+        self.assertEqual(item_whole['action']['action'].shape[0], 5)
+
+        print("Sampling modes successful.")
+
+    # =========================================================================
+    # TEST 4: Train / Val / Eval Split
+    # =========================================================================
+    def test_splitting(self):
+        print("\n--- Test 4: Data Splitting ---")
+        
+        dataset = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='w',
+            obs_config=self.obs_config,
+            act_config=self.act_config
+        )
+        
+        # Add 100 trajectories of length 10
+        for _ in range(100):
+            dataset.add_trajectory(*self.generate_dummy_data(10)[:2])
+        
+        # Standard Split: 10% Eval, 10% Val, 80% Train
+        # Total samples approx 100 * (10 - seq + 1)
+        
+        seq_len = 5
+        # Each trajectory has length 10. Valid starts for seq=5 is 10-5 = 5 samples per traj.
+        # Total valid samples = 500.
+        
+        ds_train = TrajectoryDataset(
+            data_path=self.data_path, data_dir=self.test_dir, io_mode='r', 
+            obs_config=self.obs_config, act_config=self.act_config,
+            seq_length=seq_len, sample_mode='train', split_ratios=[0.1, 0.1, 0.8]
+        )
+        
+        ds_val = TrajectoryDataset(
+            data_path=self.data_path, data_dir=self.test_dir, io_mode='r', 
+            obs_config=self.obs_config, act_config=self.act_config,
+            seq_length=seq_len, sample_mode='val', split_ratios=[0.1, 0.1, 0.8]
+        )
+
+        total_samples = 100 * (10 - seq_len)
+        expected_train = int(total_samples * 0.8)
+        expected_val = int(total_samples * 0.1)
+
+        print(f"Total Samples: {total_samples}, Train: {len(ds_train)}, Val: {len(ds_val)}")
+        
+        # Allow +/- 1 due to rounding
+        self.assertTrue(abs(len(ds_train) - expected_train) <= 1)
+        self.assertTrue(abs(len(ds_val) - expected_val) <= 1)
+        
+        print("Splitting logic successful.")
+
+    # =========================================================================
+    # TEST 5: Robustness (Short Trajectories)
+    # =========================================================================
+    def test_short_trajectories(self):
+        print("\n--- Test 5: Robustness to Short Trajectories ---")
+        
+        dataset = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='w',
+            obs_config=self.obs_config,
+            act_config=self.act_config
+        )
+        
+        # Add a "good" trajectory (len 10)
+        dataset.add_trajectory(*self.generate_dummy_data(10)[:2])
+        
+        # Add a "bad" trajectory (len 2) - shorter than seq_length 5
+        dataset.add_trajectory(*self.generate_dummy_data(2)[:2])
+        
+        # Initialize reader with seq_length 5
+        dataset_r = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='r',
+            obs_config=self.obs_config,
+            act_config=self.act_config,
+            seq_length=5
+        )
+        
+        # The bad trajectory should be skipped in flat_ranges
+        # Good traj (len 10) -> valid starts 0,1,2,3,4 (5 samples)
+        # Bad traj (len 2) -> 0 samples
+        self.assertEqual(len(dataset_r), 5)
+        
+        # Ensure we can load all of them without crashing
+        loader = DataLoader(dataset_r, batch_size=2)
+        for batch in loader:
+            pass
+            
+        print("Short trajectory handling successful.")
+
+if __name__ == '__main__':
+    unittest.main()

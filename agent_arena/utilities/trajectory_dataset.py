@@ -211,26 +211,15 @@ class TrajectoryDataset(Dataset):
             # We can start anywhere as long as we have seq_length data ahead
             self.all_samples = max(0, self.total_timesteps - self.seq_length)          
         else:
-            self.valid_ranges = []
-            self.flat_ranges = []
-            
-            # Iterate over every trajectory to find valid start indices
-            for traj_idx, (start_abs, length) in enumerate(zip(self.traj_starts, self.traj_lengths)):
-                # We need length >= seq_length + 1 usually (obs=seq, action=seq)
-                # If your sequence length logic differs (e.g. obs_horizon), adjust here.
-                if length >= self.seq_length: 
-                    # Last valid start index is: start_abs + length - seq_length
-                    # Because: start + seq_length must be <= start + length
-                    last_valid_start = start_abs + length - self.seq_length
-                    
-                    # Store (traj_idx, start_abs_index, end_abs_index_exclusive)
-                    self.valid_ranges.append((traj_idx, start_abs, last_valid_start))
-            
-            # Flatten: create a list of every valid (traj_idx, start_time_idx) tuple
+            self.valid_ranges = [
+                (start, start + length - (self.seq_length+1))
+                for start, length in zip(self.traj_starts, self.traj_lengths)
+                if length >= self.seq_length + 1
+            ]
             self.flat_ranges = [
-                (traj_idx, curr_start)
-                for traj_idx, start_abs, end_abs in self.valid_ranges
-                for curr_start in range(start_abs, end_abs + 1) # +1 because range is exclusive
+                (traj_idx, start_idx)
+                for traj_idx, (traj_start, traj_end) in enumerate(self.valid_ranges)
+                for start_idx in range(traj_start, traj_end + 1)
             ]
         
             self.all_samples = len(self.flat_ranges)

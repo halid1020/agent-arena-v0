@@ -403,7 +403,7 @@ class RavenEnvAdapter(Arena):
                     goal_traj.append(pickle.load(f))
         else:
             # Generate
-            print(f"Generating goal for {task_name} episode {config_id}...")
+            print(f"[RavenEnvAdapter, _load_or_generate_goals] Generating goal for {task_name} episode {config_id}...")
             goal_traj = self._generate_goal(config_id)
             
             # Save

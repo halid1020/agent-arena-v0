@@ -14,7 +14,7 @@ class TrajectoryDataset(Dataset):
                  whole_trajectory: bool = False, sample_mode='all', 
                  sample_terminal=True, split_ratios=[0.1, 0.1, 0.8],
                  num_trj=None, data_dir: Optional[str]=None,
-                 transform=None, cache_in_memory: bool = False): # <--- Added flag here
+                 transform=None, cache_in_memory: bool = False):
         """
         Args:
 
@@ -191,33 +191,51 @@ class TrajectoryDataset(Dataset):
             self.traj_lengths = self.trajectory_lengths[:]
         else:
             self.traj_lengths = self.trajectory_lengths[:self.num_trj]
+
+        # 1. Update basic stats
         self.total_trj = len(self.traj_lengths)
-        self.traj_starts = np.concatenate(([0], np.cumsum(self.traj_lengths)[:-1])) if len(self.traj_lengths) > 0 else np.array([])
+        self.traj_starts = np.concatenate(([0], np.cumsum(self.traj_lengths)[:-1])) if len(self.traj_lengths) > 0 else np.array([], dtype=np.int64)
         self.total_timesteps = np.sum(self.traj_lengths)
         
-        # self.terminals is always created in memory (numpy), so no extra caching needed
-        self.terminals = np.zeros((self.total_timesteps, 1))
-        for i in range(len(self.traj_lengths)):
-            self.terminals[self.traj_starts[i] + self.traj_lengths[i] - 1] = 1
+        # 2. Rebuild terminals (safe to overwrite)
+        self.terminals = np.zeros((self.total_timesteps, 1), dtype=np.float32)
+        if self.total_trj > 0:
+            # Vectorized terminal setting is faster and safer
+            term_indices = self.traj_starts + self.traj_lengths - 1
+            self.terminals[term_indices] = 1.0
 
+        # 3. Rebuild Sampling Indices
         if self.whole_trajectory:
-            self.all_samples = len(self.traj_lengths)
+            self.all_samples = self.total_trj
         elif self.cross_trajectory:
+            # We can start anywhere as long as we have seq_length data ahead
             self.all_samples = max(0, self.total_timesteps - self.seq_length)          
         else:
-            self.valid_ranges = [
-                (start, start + length - (self.seq_length+1))
-                for start, length in zip(self.traj_starts, self.traj_lengths)
-                if length >= self.seq_length + 1
-            ]
+            self.valid_ranges = []
+            self.flat_ranges = []
+            
+            # Iterate over every trajectory to find valid start indices
+            for traj_idx, (start_abs, length) in enumerate(zip(self.traj_starts, self.traj_lengths)):
+                # We need length >= seq_length + 1 usually (obs=seq, action=seq)
+                # If your sequence length logic differs (e.g. obs_horizon), adjust here.
+                if length >= self.seq_length: 
+                    # Last valid start index is: start_abs + length - seq_length
+                    # Because: start + seq_length must be <= start + length
+                    last_valid_start = start_abs + length - self.seq_length
+                    
+                    # Store (traj_idx, start_abs_index, end_abs_index_exclusive)
+                    self.valid_ranges.append((traj_idx, start_abs, last_valid_start))
+            
+            # Flatten: create a list of every valid (traj_idx, start_time_idx) tuple
             self.flat_ranges = [
-                (traj_idx, start_idx)
-                for traj_idx, (traj_start, traj_end) in enumerate(self.valid_ranges)
-                for start_idx in range(traj_start, traj_end + 1)
+                (traj_idx, curr_start)
+                for traj_idx, start_abs, end_abs in self.valid_ranges
+                for curr_start in range(start_abs, end_abs + 1) # +1 because range is exclusive
             ]
         
             self.all_samples = len(self.flat_ranges)
 
+        # 4. Update Split Logic
         if self.sample_mode == 'all':
             self.num_samples = self.all_samples
             self.start_sample = 0
@@ -231,8 +249,10 @@ class TrajectoryDataset(Dataset):
             self.start_sample = int(self.split_ratios[0] * self.all_samples)
             self.end_sample = self.start_sample + self.num_samples
         elif self.sample_mode == 'train':
-            self.num_samples = self.all_samples - int(np.sum(self.split_ratios[:-1]) * self.all_samples)
-            self.start_sample = int(np.sum(self.split_ratios[:-1]) * self.all_samples)
+            # Be careful with int rounding removing the last sample
+            start_s = int(np.sum(self.split_ratios[:-1]) * self.all_samples)
+            self.num_samples = self.all_samples - start_s
+            self.start_sample = start_s
             self.end_sample = self.all_samples
 
     def add_transition(self, observation: Dict[str, np.ndarray], action: Dict[str, np.ndarray], done: bool):
@@ -259,56 +279,69 @@ class TrajectoryDataset(Dataset):
         if self.mode not in ['a', 'w']:
             raise ValueError("[agent-arena, TrajectoryDatset]  Dataset not opened in append or write mode.")
 
+        # --- 1. Process Observations (Zarr + Cache) ---
         for obs_type, obs_data in observations.items():
             if obs_type not in self.obs_config.keys():
                 continue
             
+            # Validation
             if len(obs_data) != len(list(actions.values())[0]) + 1:
                 raise ValueError(f"[agent-arena, TrajectoryDatset]  Number of {obs_type} observations should be one more than the number of actions.")
             
+            # Prepare data
             if isinstance(obs_data, list):
                 obs_data = np.array(obs_data)
+            
+            # Reshape for storage
             obs_data_ = obs_data.reshape(-1, *self.obs_config[obs_type]['shape'])
+            
+            # A. Write to Zarr (Disk)
             self.observation[obs_type].append(obs_data_)
 
-        # for action_type, action_data in actions.items():
-        #     print('action data', action_data)
-        #     action_data = np.concatenate([action_data, np.zeros_like(action_data[:1])])
-        #     self.action[action_type].append(action_data)
+            # B. Write to Cache (Memory) - if enabled
+            if self.cache_in_memory and obs_type in self.obs_source:
+                self.obs_source[obs_type] = np.concatenate([self.obs_source[obs_type], obs_data_], axis=0)
 
-        # --- 2. Process Actions (FIXED) ---
+        # --- 2. Process Actions (Zarr + Cache) ---
         for action_type, action_data in actions.items():
-            # Convert list -> Numpy array BEFORE manipulation
             if isinstance(action_data, list):
-                action_data = np.array(action_data) # Result: (T, ActionDim)
+                action_data = np.array(action_data)
 
-            # Ensure strict shape matching (T, *Shape)
-            # This handles cases where data might be (T,) vs (T, 1)
             action_shape = self.act_config[action_type]['shape']
             action_data = action_data.reshape(-1, *action_shape)
 
-            # Pad with one zero-action at the end (to match observation length if required)
-            # Creates a (1, *Shape) zero array
+            # Pad with zero-action at the end
             padding = np.zeros((1, *action_shape), dtype=action_data.dtype)
+            action_data_padded = np.concatenate([action_data, padding], axis=0)
             
-            # Concatenate along time axis (Axis 0)
-            action_data = np.concatenate([action_data, padding], axis=0)
-            
-            # Now append to Zarr (Dimensions will strictly match)
-            self.action[action_type].append(action_data)
+            # A. Write to Zarr
+            self.action[action_type].append(action_data_padded)
 
-        
+            # B. Write to Cache
+            if self.cache_in_memory and action_type in self.act_source:
+                 self.act_source[action_type] = np.concatenate([self.act_source[action_type], action_data_padded], axis=0)
+
+        # --- 3. Process Goals ---
         if self.save_goal:
             for goal_type, goal_data in goals.items():
                 if goal_type not in self.goal_config.keys():
                     continue
                 if len(goal_data) != 1:
                     raise ValueError(f"Number of {goal_type} goals should be one.")
+                
                 if isinstance(goal_data, list):
                     goal_data = np.array(goal_data)
+                
                 goal_data_ = goal_data.reshape(-1, *self.goal_config[goal_type]['shape'])
+                
+                # A. Write to Zarr
                 self.goal[goal_type].append(goal_data_)
 
+                # B. Write to Cache
+                if self.cache_in_memory and goal_type in self.goal_source:
+                    self.goal_source[goal_type] = np.concatenate([self.goal_source[goal_type], goal_data_], axis=0)
+
+        # --- 4. Final Updates ---
         self.trajectory_lengths.append(np.array([len(list(observations.values())[0])]))
         self.update_dataset_info()
 
@@ -405,7 +438,6 @@ class TrajectoryDataset(Dataset):
 
         return ret
 
-    # ... (rest of methods like get_trajectory_lengths, etc. remain unchanged)
     def get_trajectory_lengths(self) -> List[int]:
         return self.traj_lengths.tolist()
 

@@ -263,59 +263,6 @@ class FoldingTask(Task):
     def get_goal(self):
         return self.goals[-1].copy()
     
-    # def _generate_goals(self):
-    #     logging.info('[softgym, folding_wrapper, load gaols] generate goal')
-    #     info = arena.set_to_flatten()
-    #     info = self._process_info(info)
-    #     #print('info largest_particle_distance {}'.format(info['largest_particle_distance']))
-        
-
-    #     #print('generating goal')
-        
-    #     episode_config = arena.get_episode_config()
-    #     #print('episode config generating goals', episode_config)
-    #     self.oracle_policy.reset()
-    #     self.oracle_policy.init(info)
-    #     #actions = []
-    #     while not self.oracle_policy.success(info):
-    #         #print('reset to generate')
-    #         arena.reset(episode_config)
-    #         actions = []
-    #         #print('step 0')
-    #         info = arena.set_to_flatten()
-    #         info = self._process_info(info)
-    #         logging.info('[softgym, folding_wrapper, load gaols] info keys {}'\
-    #                         .format(info.keys()))
-    #         self.oracle_policy.reset()
-    #         self.oracle_policy.init(info)
-    #         #print('info largest_particle_distance {}'.format(info['largest_particle_distance']))
-    #         while not self.oracle_policy.success(info) and not info['done']:
-    #             #print('generate step')
-    #             #print('info largest_particle_distance {}'.format(info['largest_particle_distance']))
-    #             info['arena'] = self
-    #             action = self.oracle_policy.act(info)
-    #             actions.append(action)
-    #             #print('action shape', action.shape)
-    #             info = self.step(action)
-    #             self.oracle_policy.update(info, action)
-            
-    #     #print('finish generating goals')
-    #     self.goal = info['observation']
-    #     self.goal['action'] = np.array(actions)
-    #     self.goal['particle'] = self.get_particle_positions()
-        
-    
-
-    # def _save_goal(self):
-
-    #     eid = arena.get_episode_id()
-    #     mode = arena.get_mode()
-    #     if not os.path.exists(self._get_goal_path(eid, mode)):
-    #         os.makedirs(self._get_goal_path(eid, mode))
-    #     plt.imsave(self._get_goal_path(eid, mode) + '/rgb.png', self.goal['rgb'])
-    #     np.save(self._get_goal_path(eid, mode) + '/depth.npy', self.goal['depth'])
-    #     np.save(self._get_goal_path(eid, mode) + '/mask.npy', self.goal['mask'])
-
     def load_goals(self, eid, mode):
         
         if self._goal_cached(eid, mode):

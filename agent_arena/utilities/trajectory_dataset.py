@@ -8,12 +8,12 @@ import shutil
 
 class TrajectoryDataset(Dataset):
     
-    def __init__(self, data_path: str, seq_length: Optional[int] = None, cross_trajectory: bool = False, 
+    def __init__(self, data_path: str, seq_length: Optional[int] = 1, cross_trajectory: bool = False, 
                  io_mode: str = 'r', obs_config: Dict[str, Tuple] = None, act_config: Dict[str, Tuple] = None, 
                  goal_config: Dict[str, Tuple] = None, save_goal=False,
                  whole_trajectory: bool = False, sample_mode='all', 
                  sample_terminal=True, split_ratios=[0.1, 0.1, 0.8],
-                 num_trj=None, data_dir: Optional[str]=None,
+                 num_trj=None, data_dir: Optional[str]=None, return_trj_last: bool = False, 
                  transform=None, cache_in_memory: bool = False):
         """
         Args:
@@ -46,12 +46,14 @@ class TrajectoryDataset(Dataset):
         self.save_goal = save_goal
         self.transform = transform
         self.num_trj = num_trj
-        self.cache_in_memory = cache_in_memory # <--- Store flag
+        self.cache_in_memory = cache_in_memory
+        self.return_trj_last = return_trj_last
         
         if whole_trajectory:
             self.seq_length = None
             self.cross_trajectory = False
         else:
+            # TODO: asssett seq lenght is not None.
             self.seq_length = seq_length
             self.cross_trajectory = cross_trajectory
         
@@ -205,12 +207,17 @@ class TrajectoryDataset(Dataset):
             self.terminals[term_indices] = 1.0
 
         # 3. Rebuild Sampling Indices
-        if self.whole_trajectory:
+        if self.whole_trajectory: # Sample a whole trajectory regarless of its length
             self.all_samples = self.total_trj
-        elif self.cross_trajectory:
+        elif self.cross_trajectory: # Sample a sequence where it can cross trajectories
             # We can start anywhere as long as we have seq_length data ahead
-            self.all_samples = max(0, self.total_timesteps - self.seq_length)          
-        else:
+            self.all_samples = max(0, self.total_timesteps - self.seq_length) # This is for self.return_trj_last is true
+            if not self.return_trj_last:
+                self.all_samples -= self.total_trj
+        else: # Sample a sequence with a fixed length where it cannot cross trajecoties.
+            
+            ## TODO: bellow works for self.return_trj_last is False, 
+            # we also need the impmemtation for self.return_trj_last is True
             self.valid_ranges = [
                 (start, start + length - (self.seq_length+1))
                 for start, length in zip(self.traj_starts, self.traj_lengths)
@@ -265,6 +272,10 @@ class TrajectoryDataset(Dataset):
         self.update_dataset_info()
 
     def add_trajectory(self, observations: Dict[str, np.ndarray], actions: Dict[str, np.ndarray], goals=None):
+        """
+            We expect input actions has 1 less entry than the observations.
+            However, when storing we add one more action padding as place holder
+        """
         if self.mode not in ['a', 'w']:
             raise ValueError("[agent-arena, TrajectoryDatset]  Dataset not opened in append or write mode.")
 
@@ -361,7 +372,7 @@ class TrajectoryDataset(Dataset):
 
         if self.save_goal:
             goals = {
-                goal_output_type: self.goal_source[goal_type][idx].reshape(*self.goal_config[goal_type]['shape']) \
+                goal_output_type: self.goal_source[goal_type][idx].reshape(-1, *self.goal_config[goal_type]['shape']) \
                     for goal_type, goal_output_type in zip(self.goal_types, self.goal_output_types)
             }
             ret['goal'] = goals
@@ -387,6 +398,7 @@ class TrajectoryDataset(Dataset):
         elif self.cross_trajectory:
             start_idx = idx
             end_idx = start_idx + self.seq_length
+            # TODO: we need add implemetaion for return_trj_last is False
         else:
             traj_idx, start_idx = self.flat_ranges[idx]
             end_idx = start_idx + self.seq_length

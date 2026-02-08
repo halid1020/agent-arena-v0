@@ -75,7 +75,7 @@ class TestTrajectoryDataset(unittest.TestCase):
         dataset.add_trajectory(obs2, act2, goal2)
 
         self.assertEqual(dataset.num_trajectories(), 2)
-        self.assertEqual(dataset.get_total_timesteps(), 10 + 15)
+        self.assertEqual(dataset.get_total_timesteps(), 11 + 16)
 
         # 2. Reload in Read Mode
         dataset_r = TrajectoryDataset(
@@ -104,6 +104,7 @@ class TestTrajectoryDataset(unittest.TestCase):
         print("\n--- Test 2: In-Memory Caching ---")
         
         # Initialize with cache_in_memory=True
+        # In this case whole_trajecotry is set to Flase, the seuqnce length has to be set to an number
         dataset = TrajectoryDataset(
             data_path=self.data_path,
             data_dir=self.test_dir,
@@ -140,8 +141,8 @@ class TestTrajectoryDataset(unittest.TestCase):
             obs_config=self.obs_config,
             act_config=self.act_config
         )
-        dataset.add_trajectory(*self.generate_dummy_data(10)[:2])
-        dataset.add_trajectory(*self.generate_dummy_data(5)[:2])
+        dataset.add_trajectory(*self.generate_dummy_data(10)[:2]) # steps are 10, but sequence size is 11
+        dataset.add_trajectory(*self.generate_dummy_data(5)[:2]) # steps are 5, but sequence size is 6
 
         # A. Fixed Sequence Length
         # Trj1 has 10 steps. Seq=2. Valid starts: 0 to 8 (indices)
@@ -186,7 +187,7 @@ class TestTrajectoryDataset(unittest.TestCase):
             data_dir=self.test_dir,
             io_mode='w',
             obs_config=self.obs_config,
-            act_config=self.act_config
+            act_config=self.act_config,
         )
         
         # Add 100 trajectories of length 10
@@ -212,7 +213,7 @@ class TestTrajectoryDataset(unittest.TestCase):
             seq_length=seq_len, sample_mode='val', split_ratios=[0.1, 0.1, 0.8]
         )
 
-        total_samples = 100 * (10 - seq_len)
+        total_samples = 100 * (11 - seq_len)
         expected_train = int(total_samples * 0.8)
         expected_val = int(total_samples * 0.1)
 
@@ -239,11 +240,13 @@ class TestTrajectoryDataset(unittest.TestCase):
         )
         
         # Add a "good" trajectory (len 10)
-        dataset.add_trajectory(*self.generate_dummy_data(10)[:2])
+        dataset.add_trajectory(*self.generate_dummy_data(10)[:2]) # steps 10, sqenece 11.
         
         # Add a "bad" trajectory (len 2) - shorter than seq_length 5
-        dataset.add_trajectory(*self.generate_dummy_data(2)[:2])
+        dataset.add_trajectory(*self.generate_dummy_data(2)[:2]) # steps 2, sqenece 3.
         
+        # TODO: check if sequence lenght for the added trajecoties are 11 and 3.
+
         # Initialize reader with seq_length 5
         dataset_r = TrajectoryDataset(
             data_path=self.data_path,
@@ -251,13 +254,14 @@ class TestTrajectoryDataset(unittest.TestCase):
             io_mode='r',
             obs_config=self.obs_config,
             act_config=self.act_config,
-            seq_length=5
+            seq_length=5,
         )
         
         # The bad trajectory should be skipped in flat_ranges
-        # Good traj (len 10) -> valid starts 0,1,2,3,4 (5 samples)
-        # Bad traj (len 2) -> 0 samples
-        self.assertEqual(len(dataset_r), 5)
+        # Good traj (len 11) -> valid sequence [0-4],[1-5],[2-6],[3-7],[4-8], [5-9] (6 samples); 
+        # we do not sample [6-10] because last action is 'place-holder'
+        # Bad traj (len 3) -> 0 samples
+        self.assertEqual(len(dataset_r), 6)
         
         # Ensure we can load all of them without crashing
         loader = DataLoader(dataset_r, batch_size=2)
@@ -265,6 +269,66 @@ class TestTrajectoryDataset(unittest.TestCase):
             pass
             
         print("Short trajectory handling successful.")
+
+    # =========================================================================
+    # TEST 6: Cross Trajectory & Terminal Flags
+    # =========================================================================
+    def test_cross_trajectory(self):
+        print("\n--- Test 6: Cross Trajectory & Terminal Flags ---")
+        
+        dataset = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='w',
+            obs_config=self.obs_config,
+            act_config=self.act_config
+        )
+        
+        # Add 2 trajectories of 5 steps each (Storage length 6)
+        # Total storage: 12 steps. 
+        # Indices: 
+        # T1: 0, 1, 2, 3, 4 (actions), 5 (pad/terminal)
+        # T2: 6, 7, 8, 9, 10 (actions), 11 (pad/terminal)
+        dataset.add_trajectory(*self.generate_dummy_data(5)[:2])
+        dataset.add_trajectory(*self.generate_dummy_data(5)[:2])
+        
+        dataset_cross = TrajectoryDataset(
+            data_path=self.data_path,
+            data_dir=self.test_dir,
+            io_mode='r',
+            obs_config=self.obs_config,
+            act_config=self.act_config,
+            seq_length=4,
+            cross_trajectory=True,
+            sample_terminal=True,
+            return_trj_last=True
+        )
+
+        # We want to sample a window that crosses from T1 to T2.
+        # Window length = 4. 
+        # If we start at index 3:
+        # steps: 3, 4, 5, 6.
+        # 3,4 are T1 actions. 5 is T1 pad. 6 is T2 start.
+        
+        # Note: In cross_trajectory mode, we treat indices linearly.
+        item = dataset_cross[3] 
+        
+        terminals = item['observation']['terminal']
+        # terminal shape is (seq_len + 1, 1) -> (5, 1)
+        # indices relative to window: 0(idx3), 1(idx4), 2(idx5), 3(idx6), 4(idx7)
+        
+        # Index 5 in global storage is the end of T1. 
+        # It should correspond to index 2 in our local window.
+        
+        print("Terminal array:", terminals.flatten())
+        
+        # Assert that the terminal flag is high at the boundary
+        self.assertEqual(terminals[2].item(), 1.0, "Terminal flag should be 1 at the end of Trajectory 1")
+        self.assertEqual(terminals[0].item(), 0.0)
+        self.assertEqual(terminals[3].item(), 0.0) # Start of T2 should not be terminal
+        
+        print("Cross trajectory logic successful.")
+
 
 if __name__ == '__main__':
     unittest.main()

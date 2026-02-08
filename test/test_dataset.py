@@ -6,9 +6,9 @@ from agent_arena.utilities.trajectory_dataset \
 
 # Define the shapes of your observation and action types
 obs_shapes = {
-    'rgb': {'shape': (64, 64, 3), 'output_key': 'rgb'},
-    'depth': {'shape': (64, 64, 1), 'output_key': 'depth'},
-    'particles': {'shape': (100, 3), 'output_key': 'particles'},
+    'rgb': {'shape': (16, 16, 3), 'output_key': 'rgb'},
+    'depth': {'shape': (16, 16, 1), 'output_key': 'depth'},
+    'particles': {'shape': (10, 3), 'output_key': 'particles'},
 }
 
 action_shapes = {

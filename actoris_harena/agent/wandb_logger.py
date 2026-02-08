@@ -75,7 +75,7 @@ class WandbLogger(Logger):
             config=config,
             id=effective_run_id,
             resume=effective_resume,
-            dir=str(logdir)
+            dir=str(logdir),
         )
         self.step = 0
 

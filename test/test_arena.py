@@ -1,6 +1,6 @@
 import argparse
 from dotmap import DotMap
-import agent_arena as ag_ar
+import actoris_harena as athar
 import math
 import os
 import matplotlib
@@ -42,7 +42,7 @@ def main():
 
     # 1. Build Arena using the DotMap format
     print(f"\nBuilding Arena: {args.arena}...")
-    arena = ag_ar.build_arena(
+    arena = athar.build_arena(
         f"{args.arena}", 
         DotMap({
             'ray': False,
@@ -59,7 +59,7 @@ def main():
 
     # 2. Build Agent
     print(f"Building Agent: {args.policy}...")
-    agent = ag_ar.build_agent(
+    agent = athar.build_agent(
         args.policy,
         DotMap({}), 
         log_dir, 
@@ -69,7 +69,7 @@ def main():
 
     # 3. Run Episode
     print(f"Running episode {args.eid}...")
-    _, res = ag_ar.run(agent, arena, 'eval',
+    _, res = athar.run(agent, arena, 'eval',
         episode_config={
             'eid': args.eid, 
             'save_video': True, 

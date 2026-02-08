@@ -117,7 +117,7 @@ def main():
     parser.add_argument('--seed', default=0, type=int)
     args = parser.parse_args()
 
-    config = yaml.safe_load(Path('{}/configuration/data_collection/{}.yaml'.format(os.environ['AGENT_ARENA_PATH'], args.config)).read_text())
+    config = yaml.safe_load(Path('{}/configuration/data_collection/{}.yaml'.format(os.environ['actoris_harena_PATH'], args.config)).read_text())
     config = dotmap.DotMap(config)
     config.num_episodes = args.num_episodes
 

@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 # --- Mocking the class import for the purpose of this script ---
 # (In your real setup, just import your actual class)
-from agent_arena import TrajectoryDataset
+from actoris_harena import TrajectoryDataset
 
 class TestTrajectoryDataset(unittest.TestCase):
 

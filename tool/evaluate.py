@@ -1,8 +1,8 @@
 import argparse
 import os
 
-import agent_arena.api as ag_ar
-from agent_arena.utilities.utils import create_message_logger
+import actoris_harena.api as ag_ar
+from actoris_harena.utilities.utils import create_message_logger
 
 def main():
 

@@ -1,7 +1,7 @@
 import argparse
 import api as ag_ar
 from utilities.utils import create_message_logger
-from agent_arena import TrainableAgent
+from actoris_harena import TrainableAgent
 
 def main():
 

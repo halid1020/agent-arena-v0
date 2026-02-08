@@ -2,8 +2,8 @@ import sys
 import argparse
 import os
 
-import agent_arena as ag_ar
-from agent_arena.utilities.utils import create_message_logger
+import actoris_harena as ag_ar
+from actoris_harena.utilities.utils import create_message_logger
 
 def parse_arguments():
     """Parse command-line arguments."""

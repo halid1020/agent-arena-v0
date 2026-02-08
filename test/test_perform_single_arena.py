@@ -1,9 +1,9 @@
 import os
 
-import agent_arena as ag_ar
-from agent_arena.utilities.utils import create_message_logger
-from agent_arena.utilities.visual_utils import plot_pick_and_place_trajectory as pt
-from agent_arena.utilities.perform_single import perform_single
+import actoris_harena as ag_ar
+from actoris_harena.utilities.utils import create_message_logger
+from actoris_harena.utilities.visual_utils import plot_pick_and_place_trajectory as pt
+from actoris_harena.utilities.perform_single import perform_single
 import ray
 
 import numpy as np

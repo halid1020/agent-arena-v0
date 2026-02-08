@@ -26,7 +26,7 @@ unzip MonoSquareFabric-VisionPickAndPlace-TrajectorySim.zip
 
 # Train and Evaluate PlaNet-ClothPick from Scratch
 
-After downloading the data, you can start traning `planet-clothpick` agent. You can find the implementation of the agent [here](https://github.com/halid1020/agent-arena-v0/tree/main/agent_arena/agent/drl/planet)
+After downloading the data, you can start traning `planet-clothpick` agent. You can find the implementation of the agent [here](https://github.com/halid1020/agent-arena-v0/tree/main/actoris_harena/agent/drl/planet)
 
 Under the `softgym`'s root directory, please run
 ```
@@ -49,7 +49,7 @@ python train_and_evaluate.py \
 
 The above program will also evaluate the agent in the test trials of the arena.
 
-Provided config files are `D2M` and `RGB2RGB`, and you can find them [here](https://github.com/halid1020/agent-arena-v0/tree/main/agent_arena/configuration/train_and_evaluate/planet-clothpick/softgym%7Cdomain%3Amono-square-fabric%2Cinitial%3Acrumpled%2Caction%3Apixel-pick-and-place(1)%2Ctask%3Aflattening)
+Provided config files are `D2M` and `RGB2RGB`, and you can find them [here](https://github.com/halid1020/agent-arena-v0/tree/main/actoris_harena/configuration/train_and_evaluate/planet-clothpick/softgym%7Cdomain%3Amono-square-fabric%2Cinitial%3Acrumpled%2Caction%3Apixel-pick-and-place(1)%2Ctask%3Aflattening)
 
 
 # Download Provided Weights

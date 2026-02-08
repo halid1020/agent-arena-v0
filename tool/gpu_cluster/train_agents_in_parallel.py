@@ -1,7 +1,7 @@
 import argparse
 import os
 import ray
-import agent_arena as ag_ar
+import actoris_harena as ag_ar
 from ruamel.yaml import YAML
 from pathlib import Path
 

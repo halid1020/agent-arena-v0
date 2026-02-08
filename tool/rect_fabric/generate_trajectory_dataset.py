@@ -37,7 +37,7 @@ def main():
     
     
     config = yaml.safe_load(Path('{}/configuration/data_collection/{}.yaml'.\
-                                 format(os.environ['AGENT_ARENA_PATH'], args.config)).read_text())
+                                 format(os.environ['actoris_harena_PATH'], args.config)).read_text())
     config = dotmap.DotMap(config)
     config.num_episodes = args.num_episodes
 

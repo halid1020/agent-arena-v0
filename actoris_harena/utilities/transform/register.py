@@ -1,0 +1,32 @@
+from actoris_harena.utilities.transform.pick_and_place_transformer \
+    import PickAndPlaceTransformer
+from actoris_harena.utilities.transform.pick_and_place_heatmap_transformer \
+    import PickAndPlaceHeatmapTransformer
+from actoris_harena.utilities.transform.transporter_net_transformer \
+    import TransporterNetTransformer
+from actoris_harena.utilities.transform.transporter_net_goal_condition_transformer \
+    import TransporterNetGoalConditionTransformer
+from actoris_harena.utilities.transform.identity_transformer \
+    import IdentityTransformer
+from actoris_harena.utilities.transform.contrastive_learning_transformer \
+    import ContrastiveLearningTransformer
+from actoris_harena.utilities.transform.planet_transformer \
+    import PlaNetTransformer
+from actoris_harena.utilities.transform.phase_prediction_transformer \
+    import PhasePredictionTransformer
+
+from actoris_harena.utilities.transform.pick_and_place_transformer_v1 \
+    import PickAndPlaceTransformerV1
+
+
+DATA_TRANSFORMER = {
+    'planet_transformer': PlaNetTransformer,
+    'pick_and_place_transformer':  PickAndPlaceTransformer,
+    'pick_and_place_heatmap_transformer': PickAndPlaceHeatmapTransformer,
+    'transporter_net_transformer': TransporterNetTransformer,
+    'transporter_net_goal_condition_transformer': TransporterNetGoalConditionTransformer,
+    'identity': IdentityTransformer,
+    'contrastive_learning_transformer': ContrastiveLearningTransformer,
+    'phase_prediction_transform': PhasePredictionTransformer,
+    'pick_and_place_transformer_v1':  PickAndPlaceTransformerV1,
+}

@@ -1,8 +1,8 @@
 import numpy as np
 import cv2
-import agent_arena as ag_ar
-from agent_arena.utilities.trajectory_dataset import TrajectoryDataset
-from agent_arena.utilities.perform_single import perform_single
+import actoris_harena as ag_ar
+from actoris_harena.utilities.trajectory_dataset import TrajectoryDataset
+from actoris_harena.utilities.perform_single import perform_single
 
 obs_config = {'rgb': {'shape': (128, 128, 3),  'output_key': 'rgb'}}
 act_config = {'norm-pixel-pick-and-place': {'shape': (2, 2), 'output_key': 'default'}}

@@ -1,6 +1,6 @@
 import argparse
 from dotmap import DotMap
-import agent_arena as ag_ar
+import actoris_harena as ag_ar
 import math
 import os
 import matplotlib

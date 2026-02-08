@@ -15,29 +15,6 @@ class TrajectoryDataset(Dataset):
                  sample_terminal=True, split_ratios=[0.1, 0.1, 0.8],
                  num_trj=None, data_dir: Optional[str]=None, return_trj_last: bool = False, 
                  transform=None, cache_in_memory: bool = False):
-        """
-        Args:
-
-            cache_in_memory (bool): If True, loads the entire dataset into RAM (numpy arrays) 
-                                        to speed up training (avoids disk I/O per batch).
-
-            zarr_path (str): Path to the Zarr directory.
-
-            seq_length (Optional[int]): The fixed sequence length to sample. Set to None if whole_trajectory is True.
-
-            cross_trajectory (bool): If True, allow sampling across trajectory boundaries. Ignored if whole_trajectory is True.
-
-            mode (str): 'r' for read-only, 'a' for read/write append mode, 'w' for write mode (create new or overwrite).
-
-            obs_shapes (Dict[str, Tuple]): Dictionary of observation shapes for each observation type (required for 'w' mode).
-
-            action_shapes (Dict[str, Tuple]): Dictionary of action shapes for each action type (required for 'w' mode).
-
-            whole_trajectory (bool): If True, sample whole trajectories instead of fixed-length sequences.
-
-            splot_raitos (list of floats): Eval, val, and train.
-
-        """
 
         self.whole_trajectory = whole_trajectory
         self.sample_mode = sample_mode
@@ -53,7 +30,8 @@ class TrajectoryDataset(Dataset):
             self.seq_length = None
             self.cross_trajectory = False
         else:
-            # TODO: asssett seq lenght is not None.
+            if seq_length is None:
+                raise ValueError("seq_length must be provided if whole_trajectory is False.")
             self.seq_length = seq_length
             self.cross_trajectory = cross_trajectory
         
@@ -63,12 +41,10 @@ class TrajectoryDataset(Dataset):
         self.mode = io_mode
         
         if data_dir is None:
-            # Fallback for data_path resolution
             if 'AGENT_ARENA_PATH' in os.environ:
                  base_path = os.path.join(os.environ['AGENT_ARENA_PATH'], '..', 'data')
             else:
-                 base_path = './data' # default fallback
-            
+                 base_path = './data'
             data_path = os.path.join(base_path, data_path)
         else:
             data_path = os.path.join(data_dir, data_path)
@@ -91,9 +67,8 @@ class TrajectoryDataset(Dataset):
         else:
             self.store = zarr.DirectoryStore(data_path)
 
-        self.root = zarr.open(self.store, mode=io_mode) # Fixed: pass store to zarr.open
+        self.root = zarr.open(self.store, mode=io_mode)
 
-        # Initialize or load arrays (Zarr handles)
         if io_mode in ['a', 'w']:
             self.observation = self.root.require_group('observation')
             self.action = self.root.require_group('action')
@@ -129,11 +104,8 @@ class TrajectoryDataset(Dataset):
         self.obs_config = obs_config
         self.act_config = act_config
         
-        # In read mode, infer config from Zarr if not provided
         if self.obs_config is None and io_mode == 'r':
-             # Simple inference, might need adjustment based on your config structure
              self.obs_types = list(self.observation.keys())
-             # Warning: this assumes standard shape/key structure
         else:
             self.obs_types = list(self.obs_config.keys())
             self.obs_shapes = {k: v['shape'] for k, v in self.obs_config.items()}
@@ -150,8 +122,6 @@ class TrajectoryDataset(Dataset):
         
         self.update_dataset_info()
         
-        # --- CACHING LOGIC START ---
-        # By default, sources point to Zarr groups
         self.obs_source = self.observation
         self.act_source = self.action
         if save_goal:
@@ -159,30 +129,24 @@ class TrajectoryDataset(Dataset):
 
         if self.cache_in_memory:
             if self.mode != 'r':
-                print("[agent-arena, TrajectoryDatset]  Warning: cache_in_memory is strictly recommended for 'r' mode. " 
-                      "[agent-arena, TrajectoryDatset]  Writing new data will not update the cache automatically.")
+                print("[agent-arena, TrajectoryDatset]  Warning: cache_in_memory is strictly recommended for 'r' mode.")
             
             print("[agent-arena, TrajectoryDatset] Caching dataset into memory... (This may take a moment)")
             
-            # Cache Observations
             self.obs_source = {}
             for k in self.obs_types:
-                # [:] forces load from zarr to numpy RAM
                 self.obs_source[k] = self.observation[k][:] 
             
-            # Cache Actions
             self.act_source = {}
             for k in self.action_types:
                 self.act_source[k] = self.action[k][:]
                 
-            # Cache Goals
             if self.save_goal and self.goal is not None:
                 self.goal_source = {}
                 for k in self.goal_types:
                     self.goal_source[k] = self.goal[k][:]
                     
             print(f"Finished caching. Loaded {self.total_timesteps} timesteps.")
-        # --- CACHING LOGIC END ---
 
         print('[agent-arena, TrajectoryDatset]  total trj', self.total_trj)
         print('[agent-arena, TrajectoryDatset]  num_samples', self.num_samples)
@@ -194,35 +158,66 @@ class TrajectoryDataset(Dataset):
         else:
             self.traj_lengths = self.trajectory_lengths[:self.num_trj]
 
-        # 1. Update basic stats
         self.total_trj = len(self.traj_lengths)
         self.traj_starts = np.concatenate(([0], np.cumsum(self.traj_lengths)[:-1])) if len(self.traj_lengths) > 0 else np.array([], dtype=np.int64)
         self.total_timesteps = np.sum(self.traj_lengths)
         
-        # 2. Rebuild terminals (safe to overwrite)
+        # Terminals (at the end of stored trajectory - which is the padded dummy step)
         self.terminals = np.zeros((self.total_timesteps, 1), dtype=np.float32)
         if self.total_trj > 0:
-            # Vectorized terminal setting is faster and safer
             term_indices = self.traj_starts + self.traj_lengths - 1
             self.terminals[term_indices] = 1.0
 
-        # 3. Rebuild Sampling Indices
-        if self.whole_trajectory: # Sample a whole trajectory regarless of its length
+        # --- Rebuild Sampling Indices ---
+        self.valid_indices = None # Only used for cross_trajectory + return_trj_last=False
+
+        if self.whole_trajectory: 
             self.all_samples = self.total_trj
-        elif self.cross_trajectory: # Sample a sequence where it can cross trajectories
-            # We can start anywhere as long as we have seq_length data ahead
-            self.all_samples = max(0, self.total_timesteps - self.seq_length) # This is for self.return_trj_last is true
-            if not self.return_trj_last:
-                self.all_samples -= self.total_trj
-        else: # Sample a sequence with a fixed length where it cannot cross trajecoties.
+        
+        elif self.cross_trajectory: 
+            # Max valid index to start a sequence
+            max_start_idx = max(0, self.total_timesteps - self.seq_length)
             
-            ## TODO: bellow works for self.return_trj_last is False, 
-            # we also need the impmemtation for self.return_trj_last is True
-            self.valid_ranges = [
-                (start, start + length - (self.seq_length+1))
-                for start, length in zip(self.traj_starts, self.traj_lengths)
-                if length >= self.seq_length + 1
-            ]
+            if self.return_trj_last:
+                # If True, we can sample anywhere that fits the sequence length
+                self.all_samples = max_start_idx
+            else:
+                # If False, we do not want to start a sequence on the padded terminal steps.
+                # The terminal steps are at `term_indices`.
+                # We need to filter out any start_idx that is in term_indices
+                # AND ensure start_idx < max_start_idx
+                
+                # 1. Create all possible start indices
+                all_indices = np.arange(max_start_idx)
+                
+                # 2. Identify indices to exclude (the terminals)
+                # Note: term_indices might contain indices >= max_start_idx, so we intersect
+                exclude_indices = term_indices[term_indices < max_start_idx]
+                
+                # 3. Create valid mapping
+                self.valid_indices = np.setdiff1d(all_indices, exclude_indices)
+                self.all_samples = len(self.valid_indices)
+
+        else: # Standard fixed trajectory sampling
+            # Determine effective length based on flag
+            # If return_trj_last is True: Use full stored length (includes pad)
+            # If return_trj_last is False: Use length - 1 (excludes pad)
+            padding_subtraction = 0 if self.return_trj_last else 1
+            
+            # The -1 in `(self.seq_length + 1)` logic comes from requiring N+1 observations for N actions.
+            # If we exclude the pad (length-1), we have valid actions.
+            
+            self.valid_ranges = []
+            for start, length in zip(self.traj_starts, self.traj_lengths):
+                effective_length = length - padding_subtraction
+                
+                # Logic: end = start + effective_length - seq_length
+                # If effective_length < seq_length + 1, we can't form a valid seq (Obs needed)
+                if effective_length >= self.seq_length:
+                    # Valid start range is inclusive [start, end_start_idx]
+                    end_start_idx = start + effective_length - self.seq_length
+                    self.valid_ranges.append((start, end_start_idx))
+
             self.flat_ranges = [
                 (traj_idx, start_idx)
                 for traj_idx, (traj_start, traj_end) in enumerate(self.valid_ranges)
@@ -245,14 +240,12 @@ class TrajectoryDataset(Dataset):
             self.start_sample = int(self.split_ratios[0] * self.all_samples)
             self.end_sample = self.start_sample + self.num_samples
         elif self.sample_mode == 'train':
-            # Be careful with int rounding removing the last sample
             start_s = int(np.sum(self.split_ratios[:-1]) * self.all_samples)
             self.num_samples = self.all_samples - start_s
             self.start_sample = start_s
             self.end_sample = self.all_samples
 
     def add_transition(self, observation: Dict[str, np.ndarray], action: Dict[str, np.ndarray], done: bool):
-        # NOTE: This writes to ZARR (disk). If cache_in_memory is True, the cache is NOT updated here.
         if self.mode not in ['a', 'w']:
             raise ValueError("[agent-arena, TrajectoryDatset]  Dataset not opened in append or write mode.")
 
@@ -272,37 +265,23 @@ class TrajectoryDataset(Dataset):
         self.update_dataset_info()
 
     def add_trajectory(self, observations: Dict[str, np.ndarray], actions: Dict[str, np.ndarray], goals=None):
-        """
-            We expect input actions has 1 less entry than the observations.
-            However, when storing we add one more action padding as place holder
-        """
         if self.mode not in ['a', 'w']:
             raise ValueError("[agent-arena, TrajectoryDatset]  Dataset not opened in append or write mode.")
 
-        # --- 1. Process Observations (Zarr + Cache) ---
         for obs_type, obs_data in observations.items():
             if obs_type not in self.obs_config.keys():
                 continue
-            
-            # Validation
             if len(obs_data) != len(list(actions.values())[0]) + 1:
                 raise ValueError(f"[agent-arena, TrajectoryDatset]  Number of {obs_type} observations should be one more than the number of actions.")
             
-            # Prepare data
             if isinstance(obs_data, list):
                 obs_data = np.array(obs_data)
             
-            # Reshape for storage
             obs_data_ = obs_data.reshape(-1, *self.obs_config[obs_type]['shape'])
-            
-            # A. Write to Zarr (Disk)
             self.observation[obs_type].append(obs_data_)
-
-            # B. Write to Cache (Memory) - if enabled
             if self.cache_in_memory and obs_type in self.obs_source:
                 self.obs_source[obs_type] = np.concatenate([self.obs_source[obs_type], obs_data_], axis=0)
 
-        # --- 2. Process Actions (Zarr + Cache) ---
         for action_type, action_data in actions.items():
             if isinstance(action_data, list):
                 action_data = np.array(action_data)
@@ -310,38 +289,24 @@ class TrajectoryDataset(Dataset):
             action_shape = self.act_config[action_type]['shape']
             action_data = action_data.reshape(-1, *action_shape)
 
-            # Pad with zero-action at the end
             padding = np.zeros((1, *action_shape), dtype=action_data.dtype)
             action_data_padded = np.concatenate([action_data, padding], axis=0)
             
-            # A. Write to Zarr
             self.action[action_type].append(action_data_padded)
-
-            # B. Write to Cache
             if self.cache_in_memory and action_type in self.act_source:
                  self.act_source[action_type] = np.concatenate([self.act_source[action_type], action_data_padded], axis=0)
 
-        # --- 3. Process Goals ---
         if self.save_goal:
             for goal_type, goal_data in goals.items():
                 if goal_type not in self.goal_config.keys():
                     continue
-                if len(goal_data) != 1:
-                    raise ValueError(f"Number of {goal_type} goals should be one.")
-                
                 if isinstance(goal_data, list):
                     goal_data = np.array(goal_data)
-                
                 goal_data_ = goal_data.reshape(-1, *self.goal_config[goal_type]['shape'])
-                
-                # A. Write to Zarr
                 self.goal[goal_type].append(goal_data_)
-
-                # B. Write to Cache
                 if self.cache_in_memory and goal_type in self.goal_source:
                     self.goal_source[goal_type] = np.concatenate([self.goal_source[goal_type], goal_data_], axis=0)
 
-        # --- 4. Final Updates ---
         self.trajectory_lengths.append(np.array([len(list(observations.values())[0])]))
         self.update_dataset_info()
 
@@ -349,7 +314,6 @@ class TrajectoryDataset(Dataset):
         start_idx = self.traj_starts[idx]
         end_idx = start_idx + self.traj_lengths[idx] - 1
         
-        # Use self.obs_source / self.act_source (can be Zarr or Dict of Numpy)
         obs = {
             obs_output_type: self.obs_source[obs_type][start_idx:end_idx+1]\
                 .reshape(-1, *self.obs_config[obs_type]['shape']) \
@@ -390,20 +354,26 @@ class TrajectoryDataset(Dataset):
     def __getitem__(self, idx: int):
         idx = idx + self.start_sample
         if idx >= self.end_sample:
-            raise IndexError(f"[agent-arena, TrajectoryDatset]  Index {idx-self.start_sample} out of range for sampling of length {self.num_samples}.")
+            raise IndexError(f"[agent-arena, TrajectoryDatset]  Index {idx-self.start_sample} out of range for sampling.")
 
         if self.whole_trajectory:
             start_idx = self.traj_starts[idx]
             end_idx = start_idx + self.traj_lengths[idx] - 1
+        
         elif self.cross_trajectory:
-            start_idx = idx
+            if self.return_trj_last:
+                start_idx = idx
+            else:
+                # Use the valid_indices map to skip terminals
+                start_idx = self.valid_indices[idx]
+            
             end_idx = start_idx + self.seq_length
-            # TODO: we need add implemetaion for return_trj_last is False
+            traj_idx = np.searchsorted(self.traj_starts, start_idx, side='right') - 1
+            
         else:
             traj_idx, start_idx = self.flat_ranges[idx]
             end_idx = start_idx + self.seq_length
 
-        # Use abstract sources here (self.obs_source, self.act_source)
         obs = {
             obs_output_type: self.obs_source[obs_type][start_idx:end_idx+1]\
                 .reshape(-1, *self.obs_shapes[obs_type])
@@ -443,7 +413,11 @@ class TrajectoryDataset(Dataset):
         return self.traj_lengths.tolist()
 
     def get_total_timesteps(self) -> int:
-        return self.total_timesteps
+
+        if self.return_trj_last:
+            return self.total_timesteps
+        else:
+            return self.total_timesteps - self.num_trajectories()
 
     def is_cross_trajectory(self) -> bool:
         return self.cross_trajectory

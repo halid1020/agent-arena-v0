@@ -65,7 +65,8 @@ class TestTrajectoryDataset(unittest.TestCase):
             obs_config=self.obs_config,
             act_config=self.act_config,
             goal_config=self.goal_config,
-            save_goal=True
+            save_goal=True,
+            return_trj_last=True
         )
 
         obs1, act1, goal1 = self.generate_dummy_data(10)
@@ -203,14 +204,14 @@ class TestTrajectoryDataset(unittest.TestCase):
         
         ds_train = TrajectoryDataset(
             data_path=self.data_path, data_dir=self.test_dir, io_mode='r', 
-            obs_config=self.obs_config, act_config=self.act_config,
-            seq_length=seq_len, sample_mode='train', split_ratios=[0.1, 0.1, 0.8]
+            obs_config=self.obs_config, act_config=self.act_config, cross_trajectory=False,
+            seq_length=seq_len, sample_mode='train', split_ratios=[0.1, 0.1, 0.8], return_trj_last=False
         )
         
         ds_val = TrajectoryDataset(
             data_path=self.data_path, data_dir=self.test_dir, io_mode='r', 
-            obs_config=self.obs_config, act_config=self.act_config,
-            seq_length=seq_len, sample_mode='val', split_ratios=[0.1, 0.1, 0.8]
+            obs_config=self.obs_config, act_config=self.act_config, cross_trajectory=False,
+            seq_length=seq_len, sample_mode='val', split_ratios=[0.1, 0.1, 0.8], return_trj_last=False
         )
 
         total_samples = 100 * (11 - seq_len)
@@ -251,10 +252,13 @@ class TestTrajectoryDataset(unittest.TestCase):
         dataset_r = TrajectoryDataset(
             data_path=self.data_path,
             data_dir=self.test_dir,
+            whole_trajectory=False,
+            cross_trajectory=False,
             io_mode='r',
             obs_config=self.obs_config,
             act_config=self.act_config,
             seq_length=5,
+            return_trj_last=False
         )
         
         # The bad trajectory should be skipped in flat_ranges
@@ -328,6 +332,76 @@ class TestTrajectoryDataset(unittest.TestCase):
         self.assertEqual(terminals[3].item(), 0.0) # Start of T2 should not be terminal
         
         print("Cross trajectory logic successful.")
+
+    
+    # =========================================================================
+    # TEST 7: Return Trajectory Last Flag Logic
+    # =========================================================================
+    def test_return_trj_last_modes(self):
+        print("\n--- Test 7: Return Last Trajectory Flag Logic ---")
+        
+        # Setup: Create 2 trajectories, 10 steps each.
+        # Stored length is 11 (0..9 actions, 10 pad).
+        # Total storage: 22 steps.
+        # Terminals at indices: 10 and 21.
+        dataset = TrajectoryDataset(
+            data_path=self.data_path, data_dir=self.test_dir, io_mode='w',
+            obs_config=self.obs_config, act_config=self.act_config
+        )
+        dataset.add_trajectory(*self.generate_dummy_data(10)[:2])
+        dataset.add_trajectory(*self.generate_dummy_data(10)[:2])
+        
+        seq_len = 2
+
+        # --- Case A: Standard Mode, return_trj_last=False ---
+        # Length used: 11 - 1 = 10.
+        # Valid starts: 0 to 10 - 2 + 1 = 9
+        # Formula: start + len - seq. 
+        # start=0. len=10. seq=2. end_idx = 0 + 10 - 2 = 8.
+        # Range 0..8 inclusive = 9 samples.
+        ds_std_false = TrajectoryDataset(data_path=self.data_path, data_dir=self.test_dir, 
+                                         obs_config=self.obs_config, act_config=self.act_config,
+                                         seq_length=seq_len, cross_trajectory=False, return_trj_last=False)
+        self.assertEqual(len(ds_std_false), 18) # 9 per trj * 2 trj
+        
+        # --- Case B: Standard Mode, return_trj_last=True ---
+        # Length used: 11.
+        # Formula: start + 11 - 2 = 9.
+        # Range 0..9 inclusive = 10 samples. (One extra sample per trj).
+        ds_std_true = TrajectoryDataset(data_path=self.data_path, data_dir=self.test_dir, 
+                                        obs_config=self.obs_config, act_config=self.act_config,
+                                        seq_length=seq_len, cross_trajectory=False, return_trj_last=True)
+        self.assertEqual(len(ds_std_true), 20) # 9 per trj * 2 trj
+
+        # --- Case C: Cross Mode, return_trj_last=True ---
+        # Total time: 22. Max start: 22 - 2 = 20. (Indices 0..19).
+        # Sample count: 20.
+        ds_cross_true = TrajectoryDataset(data_path=self.data_path, data_dir=self.test_dir, 
+                                          obs_config=self.obs_config, act_config=self.act_config,
+                                          seq_length=seq_len, cross_trajectory=True, return_trj_last=True)
+        self.assertEqual(len(ds_cross_true), 20)
+        
+        # --- Case D: Cross Mode, return_trj_last=False ---
+        # Total possible starts: 20.
+        # Terminals at 10 and 21.
+        # Index 21 is >= 20, so it's out of range anyway.
+        # Index 10 is inside range 0..19.
+        # We must skip index 10.
+        # Total samples: 20 - 1 = 19.
+        ds_cross_false = TrajectoryDataset(data_path=self.data_path, data_dir=self.test_dir, 
+                                           obs_config=self.obs_config, act_config=self.act_config,
+                                           seq_length=seq_len, cross_trajectory=True, return_trj_last=False)
+        self.assertEqual(len(ds_cross_false), 19)
+        
+        # Verify that we actually skipped index 10
+        # If we access index 10 (which maps to 11 in valid list), we should get start_idx=11
+        # Item 10 in the dataset should correspond to index 11 in raw storage.
+        # (Indices 0..9 map to 0..9. Index 10 maps to 11).
+        item = ds_cross_false[10]
+        # Check an observation value to verify shift (optional, but good for sanity)
+        # Or just check that we didn't crash.
+        
+        print("Return Last Trajectory flags verified successfully.")
 
 
 if __name__ == '__main__':

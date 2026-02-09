@@ -86,7 +86,6 @@ def main():
             'action_horizon': args.horizon,
             'debug': True, 
             'debug_dir': os.path.join(log_dir, 'internal_debug'),
-            'use_default_goal_cam': True,
             'snap_to_mask': True
         }),
         save_dir=log_dir,

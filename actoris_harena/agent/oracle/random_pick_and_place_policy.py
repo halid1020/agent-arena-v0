@@ -1,6 +1,6 @@
 import numpy as np
 
-from actoris_harena.agent.random_policy import RandomPolicy
+from actoris_harena.agent.random.random_policy import RandomPolicy
 
 
 class RandomPickAndPlacePolicy(RandomPolicy):

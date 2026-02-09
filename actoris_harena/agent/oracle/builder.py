@@ -69,7 +69,7 @@ class OracleBuilder():
             return VisualMPC_CEM(param)
         
         if config_str == 'random':
-            from ..random_policy import RandomPolicy
+            from ..random.random_policy import RandomPolicy
             return RandomPolicy()
 
         if config_str == 'goal_action':

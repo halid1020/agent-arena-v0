@@ -42,17 +42,17 @@ from actoris_harena.agent.planning.mpc.rect_fabric.pick_and_place_cloth_contour_
 from actoris_harena.agent.planning.mpc.rect_fabric.pick_and_place_cloth_contour_mpc_step_goals \
     import RectFabricPickPlaceClothContourMPCStepGoals
 
-from actoris_harena.agent.random_policy import RandomPolicy
+from actoris_harena.agent.random.random_policy import RandomPolicy
 from actoris_harena.agent.random.mask_biased_pixel_random_pick_and_place_policy import MaskBiasedPixelPickAndPlacePolicy
 
 from actoris_harena.agent.oracle.raven.raven_oracle_policy_adapter \
     import RavenOraclePolicyAdapter
-from actoris_harena.agent.random.raven_random_policy \
-    import RavenRandomPolicy
+from actoris_harena.agent.random.raven_mask_biased_random_policy \
+    import RavenMaskBiasedRandomPolicy
 from actoris_harena.agent.oracle.raven.raven_pixel_oracle_policy_adapter \
     import RavenPixelOraclePolicyAdapter
-from actoris_harena.agent.random.raven_pixel_random_policy \
-    import RavenPixelRandomPolicy
+from actoris_harena.agent.random.raven_pixel_mask_biased_random_policy \
+    import RavenPixelMaskBiasedRandomPolicy
 
 AGENTS = {  
     # 'dreamer-planning': Dreamer,
@@ -83,8 +83,8 @@ AGENTS = {
 
     'raven-oracle': RavenOraclePolicyAdapter,
     'raven-pixel-oracle': RavenPixelOraclePolicyAdapter,
-    'raven-random': RavenRandomPolicy,
-    'raven-pixel-random': RavenPixelRandomPolicy,
+    'raven-mask-biased-random': RavenMaskBiasedRandomPolicy,
+    'raven-pixel-mask-biased-random': RavenPixelMaskBiasedRandomPolicy,
     
     'random': RandomPolicy,
     'mask-biased-pixel-random-pick-and-place': MaskBiasedPixelPickAndPlacePolicy,

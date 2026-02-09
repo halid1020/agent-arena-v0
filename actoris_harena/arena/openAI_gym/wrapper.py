@@ -3,7 +3,7 @@ import cv2
 import gym
 
 from actoris_harena.arena.arena import Arena
-from ...utilities.logger.standard_logger import StandardLogger
+from ..loggers.standard_logger import StandardLogger
 
 # https://github.com/Kaixhin/PlaNet/blob/master/env.py
 

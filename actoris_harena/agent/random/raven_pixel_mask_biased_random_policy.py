@@ -2,7 +2,7 @@
 import numpy as np
 from actoris_harena import Agent
 
-class RavenPixelRandomPolicy(Agent):
+class RavenPixelMaskBiasedRandomPolicy(Agent):
     """
     Random Policy for RavenPixelEnvAdapter.
     

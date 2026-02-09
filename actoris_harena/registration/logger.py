@@ -5,7 +5,7 @@ from actoris_harena.utilities.logger.rect_fabric.pick_and_place_rect_fabric_sing
     import PickAndPlaceRectFabricSingleTaskLogger
 from actoris_harena.utilities.logger.rect_fabric.pick_and_place_rect_fabric_all_task_logger \
     import PickAndPlaceRectFabricAllTaskLogger
-from actoris_harena.utilities.logger.standard_logger import StandardLogger
+from actoris_harena.arena.loggers.standard_logger import StandardLogger
 from actoris_harena.utilities.logger.rect_fabric.pick_and_place_phase_prediction_logger \
     import PickAndPlacePhasePredictionLogger
 

@@ -4,7 +4,9 @@ import gym
 import pybullet as p
 import cv2
 
-from .raven_env_adapter import RavenEnvAdapter 
+from .raven_env_adapter import RavenEnvAdapter
+from actoris_harena.arena.loggers.pixel_based_pick_and_place_env_logger \
+    import PixelBasedPickAndPlaceEnvLogger
 
 class RavenPixelEnvAdapter(RavenEnvAdapter):
     def __init__(self, config):
@@ -26,14 +28,60 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         self.cam_rotm = np.float32(rotation).reshape(3, 3)
         self.cam_pos = np.array(self.cam_config['position'])
 
+        self.snap_to_mask = config.get('snap_to_mask', False)
+
         self.debug = config.get('debug', False)
         self.debug_dir = config.get('debug_dir', 'tmp/raven_debug')
         if self.debug:
             os.makedirs(self.debug_dir, exist_ok=True)
             print(f"[RavenPixel] Debugging enabled. Images will be saved to: {self.debug_dir}")
+        
+        self.logger = PixelBasedPickAndPlaceEnvLogger()
 
     def get_name(self):
         return "RavenPixelNormalized"
+    
+    def _snap_pick_to_mask(self, pixel_action):
+        """
+        Finds the nearest pixel in the mask > 0 to the pick location.
+        pixel_action: [pick_u, pick_v, place_u, place_v, theta]
+        """
+        if self.last_obs is None or 'mask' not in self.last_obs:
+            return pixel_action
+
+        mask = self.last_obs['mask']
+        # Handle (H, W, 1) case if necessary
+        if mask.ndim == 3: mask = mask.squeeze()
+
+        # Get coordinates of all valid pixels (mask > 0)
+        # np.where returns (rows/v, cols/u)
+        valid_v, valid_u = np.where(mask > 0)
+
+        # If mask is empty, cannot snap
+        if len(valid_v) == 0:
+            return pixel_action
+
+        pick_u, pick_v = pixel_action[0], pixel_action[1]
+
+        # Optimization: Check if pick is already on mask
+        u_int, v_int = int(pick_u), int(pick_v)
+        if (0 <= v_int < mask.shape[0] and 
+            0 <= u_int < mask.shape[1] and 
+            mask[v_int, u_int] > 0):
+            return pixel_action
+
+        # Calculate squared Euclidean distances
+        dists = (valid_u - pick_u)**2 + (valid_v - pick_v)**2
+        
+        # Find index of minimum distance
+        min_idx = np.argmin(dists)
+        
+        # Update pick coordinates
+        snapped_action = pixel_action.copy()
+        snapped_action[0] = valid_u[min_idx]
+        snapped_action[1] = valid_v[min_idx]
+        
+        return snapped_action
     
     def _visualize_action(self, pixel_action, step_idx):
         """Draws the pick and place action on the current RGB frame."""
@@ -133,23 +181,54 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         self.last_obs = info['observation']
         return info
 
+    def _normalize_pixel_action(self, pixel_action):
+        """
+        Converts pixel space and radians back to normalized [-1, 1] range.
+        
+        Args:
+            pixel_action: [pick_u, pick_v, place_u, place_v, theta_rad]
+        Returns:
+            norm_action: Array in range [-1, 1]
+        """
+        # 1. Map Pixels [0, img_res] -> [-1, 1]
+        # Inverse: (px / size * 2) - 1
+        norm_coords = (pixel_action[:4] / self.img_res * 2.0) - 1.0
+        
+        # 2. Map Radians [-pi, pi] -> [-1, 1]
+        norm_theta = pixel_action[4] / np.pi
+        
+        return np.concatenate([norm_coords, [norm_theta]])
+
     def step(self, action):
-        # 1. Check if action is the 5-dim normalized action
         if isinstance(action, (np.ndarray, list)) and len(action) == 5:
-            # 2. Denormalize: [-1, 1] -> [Pixels, Radians]
+            # 1. Denormalize to pixel space
             pixel_action = self._denormalize_action(action)
             
+            # 2. Snap to Mask (if enabled)
+            if self.snap_to_mask:
+                pixel_action = self._snap_pick_to_mask(pixel_action)
+                # Re-normalize so the logger sees the REAL pick point
+                applied_action = self._normalize_pixel_action(pixel_action)
+            else:
+                applied_action = action
+
+            # 3. Debug Visualization
             if self.debug and self.last_obs is not None:
                 self._visualize_action(pixel_action, self._step)
 
-            # 3. Convert: [Pixels, Radians] -> [World XYZ, Quat]
+            # 4. Convert to World for Simulation
             world_action = self._convert_pixel_action_to_world(pixel_action)
         else:
-            raise ValueError
+            raise ValueError("Action must be a 5-dimensional normalized vector.")
             
         info = super().step(world_action)
         self.last_obs = info['observation']
+        
+        # Log the ACTUAL action that was executed (snapped version)
+        info['applied_action'] = applied_action
+        
         return info
+    
 
     def get_action_space(self):
         # Normalized Space: [-1, 1] for all 5 dimensions

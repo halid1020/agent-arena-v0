@@ -2,7 +2,7 @@ import numpy as np
 from actoris_harena import Agent
 from actoris_harena.agent.bc.transporter.utils import utils
 
-class RavenRandomPolicy(Agent):
+class RavenMaskBiasedRandomPolicy(Agent):
 
     def __init__(self, config):
         super().__init__(config)

@@ -23,7 +23,7 @@ from .arena.task import Task
 from .utilities.trajectory_dataset import TrajectoryDataset
 from .utilities.transform.transform import Transform
 from .utilities.logger.logger_interface import Logger
-from .utilities.logger.standard_logger import StandardLogger
+from .arena.loggers.standard_logger import StandardLogger
 
 from .api import (
     build_arena, 

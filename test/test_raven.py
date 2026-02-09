@@ -33,23 +33,36 @@ def main():
     parser.add_argument('--arena', default='raven', help="Base arena name")
     parser.add_argument('--task', default='stack-block-pyramid', help="Task name")
     parser.add_argument('--eid', default=0, type=int, help="Episode ID")
+
+    # TODO: make disp as boolean
     parser.add_argument('--disp', default=0, type=int, help="Display/GUI mode (0 or 1)")
+
+    # TODO: add snap_to_mask argument as boolean, and set it to the arena config.
     
     # Switch Arguments
-    parser.add_argument('--space', default='world', choices=['world', 'pixel'], 
+    parser.add_argument('--space', default='pixel', choices=['world', 'pixel'], 
                         help="Action space type: 'world' (14-dim) or 'pixel' (5-dim)")
-    parser.add_argument('--policy', default='random', choices=['random', 'oracle'], 
+    parser.add_argument('--policy', default='oracle', choices=['random', 'mask-biased-random', 'oracle'], 
                         help="Policy type: 'random' or 'oracle'")
+    
+    parser.add_argument('--horizon', default=3, type=int,
+                        help="Environment horizon.")
     
     args = parser.parse_args()
     
     # 1. Determine Arena and Agent Names
     if args.space == 'pixel':
-        arena_key = 'raven-pixel' 
-        agent_key = 'raven-pixel-random' if args.policy == 'random' else 'raven-pixel-oracle'
+        arena_key = 'raven-pixel'
     else:
         arena_key = 'raven'
-        agent_key = 'raven-random' if args.policy == 'random' else 'raven-oracle' 
+
+    if args.policy == 'random':
+        agent_key = 'random'
+    elif args.policy == 'mask-biased-random':
+        agent_key = f"{arena_key}-mask-biased-random"
+    else:
+        # Default to oracle (since argparse restricts choices to random/mask/oracle)
+        agent_key = f"{arena_key}-oracle"
 
     print(f'\n--- Configuration ---')
     print(f'Arena Type:   {args.space.upper()} ({arena_key})')
@@ -70,10 +83,11 @@ def main():
             'task': args.task,
             'view_mode': 'top_down',
             'img_res': 128,
-            'action_horizon': 15,
+            'action_horizon': args.horizon,
             'debug': True, 
             'debug_dir': os.path.join(log_dir, 'internal_debug'),
-            'use_default_goal_cam': True
+            'use_default_goal_cam': True,
+            'snap_to_mask': True
         }),
         save_dir=log_dir,
         project_name=f'test_raven_{args.space}',

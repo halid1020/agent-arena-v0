@@ -72,7 +72,7 @@ def main():
     print(f'---------------------')
 
     disp = args.disp == 1
-    log_dir = f'./tmp/test_{args.space}_{args.policy}'
+    log_dir = f'./tmp/test_{args.space}_{args.task}_{args.policy}'
 
     # 2. Build Arena
     print(f"\nBuilding Arena: {arena_key}...")

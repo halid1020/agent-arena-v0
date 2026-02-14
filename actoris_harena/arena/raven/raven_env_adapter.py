@@ -33,6 +33,8 @@ class RavenEnvAdapter(Arena):
         if self.use_default_goal_cam:
             # The default RealSenseD415 config is a list; we take the first one.
             self.goal_cam_config = cameras.RealSenseD415.CONFIG[0]
+        
+        self.maskout_background = config.get('maskout_background', True)
 
         # -------------------------------
 
@@ -44,6 +46,7 @@ class RavenEnvAdapter(Arena):
         hide_arm = False  
 
         if view_mode == 'top_down':
+            camera_height = config.get('camera_height', 1.0)
             hide_arm = True
             if img_res is not None:
                 img_res = int(img_res)
@@ -54,7 +57,7 @@ class RavenEnvAdapter(Arena):
                 
                 custom_cams = [{
                     'image_size': (img_res, img_res),
-                    'position': np.array([0.5, 0, 1.0]), 
+                    'position': np.array([0.5, 0, camera_height]), 
                     'rotation': rotation,
                     'zrange': (0.1, 2.0),
                     'noise': False,
@@ -296,17 +299,41 @@ class RavenEnvAdapter(Arena):
             # print('[debug] injecting')
             final_goal_step = self.goals[-1]
             
+            # Create a shallow copy of the obs so we can modify it (masking) 
+            # without permanently altering the cached self.goals if we don't want to.
+            goal_obs = final_goal_step['observation'].copy()
+
+            # --- Apply Mask to Goal RGB if requested ---
+            if self.maskout_background:
+                # Check if mask and rgb exist (they should from _process_obs)
+                if 'mask' in goal_obs and 'rgb' in goal_obs:
+                    mask = goal_obs['mask']
+                    rgb = goal_obs['rgb']
+                    
+                    # Apply mask: (H,W) -> (H,W,1) * (H,W,3)
+                    masked_rgb = rgb * mask[..., None]
+                    
+                    # Update the rgb array
+                    goal_obs['rgb'] = masked_rgb
+                    
+                    # Update the color tuple if present (to maintain consistency)
+                    if 'color' in goal_obs and isinstance(goal_obs['color'], tuple):
+                        # Assuming color[0] is the rgb image, preserve other channels/info if any
+                        goal_obs['color'] = (masked_rgb,) + goal_obs['color'][1:]
+            # -------------------------------------------
+
             # 1. info['goal'] contains the final state of the demonstration
             info['goal'] = {}
-            for k, v in final_goal_step['observation'].items():
+            # Use the (potentially masked) goal_obs
+            for k, v in goal_obs.items():
                 info['goal'][k] = v
             
-            # 2. info['goals'] contains the full trajectory
+            # 2. info['goals'] contains the full trajectory (raw)
             info['goals'] = self.goals
 
             # 3. Flattened goal obs if requested
             if self.add_final_goal_to_obs:
-                for k, v in final_goal_step['observation'].items():
+                for k, v in goal_obs.items():
                     #print('v.shape', v.shape)
                     info['observation'][f'goal_{k}'] = v
                     # Duplicate key with hyphen if needed for compatibility
@@ -317,12 +344,15 @@ class RavenEnvAdapter(Arena):
         """Helper to process raw env observation into standard dict format."""
         raw_segm = obs['mask'][0]
         binary_mask = self._get_binary_mask(raw_segm)
+        rgb = obs['color'][0]
+        if self.maskout_background:
+            rgb = rgb * binary_mask[..., None]
         return {
             'color': obs['color'],
             'depth': obs['depth'][0],
             'segm': raw_segm,
             'mask': binary_mask,
-            'rgb': obs['color'][0],
+            'rgb': rgb,
         }
     
     def _generate_goal(self, config_id):

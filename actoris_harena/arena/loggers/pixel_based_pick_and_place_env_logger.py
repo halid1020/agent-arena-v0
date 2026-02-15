@@ -53,8 +53,8 @@ class PixelBasedPickAndPlaceEnvLogger(VideoLogger):
 
             # Extract values assuming [pick_y, pick_x, place_y, place_x, theta]
             # Convert normalized to pixel first
-            py, px = norm_to_px(applied_action[:2], W, H)
-            dy, dx = norm_to_px(applied_action[2:4], W, H)
+            px, py = norm_to_px(applied_action[:2], W, H)
+            dx, dy = norm_to_px(applied_action[2:4], W, H)
             pick_theta = None
             if len(applied_action) == 5:
                 place_theta = applied_action[4] # The orientation

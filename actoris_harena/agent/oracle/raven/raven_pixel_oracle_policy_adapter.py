@@ -82,7 +82,7 @@ class RavenPixelOraclePolicyAdapter(Agent):
         n_theta = theta_rad / np.pi
         
         # Clip to ensure bounds
-        return np.clip([n_pick_u, n_pick_v, n_place_u, n_place_v, n_theta], -1.0, 1.0)
+        return np.clip([n_pick_v, n_pick_u, n_place_v, n_place_u, n_theta], -1.0, 1.0)
 
     def single_act(self, info, update=False):
         arena = info['arena']

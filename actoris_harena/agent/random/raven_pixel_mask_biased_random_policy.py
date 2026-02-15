@@ -1,4 +1,3 @@
-
 import numpy as np
 from actoris_harena import Agent
 
@@ -7,7 +6,7 @@ class RavenPixelMaskBiasedRandomPolicy(Agent):
     Random Policy for RavenPixelEnvAdapter.
     
     Logic:
-    1. Pick: Biased towards object masks (random pixel on a random object).
+    1. Pick: Biased towards valid pixels in obs['mask'].
     2. Place: Completely random pixel in the workspace.
     3. Rotation: Random rotation.
     
@@ -24,62 +23,40 @@ class RavenPixelMaskBiasedRandomPolicy(Agent):
         return self.name
 
     def single_act(self, info, update=False):
-        # 1. Retrieve Segmentation Mask
-        # The RavenPixelEnvAdapter provides 'segm' in the observation dict.
-        # segm contains object IDs. 0 is usually background/table.
+        # 1. Retrieve Observation
         obs = info['observation']
-        if 'segm' not in obs:
-            # Fallback if segm isn't available (shouldn't happen with correct adapter)
-            return np.zeros(5, dtype=np.float32)
-
-        segm = obs['segm'] # Shape: (H, W)
-        height, width = segm.shape
-
-        # --- PICK LOGIC (Mask Biased) ---
         
-        # Get unique object IDs excluding background (0)
-        valid_obj_ids = np.unique(segm)
-        valid_obj_ids = valid_obj_ids[valid_obj_ids > 0]
-        
-        if len(valid_obj_ids) > 0:
-            # Select a random object
-            target_id = np.random.choice(valid_obj_ids)
-            
-            # Find all pixel coordinates (v, u) = (row, col) belonging to this object
+        # Initialize a completely random action first [u, v, u, v, theta]
+        action = np.random.uniform(-1, 1, size=5).astype(np.float32)
+
+        # 2. Pick Logic (Mask Biased)
+        if 'mask' in obs:
+            mask = obs['mask'] # Shape: (H, W), usually binary 0 or 1
+            height, width = mask.shape
+
+            # Find all pixel coordinates (row, col) where mask > 0
             # np.where returns tuple of arrays (row_indices, col_indices)
-            obj_pixels = np.where(segm == target_id)
+            valid_pixels = np.where(mask > 0)
+            num_valid = len(valid_pixels[0])
             
-            # Select a random pixel index
-            idx = np.random.randint(len(obj_pixels[0]))
-            
-            pick_v = obj_pixels[0][idx] # Row (y-axis in image)
-            pick_u = obj_pixels[1][idx] # Col (x-axis in image)
-            
-            # Normalize to [-1, 1]
-            # Formula: (coord / size * 2) - 1
-            n_pick_u = (pick_u / width * 2) - 1.0
-            n_pick_v = (pick_v / height * 2) - 1.0
-            
-        else:
-            # Scene is empty: Pick completely random
-            n_pick_u = np.random.uniform(-1, 1)
-            n_pick_v = np.random.uniform(-1, 1)
+            if num_valid > 0:
+                # Select a random valid pixel index
+                idx = np.random.randint(num_valid)
+                
+                pick_v = valid_pixels[0][idx] # Row (y-axis)
+                pick_u = valid_pixels[1][idx] # Col (x-axis)
+                
+                # Normalize to [-1, 1]
+                # u corresponds to width (x), v corresponds to height (y)
+                n_pick_u = (pick_u / width * 2) - 1.0
+                n_pick_v = (pick_v / height * 2) - 1.0
+                
+                # Overwrite the random pick coordinates
+                action[0] =  n_pick_v 
+                action[1] = n_pick_u
 
-        # --- PLACE LOGIC (Random) ---
-        
-        # Place anywhere in the image bounds [-1, 1]
-        n_place_u = np.random.uniform(-1, 1)
-        n_place_v = np.random.uniform(-1, 1)
-
-        # --- ROTATION LOGIC (Random) ---
-        
-        # Random rotation in normalized range [-1, 1] (representing -pi to pi)
-        n_theta = np.random.uniform(-1, 1)
-
-        # --- CONSTRUCT ACTION ---
-        action = np.array([n_pick_u, n_pick_v, n_place_u, n_place_v, n_theta], dtype=np.float32)
-        
-        # Clip to be safe
+        # 3. Return Action
+        # Place and Rotation remain completely random from initialization
         return np.clip(action, -1.0, 1.0)
         
     def init(self, infos):

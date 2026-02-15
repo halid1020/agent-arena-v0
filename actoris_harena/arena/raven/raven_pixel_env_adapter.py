@@ -118,7 +118,10 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
 
     def _deproject_pixel(self, u, v, depth_map):
         """Converts pixel coordinates (u, v) + depth to World (x, y, z)."""
-        h, w = depth_map.shape
+        #print('depth_map shape', depth_map.shape)
+        if len(depth_map.shape) == 3:
+            depth_map = depth_map[:, :, 0]
+        h, w = depth_map.shape[:2]
         
         # Ensure integer coordinates for array indexing
         u_clamped = int(np.clip(u, 0, w - 1))

@@ -28,6 +28,7 @@ class RavenEnvAdapter(Arena):
         self.goals = [] # Store current episode's goal trajectory
 
         self.goal_cam_config = None
+        self.debug = config.get('debug', False)
         
         self.use_default_goal_cam = config.get('use_default_goal_cam', False)
         if self.use_default_goal_cam:
@@ -87,7 +88,7 @@ class RavenEnvAdapter(Arena):
         self.set_train()
         
         self.num_eval_trials = 30
-        self.num_val_trials = 10
+        self.num_val_trials = config.get('num_val_trials', 10)
         self.num_train_trials = 1000
 
         self.eval_params = [{'eid': i, 'save_video': True} for i in range(self.num_eval_trials)]
@@ -179,9 +180,13 @@ class RavenEnvAdapter(Arena):
         # --- STEP 2: Actual Agent Reset ---
         # We must re-seed and reset to ensure the agent starts from the exact same state
         # as the goal demonstration started.
-        np.random.seed(config_id)
-        random.seed(config_id)
-        self._env.seed(config_id)
+        seed_id = config_id
+        # The oracle cannot handle this seed.
+        if seed_id == 629:
+            seed_id = 630
+        np.random.seed(seed_id)
+        random.seed(seed_id)
+        self._env.seed(seed_id)
         self._env.set_task(self._task)
         obs = self._env.reset()
 
@@ -198,6 +203,22 @@ class RavenEnvAdapter(Arena):
 
         # --- STEP 3: Inject Goal Info ---
         info = self._inject_goal_info(info)
+
+        # --- Debug: Save RGB Image ---
+        if self.debug:
+            print('Debugg!!!')
+            # 1. Define a specific folder for debug images to keep things organized
+            debug_dir = os.path.join('./tmp', 'raven_debug_images', f'ep_{self.episode_id}')
+            
+            # 2. Create the directory if it doesn't exist
+            os.makedirs(debug_dir, exist_ok=True)
+            
+            # 3. Get the RGB image from the observation dictionary
+            # (Using 'rgb' key based on your _process_obs method)
+            debug_rgb = info['observation']['rgb']
+            
+            # 4. Save the image using matplotlib
+            plt.imsave(os.path.join(debug_dir, f'step_{self._step:03d}.png'), debug_rgb)
 
         return info
 
@@ -233,6 +254,21 @@ class RavenEnvAdapter(Arena):
 
         # --- STEP 4: Inject Goal Info ---
         info = self._inject_goal_info(info)
+
+        # --- Debug: Save RGB Image ---
+        if self.debug:
+            # 1. Define a specific folder for debug images to keep things organized
+            debug_dir = os.path.join('./tmp', 'raven_debug_images', f'ep_{self.episode_id}')
+            
+            # 2. Create the directory if it doesn't exist
+            os.makedirs(debug_dir, exist_ok=True)
+            
+            # 3. Get the RGB image from the observation dictionary
+            # (Using 'rgb' key based on your _process_obs method)
+            debug_rgb = info['observation']['rgb']
+            
+            # 4. Save the image using matplotlib
+            plt.imsave(os.path.join(debug_dir, f'step_{self._step:03d}.png'), debug_rgb)
 
         return info
     
@@ -360,16 +396,37 @@ class RavenEnvAdapter(Arena):
         goal_traj = []
 
         # Fix Determinism
-        np.random.seed(config_id)
-        random.seed(config_id)
+        # --- MODIFICATION: Handle specific seed override ---
+        seed_id = config_id
+        if seed_id == 629:
+            seed_id = 630
+        # --------------------------------------------------
+
+        np.random.seed(seed_id)
+        random.seed(seed_id)
         
         # 1. Reset Env for the Oracle
-        self._env.seed(config_id)
+        self._env.seed(seed_id)
         self._env.set_task(self._task)
         obs = self._env.reset()
         
         # --- NEW: Check if we need to render from a different camera for the goal ---
         init_step_obs = self._process_obs(obs)
+
+        if self.debug:
+            print('Debugg!!!')
+            # 1. Define a specific folder for debug images to keep things organized
+            debug_dir = os.path.join('./tmp', 'raven_debug_images', f'ep_{self.episode_id}')
+            
+            # 2. Create the directory if it doesn't exist
+            os.makedirs(debug_dir, exist_ok=True)
+            
+            # 3. Get the RGB image from the observation dictionary
+            debug_rgb = init_step_obs['rgb']
+            
+            # 4. Save the image using matplotlib
+            plt.imsave(os.path.join(debug_dir, f'goal_init_{self._step:03d}.png'), debug_rgb)
+
         if self.goal_cam_config is not None:
              print('Goal Camera!!')
              # Manually render the specific goal view
@@ -399,10 +456,24 @@ class RavenEnvAdapter(Arena):
                 p1_pos, p1_rot = action['pose1']
                 action = np.concatenate([p0_pos, p0_rot, p1_pos, p1_rot])
                 
-            obs, _, done, _ = self._env.step(action)
+            obs, reward, done, _ = self._env.step(action)
+            
+            self._step += 1
             
             # --- NEW: Process step observation with custom camera check ---
             step_obs = self._process_obs(obs)
+
+            if self.debug:
+                print('step!', reward)
+                debug_dir = os.path.join('./tmp', 'raven_debug_images', f'ep_{self.episode_id}')
+                os.makedirs(debug_dir, exist_ok=True)
+                
+                # Note: In your previous code you were saving 'init_step_obs['rgb']' here
+                # repeatedly. I assume you want the CURRENT step's rgb:
+                debug_rgb = step_obs['rgb'] 
+                
+                plt.imsave(os.path.join(debug_dir, f'goal_step_{self._step:03d}.png'), debug_rgb)
+
             if self.goal_cam_config is not None:
                  g_color, g_depth, g_segm = self._env.render_camera(self.goal_cam_config)
                  step_obs['color'] = (g_color,)
@@ -453,3 +524,84 @@ class RavenEnvAdapter(Arena):
     def __getattr__(self, attr):
         if attr in ["obj_ids", "render_camera", "add_object"]: return getattr(self._env, attr)
         else: raise AttributeError(f"'EnvWrapper' object has no attribute '{attr}'")
+
+    def compare(self, result_1, result_2):
+        """
+        result_1 and result_2 are the validation results from two different 'policies'. 
+        They are in the form of a list of information dictionaries for each episode.
+        If result_1 is better than result_2 return 1, worse return -1, if similar return 0.
+        """
+        
+        def get_scalar(val):
+            """Helper to extract the final scalar if the value is a list (trajectory)."""
+            if isinstance(val, list):
+                # Return the last element (final state) if list is not empty
+                return val[-1] if len(val) > 0 else 0
+            return val
+
+        def get_stats(results):
+            processed_successes = []
+            processed_rewards = []
+            successful_steps = []
+
+            for r in results:
+                # --- Handle 'success' ---
+                raw_success = r.get('success', 0)
+                # Use helper to handle cases where raw_success is [0, 0, 1, 1...]
+                final_success = float(get_scalar(raw_success))
+                processed_successes.append(final_success)
+
+                # --- Handle 'reward' ---
+                raw_reward = r.get('total_reward', r.get('reward', 0.0))
+                final_reward = float(get_scalar(raw_reward))
+                processed_rewards.append(final_reward)
+
+                # --- Handle 'steps' (only for successful episodes) ---
+                if final_success > 0.5: # Treat as True
+                    # Check for explicit length/steps keys
+                    if 'length' in r:
+                        steps = r['length']
+                    elif 'steps' in r:
+                        steps = r['steps']
+                    # Fallback: if 'success' was a list, the list length = num steps
+                    elif isinstance(raw_success, list):
+                        steps = len(raw_success)
+                    else:
+                        steps = 0 
+                    
+                    successful_steps.append(float(get_scalar(steps)))
+            
+            mean_success = np.mean(processed_successes) if processed_successes else 0.0
+            std_reward = np.std(processed_rewards) if processed_rewards else 0.0
+            mean_steps = np.mean(successful_steps) if successful_steps else float('inf')
+            
+            return mean_success, std_reward, mean_steps
+
+        # Get stats for both
+        mean_s1, std_r1, steps_s1 = get_stats(result_1)
+        mean_s2, std_r2, steps_s2 = get_stats(result_2)
+        
+        # Thresholds
+        SUCCESS_EPS = 1e-4
+        STD_EPS = 1e-4
+        STEP_EPS = 0.5
+
+        # 1. Compare Success Rate (Higher is better)
+        if mean_s1 > mean_s2 + SUCCESS_EPS:
+            return 1
+        elif mean_s2 > mean_s1 + SUCCESS_EPS:
+            return -1
+        
+        # 2. Compare Reward Standard Deviation (Lower is better)
+        if std_r1 < std_r2 - STD_EPS:
+            return 1
+        elif std_r2 < std_r1 - STD_EPS:
+            return -1
+
+        # 3. Compare Average Steps to Success (Lower is better)
+        if steps_s1 < steps_s2 - STEP_EPS:
+            return 1
+        elif steps_s2 < steps_s1 - STEP_EPS:
+            return -1
+
+        return 0

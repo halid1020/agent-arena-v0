@@ -205,6 +205,11 @@ class Arena(ABC):
     
     @abstractmethod
     def compare(self, result_1, result_2):
+        """
+        result_1 and result_2 are the validation results from two different 'policies'. 
+        They are in the form of a list of information dictionaries for each episode.
+        If result_1 is better than result_2 return 1, worse return -1, if similar return 0.
+        """
         raise NotImplementedError
     
     def evaluate(self) -> Dict[str, Any]:

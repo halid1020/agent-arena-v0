@@ -182,8 +182,8 @@ class RavenEnvAdapter(Arena):
         # as the goal demonstration started.
         seed_id = config_id
         # The oracle cannot handle this seed.
-        if seed_id == 629:
-            seed_id = 630
+        if seed_id in [629, 1123]:
+            seed_id +=1
         np.random.seed(seed_id)
         random.seed(seed_id)
         self._env.seed(seed_id)
@@ -398,8 +398,8 @@ class RavenEnvAdapter(Arena):
         # Fix Determinism
         # --- MODIFICATION: Handle specific seed override ---
         seed_id = config_id
-        if seed_id == 629:
-            seed_id = 630
+        if seed_id in [629, 1123]:
+            seed_id +=1
         # --------------------------------------------------
 
         np.random.seed(seed_id)

@@ -182,7 +182,7 @@ class RavenEnvAdapter(Arena):
         # as the goal demonstration started.
         seed_id = config_id
         # The oracle cannot handle this seed.
-        if seed_id in [629, 1123]:
+        if seed_id in [360, 629, 1123]:
             seed_id +=1
         np.random.seed(seed_id)
         random.seed(seed_id)

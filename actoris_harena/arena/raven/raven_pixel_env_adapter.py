@@ -61,7 +61,7 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         if len(valid_v) == 0:
             return pixel_action
 
-        pick_u, pick_v = pixel_action[0], pixel_action[1]
+        pick_v, pick_u  = pixel_action[0], pixel_action[1]
 
         # Optimization: Check if pick is already on mask
         u_int, v_int = int(pick_u), int(pick_v)
@@ -78,8 +78,8 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         
         # Update pick coordinates
         snapped_action = pixel_action.copy()
-        snapped_action[0] = valid_u[min_idx]
-        snapped_action[1] = valid_v[min_idx]
+        snapped_action[0] = valid_v[min_idx]
+        snapped_action[1] = valid_u[min_idx]
         
         return snapped_action
     
@@ -91,8 +91,8 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
             img = img[:, :, :3]
             
         # 2. Extract Coordinates (Integers for cv2)
-        u1, v1 = int(pixel_action[0]), int(pixel_action[1]) # Pick
-        u2, v2 = int(pixel_action[2]), int(pixel_action[3]) # Place
+        v1, u1 = int(pixel_action[0]), int(pixel_action[1]) # Pick
+        v2, u2 = int(pixel_action[2]), int(pixel_action[3]) # Place
         theta = pixel_action[4]
 
         # 3. Draw Markers
@@ -118,7 +118,10 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
 
     def _deproject_pixel(self, u, v, depth_map):
         """Converts pixel coordinates (u, v) + depth to World (x, y, z)."""
-        h, w = depth_map.shape
+        #print('depth_map shape', depth_map.shape)
+        if len(depth_map.shape) == 3:
+            depth_map = depth_map[:, :, 0]
+        h, w = depth_map.shape[:2]
         
         # Ensure integer coordinates for array indexing
         u_clamped = int(np.clip(u, 0, w - 1))
@@ -162,7 +165,7 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         Converts 5-dim [pick_u, pick_v, place_u, place_v, theta] 
         to 14-dim [pick_pos, pick_rot, place_pos, place_rot].
         """
-        pick_u, pick_v, place_u, place_v, theta = pixel_action
+        pick_v, pick_u, place_v, place_u, theta = pixel_action
         
         depth_map = self.last_obs['depth']
         

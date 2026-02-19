@@ -72,7 +72,7 @@ def main():
     print(f'---------------------')
 
     disp = args.disp == 1
-    log_dir = f'./tmp/test_{args.space}_{args.policy}'
+    log_dir = f'./tmp/test_{args.space}_{args.task}_{args.policy}'
 
     # 2. Build Arena
     print(f"\nBuilding Arena: {arena_key}...")
@@ -86,7 +86,7 @@ def main():
             'action_horizon': args.horizon,
             'debug': True, 
             'debug_dir': os.path.join(log_dir, 'internal_debug'),
-            'snap_to_mask': True
+            'snap_to_mask': False
         }),
         save_dir=log_dir,
         project_name=f'test_raven_{args.space}',

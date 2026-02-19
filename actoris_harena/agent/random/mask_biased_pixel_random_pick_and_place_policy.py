@@ -17,7 +17,7 @@ class MaskBiasedPixelPickAndPlacePolicy(Agent):
     def update(self, infos, actions):
         pass
 
-    def act(self, infos, update=False):
+    def act(self, infos, updates=[False]):
         # Return a list of numpy arrays (vectorized)
         actions = [self.single_act(info) for info in infos]
         return actions

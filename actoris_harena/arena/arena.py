@@ -26,6 +26,7 @@ class Arena(ABC):
         self.task = DummyTask()
         from .dummy_action_tool import DummyActionTool
         self.action_tool = DummyActionTool()
+        self.video_frames = []
         self.aid = -1
 
     def set_id(self, id):

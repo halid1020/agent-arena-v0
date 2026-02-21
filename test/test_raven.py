@@ -42,7 +42,7 @@ def main():
     # Switch Arguments
     parser.add_argument('--space', default='pixel', choices=['world', 'pixel'], 
                         help="Action space type: 'world' (14-dim) or 'pixel' (5-dim)")
-    parser.add_argument('--policy', default='oracle', choices=['random', 'mask-biased-random', 'oracle'], 
+    parser.add_argument('--policy', default='oracle', choices=['random', 'mask-biased-random', 'oracle', 'noisy-oracle'], 
                         help="Policy type: 'random' or 'oracle'")
     
     parser.add_argument('--horizon', default=3, type=int,
@@ -60,6 +60,8 @@ def main():
         agent_key = 'random'
     elif args.policy == 'mask-biased-random':
         agent_key = f"{arena_key}-mask-biased-random"
+    elif args.policy == 'noisy-oracle':
+        agent_key = f"{arena_key}-noisy-oracle"
     else:
         # Default to oracle (since argparse restricts choices to random/mask/oracle)
         agent_key = f"{arena_key}-oracle"
@@ -86,7 +88,7 @@ def main():
             'action_horizon': args.horizon,
             'debug': True, 
             'debug_dir': os.path.join(log_dir, 'internal_debug'),
-            'snap_to_mask': False
+            'snap_to_mask': True
         }),
         save_dir=log_dir,
         project_name=f'test_raven_{args.space}',

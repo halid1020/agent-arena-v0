@@ -51,6 +51,8 @@ from actoris_harena.agent.random.raven_mask_biased_random_policy \
     import RavenMaskBiasedRandomPolicy
 from actoris_harena.agent.oracle.raven.raven_pixel_oracle_policy_adapter \
     import RavenPixelOraclePolicyAdapter
+from actoris_harena.agent.oracle.raven.raven_pixel_noisy_oracle_policy_adapter \
+    import RavenPixelNoisyOraclePolicyAdapter
 from actoris_harena.agent.random.raven_pixel_mask_biased_random_policy \
     import RavenPixelMaskBiasedRandomPolicy
 
@@ -83,8 +85,10 @@ AGENTS = {
 
     'raven-oracle': RavenOraclePolicyAdapter,
     'raven-pixel-oracle': RavenPixelOraclePolicyAdapter,
+    'raven-pixel-noisy-oracle': RavenPixelNoisyOraclePolicyAdapter,
     'raven-mask-biased-random': RavenMaskBiasedRandomPolicy,
     'raven-pixel-mask-biased-random': RavenPixelMaskBiasedRandomPolicy,
+   
     
     'random': RandomPolicy,
     'mask-biased-pixel-random-pick-and-place': MaskBiasedPixelPickAndPlacePolicy,

@@ -265,7 +265,9 @@ def load_best_results(save_dir):
 
 def run(agent: Agent, arena: Arena, mode: str, 
         episode_config: dict, checkpoint: int,
-        policy_terminate: bool=True, env_success_stop: bool=True):
+        policy_terminate: bool=True, 
+        save_internal_states: bool=False,
+        env_success_stop: bool=True):
     """
     Executes an episode (or check if it already exists) and logs the results.
 
@@ -297,7 +299,9 @@ def run(agent: Agent, arena: Arena, mode: str,
    
     res = perform_single(arena, agent, mode=mode, episode_config=episode_config,
                 collect_frames=episode_config['save_video'], save_info=True,
-                policy_terminate=policy_terminate, env_success_stop=env_success_stop)
+                policy_terminate=policy_terminate, 
+                save_internal_states=save_internal_states,
+                env_success_stop=env_success_stop)
     
     if mode == 'eval':
         filename = 'eval_checkpoint_{}'.format(checkpoint)
@@ -313,6 +317,7 @@ def run(agent: Agent, arena: Arena, mode: str,
 
 def evaluate(agent: Agent, arena: Arena, checkpoint: int, 
              policy_terminate: bool = True,
+             save_internal_states: bool = False,
              env_success_stop: bool = True) -> bool:
     """
     Evaluates a specific checkpoint of an agent within a given arena.
@@ -357,7 +362,9 @@ def evaluate(agent: Agent, arena: Arena, checkpoint: int,
 
     for episode_config in tqdm(env_eval_configs):
         run(agent, arena, 'eval', episode_config, checkpoint=checkpoint, 
-            policy_terminate=policy_terminate, env_success_stop=env_success_stop)
+            policy_terminate=policy_terminate, 
+            save_internal_states=save_internal_states,
+            env_success_stop=env_success_stop)
     
     return True
 
@@ -407,7 +414,9 @@ def log_validation_metrics(results, agent, step):
 
     agent.logger.log(last_step_stats, step=step)
 
-def validate(agent, arena, update_step, policy_terminate=True, env_success_stop=True):
+def validate(agent, arena, update_step, 
+             save_internal_states=False,
+             policy_terminate=True, env_success_stop=True):
     '''
         Validate the agent's current performance on the selected validation initial configuration of the arena.
 
@@ -421,7 +430,9 @@ def validate(agent, arena, update_step, policy_terminate=True, env_success_stop=
     results = []          
     for episode_config in tqdm(val_configs, desc="[agent-arena] Validating controller in the arena..."):
         _, res = run(agent, arena, 'val', episode_config, checkpoint=update_step, 
-                     policy_terminate=policy_terminate, env_success_stop=env_success_stop)
+                     policy_terminate=policy_terminate, 
+                     save_internal_states=save_internal_states,
+                     env_success_stop=env_success_stop)
         results.append(res['evaluation'])
     log_validation_metrics(results, agent, update_step)
     return results
@@ -434,6 +445,7 @@ def train_and_evaluate_single(
     agent: TrainableAgent, arena: Arena,
     validation_interval: int, total_update_steps: int, 
     eval_last_check: bool = False, eval_best_check: bool = True,
+    save_internal_states: bool = False,
     policy_terminate: bool = True, env_success_stop: bool = True) -> bool:
     """
     Trains an agent on a single arena, performs periodic validation, and runs 
@@ -482,7 +494,8 @@ def train_and_evaluate_single(
             agent.train(validation_interval, [arena])
             agent.save()
             
-            results = validate(agent, arena, u + validation_interval, 
+            results = validate(agent, arena, u + validation_interval,
+                               save_internal_states=save_internal_states, 
                                policy_terminate=policy_terminate, env_success_stop=env_success_stop)
 
             best_results = load_best_results(agent.save_dir)
@@ -498,17 +511,21 @@ def train_and_evaluate_single(
 
     if eval_last_check:
         evaluate(agent, arena, checkpoint=-1, 
-                policy_terminate=policy_terminate, env_success_stop=env_success_stop)
+                policy_terminate=policy_terminate, 
+                save_internal_states=save_internal_states,
+                env_success_stop=env_success_stop)
 
     if eval_best_check:
         evaluate(agent, arena, checkpoint=-2, 
-                policy_terminate=policy_terminate, env_success_stop=env_success_stop)
+                policy_terminate=policy_terminate, 
+                save_internal_states=save_internal_states,
+                env_success_stop=env_success_stop)
     
     return True
 
 def train_plural_eval_single(
         agent: TrainableAgent, train_arenas: List[Arena], eval_arena: Arena, val_arena: Arena,
-        validation_interval: int, total_update_steps: int, eval_checkpoint: int) -> bool:
+        validation_interval: int, total_update_steps: int, eval_checkpoint: int, save_internal_states: bool=False) -> bool:
     '''
         Train a single agent on the list of arenas and evaluate the agent's performance on the single selected 
         evaluation configurations of the arena.
@@ -525,7 +542,9 @@ def train_plural_eval_single(
             agent.train(validation_interval, train_arenas)
             agent.save()
             
-            results = validate(agent, val_arena, u + validation_interval)
+            results = validate(
+                agent, val_arena, u + validation_interval,
+                save_internal_states=save_internal_states)
 
             best_results = load_best_results(agent.save_dir)
             if len(best_results) == 0 or compare_results(results, best_results, val_arena.compare) > 0:

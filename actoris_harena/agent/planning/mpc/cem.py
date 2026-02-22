@@ -34,8 +34,8 @@ class MPC_CEM(Agent):
     # def get_state(self):
     #     return {}
     
-    def act(self, state, env=None):
-
+    def single_act(self, info, update=False):
+    
         num_elites, popsize = int(0.1*self.candidates), self.candidates
         plan_hor = self.planning_horizon
         
@@ -55,7 +55,7 @@ class MPC_CEM(Agent):
                     .clip(self.action_space.low, self.action_space.high)\
                     .reshape(popsize, -1)
                     
-            costs, _ = self._predict_and_eval(samples, state, goal=(env.get_goal() if self.goal_condition else None), )
+            costs, _ = self._predict_and_eval(samples, info, goal=(info['goal'] if self.goal_condition else None), )
             #print("CEM Iteration: ", i, "Cost (mean, std): ", np.mean(costs), ",", np.std(costs))
             elites = samples[np.argsort(costs)][:num_elites]
             new_mean = np.mean(elites, axis=0)

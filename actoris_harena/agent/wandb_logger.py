@@ -41,7 +41,7 @@ class WandbLogger(Logger):
         print("Auto-resume run ID:", latest_run_id)
         return latest_run_id
 
-    def __init__(self, logdir, project, name, config, run_id=None):
+    def __init__(self, logdir, project, name, config, run_id=None, disable_wandb=False):
 
         self._logdir = Path(logdir)
         self._last_step = None
@@ -53,30 +53,34 @@ class WandbLogger(Logger):
         self.project = project
         self.name = name
         self.config = config
+        self.disable_wandb = disable_wandb
 
         # ---------------------------------------------------------------------
         # 🔍 AUTO-RESUME LOGIC
         # ---------------------------------------------------------------------
-        auto_resume_id = None
-        if run_id is None:
-            auto_resume_id = self._find_previous_run_id(logdir)
 
-        effective_run_id = run_id or auto_resume_id
-        effective_resume = "allow" if effective_run_id else "never"
+        if not disable_wandb:
+            auto_resume_id = None
+            if run_id is None:
+                auto_resume_id = self._find_previous_run_id(logdir)
 
-        print(f"[WandbLogger] run_id={effective_run_id}, resume={effective_resume}")
+            effective_run_id = run_id or auto_resume_id
+            effective_resume = "allow" if effective_run_id else "never"
 
-        # ---------------------------------------------------------------------
-        # Initialize W&B
-        # ---------------------------------------------------------------------
-        self.wandb = wandb.init(
-            project=project,
-            name=name,
-            config=config,
-            id=effective_run_id,
-            resume=effective_resume,
-            dir=str(logdir),
-        )
+            print(f"[WandbLogger] run_id={effective_run_id}, resume={effective_resume}")
+
+            self.wandb = wandb.init(
+                project=project,
+                name=name,
+                config=config,
+                id=effective_run_id,
+                resume=effective_resume,
+                dir=str(logdir),
+            )
+        else:
+            self.wandb = None
+            print(f"[WandbLogger] wandb disabled.")
+        
         self.step = 0
 
     def _compute_fps(self, step):

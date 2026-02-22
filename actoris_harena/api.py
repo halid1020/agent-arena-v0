@@ -113,9 +113,10 @@ def build_arena(
 def build_agent(
         name: str,
         config: Optional[DotMap] = None,
-        save_dir: Optional[str] = None,
+        save_dir: str = './results',
         project_name: str = 'actoris_harena',
-        exp_name: str = 'tmp') -> Agent:
+        exp_name: str = 'tmp',
+        disable_wandb: bool = False) -> Agent:
     """
     Constructs and configures an agent instance.
 
@@ -149,10 +150,10 @@ def build_agent(
         
     # else:
     #     agent = AGENT_NO_CONFIG[name](config)
-
+    
     agent = AGENTS[name](config)
     
-    agent.set_log_dir(save_dir, project_name, exp_name)
+    agent.set_log_dir(save_dir, project_name, exp_name, disable_wandb=disable_wandb)
     return agent
 
 

@@ -5,7 +5,7 @@ from dotmap import DotMap
 from ..utilities.logger.dummy_logger import DummyLogger
 from ..utilities.types import ActionType, InformationType, \
     ArenaIdType, ActionPhaseType
-
+from .wandb_logger import WandbLogger
 
 class Agent(ABC):
     def __init__(self, config: DotMap):
@@ -18,17 +18,14 @@ class Agent(ABC):
     def get_name(self) -> str:
         """Return the name of the agent. This will be used but not limited for logging."""
         return self.name
-
-    def set_log_dir(self, logdir: Any, project_name: str, exp_name: str) -> None:
-        """
-        Set the log directory for the logger.
-        
-        Args:
-            logdir: The path to the log directory.
-        """
-        self.logger = DummyLogger()
-        self.logger.set_log_dir(logdir, project_name, exp_name)
-        print("Log directory for the agent is set to {}".format(logdir))
+    
+    def set_log_dir(self, logdir, project_name="actoris_harena", exp_name="tmp", disable_wandb=False):
+        self.save_dir = logdir
+        self.logger = WandbLogger(logdir,
+            project_name,
+            name=exp_name,
+            config=dict(self.config),
+            disable_wandb=disable_wandb)
 
 
     def reset(self, arena_ids: List[ArenaIdType]) -> List[bool]:

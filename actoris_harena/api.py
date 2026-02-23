@@ -112,7 +112,7 @@ def build_arena(
 
 def build_agent(
         name: str,
-        config: Optional[DotMap] = None,
+        config: DotMap = DotMap({}),
         save_dir: str = './results',
         project_name: str = 'actoris_harena',
         exp_name: str = 'tmp',

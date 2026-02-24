@@ -145,8 +145,9 @@ class RavenEnvAdapter(Arena):
     # ---------------------------------------------------------------------------
 
     def reset(self, episode_config=None):
-        self._step = 0
+        
         self._total_reward = 0
+        self._succes = False
         if episode_config is None:
             # Random seed if not specified
             self.episode_id = np.random.randint(0, 1000)
@@ -169,8 +170,10 @@ class RavenEnvAdapter(Arena):
 
         # --- STEP 1: Goal Generation/Loading ---
         # We do this BEFORE the actual agent reset, so we can restore the state after.
+        self._step = 0
         self.goals = self._load_or_generate_goal(config_id)
-
+        self._step = 0
+        
         if save_video:
             self.clear_frames()
             self._vid_rec.record_mp4 = True
@@ -189,6 +192,8 @@ class RavenEnvAdapter(Arena):
         self._env.seed(seed_id)
         self._env.set_task(self._task)
         obs = self._env.reset()
+        oracle_policy = self._task.oracle(self._env)
+        oracle_action = oracle_policy.act(obs, None)
 
         # Process Observation
         obs_dict = self._process_obs(obs)
@@ -197,9 +202,11 @@ class RavenEnvAdapter(Arena):
         info['observation'] = obs_dict
         info['done'] = False
         info['arena'] = self
-        info['arena_id'] = self.id
+        info['arena_id'] = self.get_id()
         info['evaluation'] = self.evaluate()
+        info['reward'] = {'default': 0}
         info['action_space'] = self.get_action_space()
+        info['oracle_action'] = oracle_action
 
         # --- STEP 3: Inject Goal Info ---
         info = self._inject_goal_info(info)
@@ -230,9 +237,12 @@ class RavenEnvAdapter(Arena):
             p1_pos, p1_rot = action['pose1']
             action = np.concatenate([p0_pos, p0_rot, p1_pos, p1_rot])
 
-        obs, reward, done, other_info = self._env.step(action)
+        obs, reward, self._succes, other_info = self._env.step(action)
         self._step += 1
         self._total_reward += reward
+
+        oracle_policy = self._task.oracle(self._env)
+        oracle_action = oracle_policy.act(obs, None)
 
         # Process Observation
         obs_dict = self._process_obs(obs)
@@ -240,12 +250,13 @@ class RavenEnvAdapter(Arena):
         info = {}
         info['observation'] = obs_dict
         info['done'] = self._step >= self.action_horizon
-        info['reward'] = reward
+        info['reward'] = {'default': reward}
         info['others'] = other_info
         info['arena'] = self
-        info['arena_id'] = self.id
+        info['arena_id'] = self.get_id()
         info['evaluation'] = self.evaluate()
         info['action_space'] = self.get_action_space()
+        info['oracle_action'] = oracle_action
         
         if reward >= 0.99: 
             info['success'] = True
@@ -313,7 +324,7 @@ class RavenEnvAdapter(Arena):
         self.disp = flg
     
     def success(self):
-        return self._total_reward > 1-1e-6
+        return self._succes
 
     def get_control_step_info(self): 
             self._control_step_info['frame'] = np.stack(self._vid_rec.frames)

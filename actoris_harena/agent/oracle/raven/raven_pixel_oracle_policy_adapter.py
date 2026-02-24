@@ -89,18 +89,17 @@ class RavenPixelOraclePolicyAdapter(Agent):
         arena_id = info['arena_id']
         
         # 1. Initialize Oracle if needed
-        if arena_id not in self.internal_states:
-            self.internal_states[arena_id] = {}
-            self.internal_states[arena_id]['policy'] = arena._task.oracle(arena._env)
+        # self.internal_states[arena_id] = {'policy': arena._task.oracle(arena._env)}
         
-        policy = self.internal_states[arena_id]['policy']
+        #policy = arena._task.oracle(arena._env)
         
         # 2. Get Oracle Action (World Space Dict)
         # {'pose0': (pos, rot), 'pose1': (pos, rot)}
         # Oracle uses internal env state, so 'obs' argument is often unused but required
-        obs = info['observation'] if 'observation' in info else info
-        action_dict = policy.act(obs, None)
-        
+        #obs = info['observation'] if 'observation' in info else info
+        # action_dict = policy.act(obs, None)
+        action_dict = info.get('oracle_action')
+        #print('[RavenPixelOraclePolicyAdapter] oracle dict action', action_dict)
         if action_dict is None:
             # No-op or Done: Return zeros
             return np.zeros(5, dtype=np.float32)
@@ -109,6 +108,8 @@ class RavenPixelOraclePolicyAdapter(Agent):
         pick_pos = action_dict['pose0'][0]  # (x, y, z)
         place_pos = action_dict['pose1'][0] # (x, y, z)
         place_rot = action_dict['pose1'][1] # (qx, qy, qz, qw)
+        if pick_pos[2] > 0.25:
+            return np.zeros(5, dtype=np.float32)
         
         # 4. Project World -> Pixel
         # We need the camera config used by the arena
@@ -127,16 +128,14 @@ class RavenPixelOraclePolicyAdapter(Agent):
         # 6. Normalize
         pixel_action = [pick_u, pick_v, place_u, place_v, theta_rad]
         norm_action = self._normalize_action(pixel_action, img_res)
-        
+        #print('[RavenPixelOraclePolicyAdapter] norm action', norm_action)
         return norm_action
 
-    def init(self, infos):
-        for info in infos:
-            arena = info['arena']
-            arena_id = info['arena_id']
-            if arena_id not in self.internal_states:
-                self.internal_states[arena_id] = {}
-            self.internal_states[arena_id]['policy'] = arena._task.oracle(arena._env)
+    # def init(self, infos):
+    #     for info in infos:
+    #         arena = info['arena']
+    #         arena_id = info['arena_id']
+    #         self.internal_states[arena_id] = {'policy': arena._task.oracle(arena._env)}
 
     def update(self, infos, actions):
         pass

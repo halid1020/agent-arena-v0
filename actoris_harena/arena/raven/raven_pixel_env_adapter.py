@@ -160,6 +160,25 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         
         return np.concatenate([pixel_coords, [theta]])
 
+    def _deproject_pixel_to_z(self, u, v, target_z):
+        """Deprojects a pixel to a specific world Z-height by intersecting the camera ray with a 3D plane."""
+        # 1. Ray direction in camera frame
+        ray_cam = np.array([
+            (u - self.cx) / self.fx,
+            (v - self.cy) / self.fy,
+            1.0
+        ])
+        
+        # 2. Ray direction in world frame
+        ray_world = self.cam_rotm @ ray_cam
+        
+        # 3. Intersect ray with horizontal plane Z = target_z
+        # Formula: cam_pos[2] + t * ray_world[2] = target_z
+        t = (target_z - self.cam_pos[2]) / ray_world[2]
+        
+        p_world = self.cam_pos + t * ray_world
+        return p_world
+
     def _convert_pixel_action_to_world(self, pixel_action):
         """
         Converts 5-dim [pick_u, pick_v, place_u, place_v, theta] 
@@ -171,7 +190,7 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
         
         # Calculate 3D Positions
         pick_pos = self._deproject_pixel(pick_u, pick_v, depth_map)
-        place_pos = self._deproject_pixel(place_u, place_v, depth_map)
+        place_pos = self._deproject_pixel_to_z(place_u, place_v, target_z=0.075)
         
         # Calculate Rotations
         pick_rot = np.array([0, 0, 0, 1]) # Identity
@@ -204,30 +223,43 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
 
     def step(self, action):
         if isinstance(action, (np.ndarray, list)) and len(action) == 5:
-            # 1. Denormalize to pixel space
-            pixel_action = self._denormalize_action(action)
             
-            # 2. Snap to Mask (if enabled)
-            if self.snap_to_mask:
-                pixel_action = self._snap_pick_to_mask(pixel_action)
-                # Re-normalize so the logger sees the REAL pick point
-                applied_action = self._normalize_pixel_action(pixel_action)
-            else:
+            # --- NEW FIX: Intercept the No-Op (Stop) Action ---
+            if np.all(action == 0.0):
+                # Map straight to the environment's true out-of-bounds No-Op.
+                # The robot arm will instantly skip moving, saving minutes of rendering time!
+                world_action = self.get_no_op()
                 applied_action = action
+                
+            else:
+                # 1. Denormalize to pixel space
+                pixel_action = self._denormalize_action(action)
+                
+                # 2. Snap to Mask (if enabled)
+                if self.snap_to_mask:
+                    pixel_action = self._snap_pick_to_mask(pixel_action)
+                    # Re-normalize so the logger sees the REAL pick point
+                    applied_action = self._normalize_pixel_action(pixel_action)
+                else:
+                    applied_action = action
+                    
+                #print('[RavenPixelEnvAdapter] applied_action norm', applied_action)
+                
+                # 3. Debug Visualization
+                if self.debug and self.last_obs is not None:
+                    self._visualize_action(pixel_action, self._step)
 
-            # 3. Debug Visualization
-            if self.debug and self.last_obs is not None:
-                self._visualize_action(pixel_action, self._step)
+                # 4. Convert to World for Simulation
+                world_action = self._convert_pixel_action_to_world(pixel_action)
+                #print('[RavenPixelEnvAdapter] world_action', world_action)
 
-            # 4. Convert to World for Simulation
-            world_action = self._convert_pixel_action_to_world(pixel_action)
         else:
             raise ValueError("Action must be a 5-dimensional normalized vector.")
             
         info = super().step(world_action)
         self.last_obs = info['observation']
         
-        # Log the ACTUAL action that was executed (snapped version)
+        # Log the ACTUAL action that was executed
         info['applied_action'] = applied_action
         
         return info
@@ -236,3 +268,11 @@ class RavenPixelEnvAdapter(RavenEnvAdapter):
     def get_action_space(self):
         # Normalized Space: [-1, 1] for all 5 dimensions
         return gym.spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
+
+import ray
+
+@ray.remote(num_gpus=0.05)
+class RavenPixelEnvAdapterRay(RavenPixelEnvAdapter):
+    
+    def __init__(self, config):
+        super().__init__(config)

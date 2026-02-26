@@ -15,17 +15,18 @@ class TowersOfHanoi(Task):
     def __init__(self):
         super().__init__()
         self.max_steps = 14
+        # Store the URDF path as an attribute so subclasses can change it easily
+        self.base_urdf = 'hanoi/stand.urdf' 
 
     def reset(self, env):
         super().reset(env)
         self._add_instance(env)
 
     def _add_instance(self, env):
-        # Add stand.
+        # Add stand using the instance attribute
         base_size = (0.12, 0.36, 0.01)
-        base_urdf = 'hanoi/stand.urdf'
         base_pose = self.get_random_pose(env, base_size)
-        env.add_object(base_urdf, base_pose, 'fixed')
+        env.add_object(self.base_urdf, base_pose, 'fixed')
 
         # Rod positions in base coordinates.
         rod_pos = ((0, -0.12, 0.03), (0, 0, 0.03), (0, 0.12, 0.03))
@@ -50,6 +51,7 @@ class TowersOfHanoi(Task):
             solve_hanoi(n - 1, t0, t2, t1)
             hanoi_steps.append([n, t0, t1])
             solve_hanoi(n - 1, t2, t1, t0)
+            
         solve_hanoi(n_disks - 1, 0, 2, 1)
 
         # Goal: pick and place disks using Hanoi sequence.
@@ -60,3 +62,12 @@ class TowersOfHanoi(Task):
             targ_pose = (targ_pos, (0, 0, 0, 1))
             self.goals.append(([(disk_id, (0, None))], np.int32([[1]]), [targ_pose],
                                False, True, 'pose', None, 1 / len(hanoi_steps)))
+
+
+class TowersOfHanoiBaseOnly(TowersOfHanoi):
+    """Towers of Hanoi task without the vertical sticks on the stand."""
+
+    def __init__(self):
+        super().__init__()
+        # Simply override the URDF path; everything else is inherited perfectly!
+        self.base_urdf = 'hanoi/stand_base_only.urdf'

@@ -19,7 +19,7 @@ from ...raven.tasks.place_red_in_green import PlaceRedInGreen
 from ...raven.tasks.stack_block_pyramid import StackBlockPyramid
 from ...raven.tasks.sweeping_piles import SweepingPiles
 from ...raven.tasks.task import Task
-from ...raven.tasks.towers_of_hanoi import TowersOfHanoi
+from ...raven.tasks.towers_of_hanoi import TowersOfHanoi, TowersOfHanoiBaseOnly
 
 names = {
     'align-box-corner': AlignBoxCorner,
@@ -36,5 +36,6 @@ names = {
     'place-red-in-green': PlaceRedInGreen,
     'stack-block-pyramid': StackBlockPyramid,
     'sweeping-piles': SweepingPiles,
-    'towers-of-hanoi': TowersOfHanoi
+    'towers-of-hanoi': TowersOfHanoi,
+    'towers-of-hanoi-base-only': TowersOfHanoiBaseOnly
 }

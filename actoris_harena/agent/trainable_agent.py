@@ -3,7 +3,7 @@ from typing import Optional, List
 from ..arena.arena import Arena
 from ..utilities.utils import TrainWriter
 from .agent import Agent
-from .wandb_logger import WandbLogger
+
 
 class TrainableAgent(Agent):
     def __init__(self, config):
@@ -27,13 +27,7 @@ class TrainableAgent(Agent):
         """
         return False
     
-    def set_log_dir(self, logdir, project_name="actoris_harena", exp_name="tmp", disable_wandb=False):
-        self.save_dir = logdir
-        self.logger = WandbLogger(logdir,
-            project_name,
-            name=exp_name,
-            config=dict(self.config),
-            disable_wandb=disable_wandb)
+    
         
     def load(self, path: Optional[str] = None) -> int:
         """

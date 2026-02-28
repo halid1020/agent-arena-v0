@@ -21,6 +21,7 @@ class MPC_CEM(Agent):
         self.clip = config.clip
         self.goal_condition = config.goal_condition
         self.verbose = config.verbose
+        self.A = -1
 
     def initialise_cost_fn(self, cost_fn):
         if cost_fn == 'from_model':
@@ -68,7 +69,7 @@ class MPC_CEM(Agent):
     
     def _predict_and_eval(self, actions, state, goal=None):
  
-        actions = actions.reshape(-1, self.planning_horizon, 4) #TODO: fix this
+        actions = actions.reshape(-1, self.planning_horizon, self.A) #TODO: fix this
         #print('actions shape', actions.shape)
         pred_trajs = self.model.unroll_action_from_cur_state(actions, state)
         costs = self.cost_fn(pred_trajs, goal)

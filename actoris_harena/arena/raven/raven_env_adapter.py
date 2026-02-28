@@ -147,6 +147,7 @@ class RavenEnvAdapter(Arena):
     def reset(self, episode_config=None):
         
         self._total_reward = 0
+        self._cur_reward = 0
         self._succes = False
         if episode_config is None:
             # Random seed if not specified
@@ -239,6 +240,7 @@ class RavenEnvAdapter(Arena):
 
         obs, reward, self._succes, other_info = self._env.step(action)
         self._step += 1
+        self._cur_reward = reward
         self._total_reward += reward
 
         oracle_policy = self._task.oracle(self._env)
@@ -258,10 +260,7 @@ class RavenEnvAdapter(Arena):
         info['action_space'] = self.get_action_space()
         info['oracle_action'] = oracle_action
         
-        if reward >= 0.99: 
-            info['success'] = True
-        else: 
-            info['success'] = False
+        info['success'] = self._succes
 
         # --- STEP 4: Inject Goal Info ---
         info = self._inject_goal_info(info)
@@ -295,6 +294,7 @@ class RavenEnvAdapter(Arena):
     def evaluate(self):
         res = {
             'total_reward': self._total_reward,
+            'cur_reward': self._cur_reward
         }
         return res
     

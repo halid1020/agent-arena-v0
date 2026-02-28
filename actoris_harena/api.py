@@ -268,7 +268,7 @@ def run(agent: Agent, arena: Arena, mode: str,
         episode_config: dict, checkpoint: int,
         policy_terminate: bool=True, 
         save_internal_states: bool=False,
-        env_success_stop: bool=True):
+        env_success_stop: bool=True, debug: bool=False):
     """
     Executes an episode (or check if it already exists) and logs the results.
 
@@ -302,7 +302,7 @@ def run(agent: Agent, arena: Arena, mode: str,
                 collect_frames=episode_config['save_video'], save_info=True,
                 policy_terminate=policy_terminate, 
                 save_internal_states=save_internal_states,
-                env_success_stop=env_success_stop)
+                env_success_stop=env_success_stop, debug=debug)
     
     if mode == 'eval':
         filename = 'eval_checkpoint_{}'.format(checkpoint)

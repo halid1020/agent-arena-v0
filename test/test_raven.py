@@ -103,7 +103,8 @@ def main():
         DotMap({}), 
         log_dir, 
         project_name=f'test_raven_{args.space}',
-        exp_name=f'test_{args.policy}'
+        exp_name=f'test_{args.policy}',
+        disable_wandb=True
     )
 
     # 4. Run Episode

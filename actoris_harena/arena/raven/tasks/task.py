@@ -355,7 +355,7 @@ class Task():
         # if hasattr(self, 'goal'):
         # goal_done = len(self.goal['steps']) == 0  # pylint:
         # disable=g-explicit-length-test
-        print(f'[done?] self._rewards {self._rewards}')
+        # print(f'[done?] self._rewards {self._rewards}')
         return self._rewards > 0.99
         # return zone_done or defs_done or goal_done
 

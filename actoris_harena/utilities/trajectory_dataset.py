@@ -276,7 +276,7 @@ class TrajectoryDataset(Dataset):
             
             if isinstance(obs_data, list):
                 obs_data = np.array(obs_data)
-            
+            #print('obs type', obs_type, 'obs config', self.obs_config[obs_type])
             obs_data_ = obs_data.reshape(-1, *self.obs_config[obs_type]['shape'])
             self.observation[obs_type].append(obs_data_)
             if self.cache_in_memory and obs_type in self.obs_source:

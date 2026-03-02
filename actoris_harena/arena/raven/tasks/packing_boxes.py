@@ -22,6 +22,7 @@ class PackingBoxes(Task):
 
     def reset(self, env):
         super().reset(env)
+        
         self._add_instance(env)
 
     def _add_instance(self, env):
@@ -130,61 +131,67 @@ class PackingBoxes(Task):
                 len(object_ids)), true_poses, False, True, 'zone',
             (object_points, [(zone_pose, zone_size)]), 1))
 
-    def reward(self):
-        """Custom, bug-free reward specifically for the PackingBoxes task."""
-        reward, info = 0, {}
+ 
+    # def reward(self):
+    #     """Custom, restorative reward specifically for the PackingBoxes task."""
+    #     reward, info = 0, {}
 
-        # Unpack next goal step.
-        if len(self.goals) == 0:
-            return 1, {}
+    #     # 1. Cache the ENTIRE goal tuple the first time we see it.
+    #     # This contains the target poses the Oracle needs to fix mistakes.
+    #     if getattr(self, 'full_goal', None) is None and len(self.goals) > 0:
+    #         self.full_goal = self.goals[0]
 
-        objs, matches, targs, _, _, metric, params, max_reward = self.goals[0]
+    #     # Failsafe: if somehow empty and never cached
+    #     if getattr(self, 'full_goal', None) is None:
+    #         return 0, {}
 
-        # Evaluate by measuring object intersection with the container zone.
-        if metric == 'zone':
-            zone_pts, total_pts = 0, 0
-            obj_pts, zones = params
+    #     # 2. Extract parameters from the cached full_goal
+    #     objs, matches, targs, replace, rotations, metric, params, max_reward = self.full_goal
+    #     obj_pts, zones = params
+
+    #     # 3. ALWAYS evaluate the physical state of the blocks
+    #     zone_pts, total_pts = 0, 0
+    #     for zone_pose, zone_size in zones:
+    #         for obj_id in obj_pts:
+    #             pts = obj_pts[obj_id]
+                
+    #             if pts.shape[1] == 0:
+    #                 continue
+                    
+    #             obj_pose = p.getBasePositionAndOrientation(obj_id)
+    #             world_to_zone = utils.invert(zone_pose)
+    #             obj_to_zone = utils.multiply(world_to_zone, obj_pose)
+    #             pts_local = np.float32(utils.apply(obj_to_zone, pts))
+                
+    #             if len(zone_size) > 1:
+    #                 valid_pts = np.logical_and.reduce([
+    #                     pts_local[0, :] > -zone_size[0] / 2, pts_local[0, :] < zone_size[0] / 2,
+    #                     pts_local[1, :] > -zone_size[1] / 2, pts_local[1, :] < zone_size[1] / 2,
+    #                     pts_local[2, :] > -zone_size[2] / 2, pts_local[2, :] < zone_size[2] / 2
+    #                 ])
+
+    #             zone_pts += np.sum(np.float32(valid_pts))
+    #             total_pts += pts.shape[1]
+        
+    #     # Calculate current exact physical reward
+    #     step_reward = max_reward * (zone_pts / total_pts) if total_pts > 0 else 0
+
+    #     # Calculate delta reward (negative if it drifted!)
+    #     reward = step_reward - getattr(self, '_rewards', 0)
+    #     self._rewards = step_reward 
+
+    #     # 4. The "Wake Up" Logic: Pop or Restore the goal based on the physical state
+    #     is_packed = np.abs(max_reward - step_reward) < 0.05
+        
+    #     if is_packed and len(self.goals) > 0:
+    #         # Everything is packed nicely. Pop the goal so the Oracle executes a no-op.
+    #         self.progress += max_reward  
+    #         self.goals.pop(0)
             
-            for zone_pose, zone_size in zones:
-                # Count valid points in zone.
-                for obj_id in obj_pts:
-                    pts = obj_pts[obj_id]
-                    
-                    # 1. FIX: Prevent divide-by-zero crashes for empty/malformed point arrays
-                    if pts.shape[1] == 0:
-                        continue
-                        
-                    obj_pose = p.getBasePositionAndOrientation(obj_id)
-                    world_to_zone = utils.invert(zone_pose)
-                    obj_to_zone = utils.multiply(world_to_zone, obj_pose)
-                    
-                    # Transform object points into the local coordinate frame of the container
-                    pts_local = np.float32(utils.apply(obj_to_zone, pts))
-                    
-                    if len(zone_size) > 1:
-                        # 2. FIX: True 3D Volumetric Bounds Check
-                        # Check local X, Y, and importantly, Z bounds to prevent stacking/hovering
-                        valid_pts = np.logical_and.reduce([
-                            pts_local[0, :] > -zone_size[0] / 2, pts_local[0, :] < zone_size[0] / 2,
-                            pts_local[1, :] > -zone_size[1] / 2, pts_local[1, :] < zone_size[1] / 2,
-                            pts_local[2, :] > -zone_size[2] / 2, pts_local[2, :] < zone_size[2] / 2
-                        ])
+    #     elif not is_packed and len(self.goals) == 0:
+    #         # A block drifted out! The task is no longer solved.
+    #         # Restore the goal so the Oracle wakes up and fixes it.
+    #         self.progress -= max_reward  # Revoke progress so we don't double-count later
+    #         self.goals.append(self.full_goal)
 
-                    zone_pts += np.sum(np.float32(valid_pts))
-                    total_pts += pts.shape[1]
-            
-            # Ensure total_pts is greater than 0 before dividing
-            step_reward = max_reward * (zone_pts / total_pts) if total_pts > 0 else 0
-
-        # Get cumulative rewards and return delta.
-        reward = self.progress + step_reward - self._rewards
-        self._rewards = self.progress + step_reward
-
-        # 3. FIX: Discretization Tolerance
-        # Relaxed completion threshold from 0.01 to 0.05. This prevents episodes from failing
-        # just because a single discrete point clips a millimeter outside the physics mesh.
-        if np.abs(max_reward - step_reward) < 0.05:
-            self.progress += max_reward  # Update task progress.
-            self.goals.pop(0)
-
-        return reward, info
+    #     return reward, info

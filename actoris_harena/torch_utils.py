@@ -1,13 +1,44 @@
-
+# torch_utils.py
 import torch
 import numpy as np
 from torch import nn, optim
 from torch.nn import functional as F
 import torch.distributions as td
+import torch.optim as optim
 
-OPTIMISER_CLASSES = {
-    'adam': optim.Adam
-}
+def build_optimizer(name: str, params, **kwargs):
+    """
+    Factory function to build a PyTorch optimizer.
+    Supported names: adam, adamw, sgd, rmsprop, adagrad, adadelta, adamax, asgd, nadam, radam.
+    """
+    # Map lowercase names to the actual PyTorch Class names
+    mapping = {
+        'adam': 'Adam',
+        'adamw': 'AdamW',
+        'sgd': 'SGD',
+        'rmsprop': 'RMSprop',
+        'adagrad': 'Adagrad',
+        'adadelta': 'Adadelta',
+        'adamax': 'Adamax',
+        'asgd': 'ASGD',
+        'nadam': 'NAdam',
+        'radam': 'RAdam',
+        'rprop': 'Rprop',
+        'lbfgs': 'LBFGS'
+    }
+
+    opt_name = name.lower()
+    if opt_name not in mapping:
+        available = ", ".join(mapping.keys())
+        raise ValueError(
+            f"Optimizer '{name}' not found. Available optimizers: {available}"
+        )
+
+    # Get the class from torch.optim using the mapped name
+    opt_class = getattr(optim, mapping[opt_name])
+    
+    # Return the instantiated optimizer
+    return opt_class(params, **kwargs)
 
 ACTIVATIONS = {
     'relu': nn.ReLU,

@@ -55,6 +55,8 @@ from actoris_harena.agent.oracle.raven.raven_pixel_noisy_oracle_policy_adapter \
     import RavenPixelNoisyOraclePolicyAdapter
 from actoris_harena.agent.random.raven_pixel_mask_biased_random_policy \
     import RavenPixelMaskBiasedRandomPolicy
+from actoris_harena.agent.drl.sac.vanilla_image_sac \
+    import VanillaImageSAC
 
 AGENTS = {  
     # 'dreamer-planning': Dreamer,
@@ -98,6 +100,8 @@ AGENTS = {
     'human-pixel-pick-and-fling': PnFHuman,
 
     'human-pixel-multi-primitive': PixelMultiPrimitive,
+
+    'vanilla-image-sac': VanillaImageSAC
 }
 
 # AGENT_NO_CONFIG = {

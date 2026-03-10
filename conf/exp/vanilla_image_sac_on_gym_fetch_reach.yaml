@@ -1,0 +1,9 @@
+# @package _global_
+defaults:
+  - /agent@agent: vanilla_image_sac_on_gym_fetch_reach
+  - /arena@arena: gym_fetch_reach
+
+exp_name: vanilla_image_sac_on_gym_fetch_reach
+project_name: bimanual_garment_folding
+save_root: /mnt/scratch/users/hcv530/garment_folding_data
+train_and_eval: train_and_evaluate_single

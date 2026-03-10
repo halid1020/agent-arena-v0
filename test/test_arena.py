@@ -21,7 +21,7 @@ def format_action_text(action):
 def main():
     parser = argparse.ArgumentParser()
     # Keeping your original default but allowing overrides
-    parser.add_argument('--arena', default='openAI-gym', help="Arena name")
+    parser.add_argument('--arena', default='gymnasium', help="Arena name")
     parser.add_argument('--eid', default=0, type=int, help="Episode ID")
     parser.add_argument('--disp', default=0, type=int, help="Display mode (0 or 1)")
     parser.add_argument('--policy', default='random', help="Policy type")

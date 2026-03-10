@@ -1,0 +1,4 @@
+[2026-03-10 20:19:35,823][OpenGL.acceleratesupport][INFO] - No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+[2026-03-10 20:19:35,977][py.warnings][WARNING] - /home/hcv530/project/actoris_harena/actoris_harena/agent/drl/sac/vanilla_image_sac.py:165: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at ../torch/csrc/utils/tensor_new.cpp:278.)
+  rgb = torch.as_tensor(context, dtype=torch.float32, device=self.device)
+

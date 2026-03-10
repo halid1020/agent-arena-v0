@@ -68,7 +68,10 @@ For testing the installation of the package and the envrionmental variables, ple
 
 ## III. Environment Setup
 
-### A. SoftGym Simulation
+### A. Porvided Arenas
+Gymanisum, robot gymnasium, and Raven.
+
+### B. SoftGym Simulation (Skip if not needed)
 To reproduce our policies and environment wrappers for the `SoftGym` cloth-manipulation benchmark, please use our modified simulation version.
 
 1.  Download our modified SoftGym: [GitHub Link](https://github.com/halid1020/softgym/tree/py3.10).
@@ -77,7 +80,7 @@ To reproduce our policies and environment wrappers for the `SoftGym` cloth-manip
     * Running experiments should be done **outside** the Docker container (or in a separate container if using a remote machine).
 3.  Ensure you have downloaded the corresponding initial state data files.
 
-### B. Custom Benchmark Environments
+### C. Custom Benchmark Environments
 For other benchmark environments, please follow their respective installation instructions. You must provide an **Adapter Class** that wraps the third-party environment to fit the `Arena` interface.
 
 ## IV. Testing

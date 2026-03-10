@@ -1,0 +1,4 @@
+name: 'gymnasium'
+render_mode: 'rgb_array'
+domain: "FetchReach-v4"
+disp: False

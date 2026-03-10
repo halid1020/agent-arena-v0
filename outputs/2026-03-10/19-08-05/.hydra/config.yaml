@@ -1,0 +1,37 @@
+agent:
+  name: vanilla-image-sac
+  device: ${oc.env:DEVICE,cuda:0}
+  obs_keys:
+  - rgb
+  reward_key: reward
+  context_horizon: 1
+  each_image_shape:
+  - 3
+  - 84
+  - 84
+  hidden_dim: 256
+  feature_dim: 512
+  action_dim: 8
+  action_range: 1.0
+  actor_lr: 0.0003
+  critic_lr: 0.0003
+  alpha_lr: 0.0003
+  tau: 0.005
+  gamma: 0.99
+  batch_size: 256
+  replay_capacity: 100000
+  initial_act_steps: 100
+  train_freq: 1
+  gradient_steps: 1
+  target_update_interval: 1
+  total_update_steps: 100000
+  validation_interval: 1000
+  eval_checkpoint: -1
+arena:
+  name: gymansium
+  render_mode: rgb_array
+  domain: FetchReach-v4
+exp_name: vanilla_image_sac_on_gym_fetch_reach
+project_name: bimanual_garment_folding
+save_root: /mnt/scratch/users/hcv530/garment_folding_data
+train_and_eval: train_and_evaluate_single

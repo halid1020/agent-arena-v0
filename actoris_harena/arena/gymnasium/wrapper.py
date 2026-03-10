@@ -4,7 +4,7 @@ import cv2
 import gymnasium as gym
 
 from actoris_harena.arena.arena import Arena
-from ..loggers.standard_logger import StandardLogger
+from actoris_harena import StandardLogger
 import gymnasium_robotics
 gym.register_envs(gymnasium_robotics)
 
@@ -33,7 +33,7 @@ class GymnasiumArena(Arena):
 
         self.eval_params = [{'eid': i, 'save_video': True} for i in range(10)]
         self.eval_params.extend([{'eid': i, 'save_video': False} for i in range(10, 30)])
-        self.val_params = [{'eid': i, 'save_video': False} for i in range(3)]
+        self.val_params = [{'eid': i, 'save_video': True} for i in range(3)]
 
         ### first 100 seeds for evaluation, next 100 for validation, and the rest for training
         self._num_seeds = 1000

@@ -57,7 +57,8 @@ from actoris_harena.agent.random.raven_pixel_mask_biased_random_policy \
     import RavenPixelMaskBiasedRandomPolicy
 from actoris_harena.agent.drl.sac.vanilla_image_sac \
     import VanillaImageSAC
-
+from actoris_harena.agent.drl.sac.vanilla_sac \
+    import VanillaSAC
 AGENTS = {  
     # 'dreamer-planning': Dreamer,
     'planet-clothpick': RSSM,
@@ -101,7 +102,8 @@ AGENTS = {
 
     'human-pixel-multi-primitive': PixelMultiPrimitive,
 
-    'vanilla-image-sac': VanillaImageSAC
+    'vanilla-image-sac': VanillaImageSAC,
+    'vanilla-sac': VanillaSAC
 }
 
 # AGENT_NO_CONFIG = {

@@ -42,10 +42,9 @@ class GymnasiumArena(Arena):
         self._train_seeds = np.arange(100, self._num_seeds)
 
     def reset(self, episode_config=None):
-        self._sim_step = 0  # Reset internal timer
+        self._sim_step = 0
         self._total_reward = 0
         
-        # get seed and set save_frame flag
         self._save_frame = False
         if episode_config is not None:
             seed = episode_config['eid']
@@ -71,7 +70,6 @@ class GymnasiumArena(Arena):
         
         obs, info_ = self._env.reset(seed=int(seed))
         
-        # ADDED: Store the latest obs and info for the success() method
         self._last_obs = obs
         self._last_info = info_
 
@@ -79,9 +77,18 @@ class GymnasiumArena(Arena):
             self._display()
         
         self._sim_step = 0
+        
+        # Create a new dictionary to avoid mutating Gymnasium's internal obs
+        processed_obs = dict(obs) if isinstance(obs, dict) else {'state': obs}
+
+        # Format the state vector for Goal-Oriented Robotics Envs
+        if isinstance(obs, dict) and 'desired_goal' in obs:
+            # FetchReach state = robot observation (10) + desired goal position (3)
+            processed_obs['state'] = np.concatenate([obs['observation'], obs['desired_goal']])
+        
         info = {
             'action_space': self._env.action_space, 
-            'observation': obs,
+            'observation': processed_obs,
             'evaluation': self.evaluate(),
             'done': False,
             'arena_id': self.id,
@@ -89,32 +96,16 @@ class GymnasiumArena(Arena):
             'success': False
         }
 
-        # Safely handle different observation structures
+        # Only render the image if we actually need to save a video!
         if self._domain == 'pushT':
             info['observation']['rgb'] = obs['image']
             info['observation']['vector_state'] = obs['agent_pos']
-        else:
+        elif self._save_frame:
             info['observation']['rgb'] = self._env.render()
             
         return info
 
-    def success(self):
-        """Determines if the current state is a success."""
-        # 1. Gymnasium Robotics standard: check 'is_success' in the info dict
-        if hasattr(self, '_last_info') and 'is_success' in self._last_info:
-            return bool(self._last_info['is_success'])
-        
-        # 2. Fallback: Manually calculate distance for goal-based environments
-        if hasattr(self, '_last_obs') and isinstance(self._last_obs, dict):
-            if 'achieved_goal' in self._last_obs and 'desired_goal' in self._last_obs:
-                distance = np.linalg.norm(self._last_obs['achieved_goal'] - self._last_obs['desired_goal'])
-                return distance < 0.05  # Standard threshold for Fetch tasks
-                
-        return False
-    
-    def get_action_horizon(self):
-        return self._max_env_step
-    
+
     def step(self, action):
         if isinstance(action, dict):
             action = action['default']
@@ -139,30 +130,51 @@ class GymnasiumArena(Arena):
             if done:
                 break
                 
-        # ADDED: Store the latest obs and info so success() can read them
         self._last_obs = obs
         self._last_info = info_
+
+        # Create a new dictionary to avoid mutating Gymnasium's internal obs
+        processed_obs = dict(obs) if isinstance(obs, dict) else {'state': obs}
+
+        if isinstance(obs, dict) and 'desired_goal' in obs:
+             processed_obs['state'] = np.concatenate([obs['observation'], obs['desired_goal']])
 
         info = {
             'done': done,
             'reward': reward,
             'evaluation': self.evaluate(),
             'action_space': self._env.action_space, 
-            'observation': obs,
+            'observation': processed_obs,
             'arena_id': self.id,
             'sim_steps': self._action_repeat,
-            'success': self.success()  # Now this will work correctly
+            'success': self.success()
         }
 
-        # Safely handle different observation structures
         if self._domain == 'pushT':
             info['observation']['rgb'] = obs['image']
             info['observation']['vector_state'] = obs['agent_pos']
-        else:
+        elif self._save_frame:
             info['observation']['rgb'] = self._env.render()
 
         self._total_reward += reward
         return info
+
+    def success(self):
+        """Determines if the current state is a success."""
+        # 1. Gymnasium Robotics standard: check 'is_success' in the info dict
+        if hasattr(self, '_last_info') and 'is_success' in self._last_info:
+            return bool(self._last_info['is_success'])
+        
+        # 2. Fallback: Manually calculate distance for goal-based environments
+        if hasattr(self, '_last_obs') and isinstance(self._last_obs, dict):
+            if 'achieved_goal' in self._last_obs and 'desired_goal' in self._last_obs:
+                distance = np.linalg.norm(self._last_obs['achieved_goal'] - self._last_obs['desired_goal'])
+                return distance < 0.05  # Standard threshold for Fetch tasks
+                
+        return False
+    
+    def get_action_horizon(self):
+        return self._max_env_step
 
     def get_name(self, episode_config=None):
         return 'Open AI Gym:' + self._domain

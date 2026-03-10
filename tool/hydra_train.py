@@ -13,15 +13,6 @@ from env.parallel import Parallel
 @hydra.main(config_path="../conf", version_base=None)
 def main(cfg: DictConfig):
 
-    new_save_root = resolve_save_root(cfg.save_root)
-    print(f"[tool.hydra_train] Using Save Root: {cfg.save_root}")
-
-    # Update the config object (must unset 'struct' to modify)
-    OmegaConf.set_struct(cfg, False)
-    cfg.save_root = new_save_root
-    OmegaConf.set_struct(cfg, True)
-    # -------------------------------------
-
     print("[tool.hydra_train] --- Configuration ---")
     print(OmegaConf.to_yaml(cfg, resolve=True))
     print("[tool.hydra_train] ---------------------")

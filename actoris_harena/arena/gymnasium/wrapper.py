@@ -126,7 +126,6 @@ class GymnasiumArena(Arena):
             self._sim_step += 1
             
             done = (term or trunc or self._sim_step >= self._max_env_step)
-
             if done:
                 break
                 
@@ -137,10 +136,11 @@ class GymnasiumArena(Arena):
         processed_obs = dict(obs) if isinstance(obs, dict) else {'state': obs}
 
         if isinstance(obs, dict) and 'desired_goal' in obs:
-             processed_obs['state'] = np.concatenate([obs['observation'], obs['desired_goal']])
-
+            processed_obs['state'] = np.concatenate([obs['observation'], obs['achieved_goal'], obs['desired_goal']])
+            
         info = {
             'done': done,
+            'terminated': term,
             'reward': reward,
             'evaluation': self.evaluate(),
             'action_space': self._env.action_space, 

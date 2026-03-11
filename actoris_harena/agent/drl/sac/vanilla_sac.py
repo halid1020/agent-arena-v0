@@ -400,6 +400,7 @@ class VanillaSAC(TrainableAgent):
                 f"train/{k}": v,
             }, step=self.act_steps)
         done = next_info.get('done', False)
+        term = next_info.get('terminated', False)
         self.info = next_info
         #a = next_info['applied_action']
         self.last_done = done
@@ -416,7 +417,7 @@ class VanillaSAC(TrainableAgent):
         #next_obs_stack = np.stack(obs_list)[-self.context_horizon:].flatten() #TODO: .reshape(self.context_horizon * self.each_image_shape[0], *self.each_image_shape[1:])
 
         #print('\napplied action vecotr', a, type(a))
-        self._add_transition_replay(obs_for_replay, self._post_process_action_to_replay(a_add), reward, next_obs_for_replay, done)
+        self._add_transition_replay(obs_for_replay, self._post_process_action_to_replay(a_add), reward, next_obs_for_replay, term)
         
         
         self.act_steps += 1

@@ -8,7 +8,7 @@ auto_alpha_learning: True
 context_horizon: 1
 
 hidden_dim: 256
-state_dim: 13
+state_dim: 16
 action_dim: 4
 action_range: 1.0
 

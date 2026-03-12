@@ -133,20 +133,22 @@ class TrajectoryDataset(Dataset):
             
             print("[agent-arena, TrajectoryDatset] Caching dataset into memory... (This may take a moment)")
             
+            # Slice up to total_timesteps for frame-level data
             self.obs_source = {}
             for k in self.obs_types:
-                self.obs_source[k] = self.observation[k][:] 
+                self.obs_source[k] = self.observation[k][:self.total_timesteps] 
             
             self.act_source = {}
             for k in self.action_types:
-                self.act_source[k] = self.action[k][:]
+                self.act_source[k] = self.action[k][:self.total_timesteps]
                 
+            # Slice up to total_trj for trajectory-level data (goals)
             if self.save_goal and self.goal is not None:
                 self.goal_source = {}
                 for k in self.goal_types:
-                    self.goal_source[k] = self.goal[k][:]
+                    self.goal_source[k] = self.goal[k][:self.total_trj]
                     
-            print(f"Finished caching. Loaded {self.total_timesteps} timesteps.")
+            print(f"Finished caching. Loaded {self.total_timesteps} timesteps across {self.total_trj} trajectories.")
 
         print('[agent-arena, TrajectoryDatset]  total trj', self.total_trj)
         print('[agent-arena, TrajectoryDatset]  num_samples', self.num_samples)

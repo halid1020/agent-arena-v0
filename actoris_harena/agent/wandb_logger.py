@@ -266,8 +266,9 @@ class WandbLogger(Logger):
 
             value = np.transpose(value, (0, 3, 1, 2))  # (T,H,W,C) → (T,C,H,W)
 
-            wandb_logs[name] = wandb.Video(value, fps=16, format="mp4")
-
+            #wandb_logs[name] = wandb.Video(value, fps=16, format="mp4")
+            wandb_logs[name] = wandb.Video(value, fps=16, format="gif")
+            
         # Commit step
         wandb.log(wandb_logs, step=step)
 

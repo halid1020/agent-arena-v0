@@ -26,33 +26,24 @@
 # TODO: need to check the difference of pixel2world and not.
 
 import os
-
-from pathlib import Path
-from typing import Any
-import ruamel.yaml as yaml
 from tqdm import tqdm
+import time
 import torch
 import logging 
 
 
-from actoris_harena.registration.dataset import name_to_dataset
-from actoris_harena.utilities.utils import TrainWriter
-from .utils.initializers import get_log_dir, set_seed
+from .utils.initializers import set_seed
 from .transporter import *
 from .dataset import Dataset
-from actoris_harena.agent.oracle.builder import OracleBuilder
 from actoris_harena import TrainableAgent
-
-
-from actoris_harena.utilities.logger.logger_interface import Logger
 
 class TransporterAdapter(TrainableAgent):
 
     def __init__(self, config):
+        super().__init__(config)
         self.name = 'Transporter'
         self.internal_states = {}
         self.config = config
-        self.logger = Logger()
         
         self.success_noop = config['success_noop'] if 'success_noop' in config else False
         self.bc_update_steps = config['bc_update_steps'] if 'bc_update_steps' in config else 0
@@ -62,10 +53,12 @@ class TransporterAdapter(TrainableAgent):
         self.bc_demo_episodes_per_iteration = config['bc_demo_episodes_per_iteration'] \
             if 'bc_demo_episodes_per_iteration' in config else 0
         #self.depth_only = config['depth_only'] if 'depth_ony' in configs else False
+        
         transform_config = self.config.transform
         self.two_picker = config['two_picker'] if 'two_picker' in config else False
         from actoris_harena.api import build_transform
         transformer = build_transform(transform_config.name, transform_config.params)
+        
         # self.config['preprocess'] = \
         #     DATA_TRANSFORMER[transform_config.name](transform_config.params)
         
@@ -96,42 +89,61 @@ class TransporterAdapter(TrainableAgent):
                     transformer=transformer,
                     **self.config)
         
-        self.writer = TrainWriter(self.config.save_dir)
         self.agent.load()
         
-
         if self.config.train_mode == 'from_dataset':
             self.datasets = {}
+            from actoris_harena.utilities.trajectory_dataset import TrajectoryDataset
+            
+            # Iterate through the dictionary keys ('train', 'eval') and values
+            for key, dataset_dict in self.config.datasets.items():
+                
+                # Access the nested 'dataset_config' block
+                # Use dictionary access since YAML parsers return dicts
+                ds_config = dataset_dict['dataset_config']
+                
+                # # If your config manager (like OmegaConf/Addict) requires conversion to a standard dict:
+                # if hasattr(ds_config, 'toDict'):
+                #     ds_config = ds_config.toDict()
+                # elif hasattr(ds_config, 'to_dict'):
+                #     ds_config = ds_config.to_dict()
+                # elif hasattr(ds_config, '__dict__') and not isinstance(ds_config, dict):
+                #      ds_config = vars(ds_config)
+                
+                # Unpack the parameters into the dataset class
+                #ds_config.pop('_metadata', None)
+                dataset = TrajectoryDataset(**ds_config)
+                self.datasets[key] = dataset
+
+
+        # if self.config.train_mode == 'from_dataset':
+        #     self.datasets = {}
 
             
-            for dataset_dict in self.config.datasets:
-                key = dataset_dict.key
-                print()
-                print('Initialising dataset {} from name {}'.format(key, dataset_dict.name))
+        #     for dataset_dict in self.config.datasets:
+                
+        #         # print()
+        #         # print('Initialising dataset {} from name {}'.format(key, dataset_dict.name))
 
-                dataset_params = yaml.safe_load(
-                    Path('{}/configuration/datasets/{}.yaml'.\
-                        format(os.environ['actoris_harena_PATH'], dataset_dict.name)).read_text())
-                dataset_params.update(dataset_dict['params'])
-                
-                # transform_params = DotMap(dataset_dict['transform']['params'])
-                # transform = name_to_transformer[dataset_dict['transform']['name']](transform_params)
-                # dataset_params['transform'] = transform
+        #         # dataset_params = yaml.safe_load(
+        #         #     Path('{}/configuration/datasets/{}.yaml'.\
+        #         #         format(os.environ['actoris_harena_PATH'], dataset_dict.name)).read_text())
+        #         # dataset_params.update(dataset_dict['params'])
                 
                 
                 
-                dataset = name_to_dataset[dataset_dict.name](
-                    **dataset_params)
+        #         # dataset = name_to_dataset[dataset_dict.name](
+        #         #     **dataset_params)
 
-                self.datasets[key] = dataset
+                
 
     def get_name(self):
         return self.name
-
-    def set_log_dir(self, log_dir):
-        super().set_log_dir(log_dir)
-        self.save_dir = log_dir
-        self.agent.set_save_dir(log_dir)
+    
+    def set_log_dir(self, logdir, project_name, exp_name, disable_wandb=False):
+        super().set_log_dir(logdir, project_name, exp_name, disable_wandb=disable_wandb)
+        self.save_dir = logdir
+        self.agent.set_save_dir(logdir)
 
     def train(self, update_steps, arena):
         torch.backends.cudnn.benchmark = True
@@ -151,28 +163,10 @@ class TransporterAdapter(TrainableAgent):
     def load(self):
         return self.agent.load()
     
-    def train_from_dataset(self, datasets):
-
-        train_dataset = datasets['train']
-        test_dataset = datasets['test']
-        self.agent.load()
-        start_step = self.agent.current_update_steps
-
-        # TODO: load from checkpoint
-        #print('Herrr')
-        #self.agent.validate(test_dataset, self.writer)
-
-        for u in tqdm(range(start_step, self.config.update_steps)):
-            self.agent.train(train_dataset,self.writer)
-            if u % self.config.test_interval == 0:
-                self.agent.validate(test_dataset, self.writer)
-                #self.test_agent(u, self.writer)
-                self.agent.save()
-        
-        self.agent.save()
+    
     
     def get_writer(self):
-        return self.writer
+        return self.logger
 
     def success(self):
         return {arena_id: False for arena_id in self.internal_states.keys()}
@@ -227,11 +221,7 @@ class TransporterAdapter(TrainableAgent):
             while not done:
                 action = policy.act([info])[0]
 
-                #print('action', action)
-                
-                #print('transporter action', action)
-                
-                #print('action keys', action.keys())
+            
                 if action is None:
                     break
                 episodes.append(
@@ -239,9 +229,7 @@ class TransporterAdapter(TrainableAgent):
                      action, 
                      info['reward'], 
                      None))
-                #print('largest partciel distance', info['largest_particle_distance'])
-
-
+                
                 info = arena.step(action)
                 policy.update([info], [action])
                 info['reward'] = 0
@@ -274,12 +262,8 @@ class TransporterAdapter(TrainableAgent):
     
     def _extend_dataset_from_policy(self, dataset, policy, arena, iteration):
 
-        # dataset = Dataset(os.path.join(self.config.save_dir,
-        #     '{}_dataset'.format('bc')), self.config.swap_action)
-        print('exten dataset')
         arena.set_train()
         
-        print('dataset.n_episodes', dataset.n_episodes)
         max_episode = self.bc_demo_episodes_per_iteration * (iteration+1) \
             + self.config.num_train_demo_episodes
 
@@ -333,6 +317,32 @@ class TransporterAdapter(TrainableAgent):
         return dataset
 
 
+    def train_from_dataset(self, datasets, update_steps=-1):
+        train_dataset = datasets['train']
+        test_dataset = datasets['test'] # Or 'eval', depending on your YAML!
+        
+        load_start_step = self.agent.load()
+        
+        # Supervised Learning boundary logic
+        sl_update_steps = self.config.sl_update_steps
+        if update_steps != -1 and load_start_step < self.config.sl_update_steps:
+            sl_update_steps = min(self.config.sl_update_steps, load_start_step + update_steps + 1)
+        
+        # Initial validation before training starts
+        self.agent.validate(test_dataset, self.logger)
+        
+        # Train loop restricted to SL update steps
+        for u in tqdm(range(load_start_step, sl_update_steps + 1), desc='Training agent (SL only)...'):
+            self.agent.train(train_dataset, self.logger)
+            
+            if u % self.config.test_interval == 0:
+                self.agent.validate(test_dataset, self.logger)
+                self.agent.save()
+        
+        # Final validation and save after the SL phase is complete
+        self.agent.validate(test_dataset, self.logger)
+        self.agent.save()
+
     def train_from_policy(self, arena, update_steps=-1):
         
         # collect data
@@ -345,35 +355,25 @@ class TransporterAdapter(TrainableAgent):
         test_dataset = self._init_dataset_from_policy(policy, arena, mode='test')
 
         
-
-        # episodes = np.random.choice(
-        #     range(self.config.num_train_demo_episodes), 
-        #     self.config.num_train_demo_episodes, False)
-        
-        # train_dataset.set(episodes)
-        
-        # train
-        
-        
         load_start_step = self.agent.load()
-        #self.test_agent(arena, start_step, self.writer)
+        #self.test_agent(arena, start_step, self.logger)
         sl_update_steps = self.config.sl_update_steps
         if load_start_step < self.config.sl_update_steps:
             sl_update_steps = min(self.config.sl_update_steps, load_start_step + update_steps + 1)
         
         #print('Herr')
-        self.agent.validate(test_dataset, self.writer)
+        self.agent.validate(test_dataset, self.logger)
         
         for u in tqdm(range(load_start_step, sl_update_steps + 1), desc='Training agent ...'):
-            self.agent.train(train_dataset, self.writer)
+            self.agent.train(train_dataset, self.logger)
             if u % self.config.test_interval == 0:
-                self.agent.validate(test_dataset, self.writer)
-                #self.test_agent(arena, u, self.writer)
+                self.agent.validate(test_dataset, self.logger)
+                #self.test_agent(arena, u, self.logger)
                 self.agent.save()
         
 
         if self.bc_update_steps == 0:
-            self.agent.validate(test_dataset, self.writer)
+            self.agent.validate(test_dataset, self.logger)
             self.agent.save()
             return
 
@@ -405,7 +405,7 @@ class TransporterAdapter(TrainableAgent):
             desc='Training agent with BC ...'):
             
             if u % self.collect_interval == 0:
-                #self.test_agent(arena, u, self.writer)
+                #self.test_agent(arena, u, self.logger)
                 self._extend_dataset_from_policy(
                     train_dataset,
                     policy,
@@ -417,101 +417,108 @@ class TransporterAdapter(TrainableAgent):
                 
                 # self.agent.save()
 
-            self.agent.train(train_dataset, self.writer)
+            self.agent.train(train_dataset, self.logger)
 
-        self.agent.validate(test_dataset, self.writer)
+        self.agent.validate(test_dataset, self.logger)
         self.agent.save()
 
+    def single_act(self, info, update=False):
+        start_time = time.time()
+        if self.success_noop:
+            if info['evaluation']['success']:
+                return info['no_op']
+
+        ret_state = {
+            'current': {},
+            'goal': None,
+            # 'eid': env.get_episode_id(),
+            # 'step': env.get_step()
+        }
+        if 'color' not in info['observation']:
+            ret_state['current']['color'] = info['observation']['rgb']
+        else:
+            ret_state['current']['color'] = info['observation']['color'] #be careful here if change
+
+        if 'depth' in info['observation']:
+            ret_state['current']['depth'] = info['observation']['depth'] # be careful here if change
+        #print('state obsrvation keys', state['observation'].keys())
+        if 'mask' in info['observation']:
+            ret_state['current']['mask'] = info['observation']['mask'] # be careful here if change
+            
+            #cv2.imwrite('tmp/mask.png', state['observation']['mask']*255)
+        
+
+        ## rehape the color and depth with self.config.inshape[:2]
+        shape = tuple(self.config.in_shape[:2])
+
+        # TODO: need to make the following works
+        if (not isinstance(ret_state['current']['color'], tuple)) \
+            and (not isinstance(ret_state['current']['color'], list)):
 
 
-    def act(self, infos):
+            ret_state['current']['color'] = \
+                cv2.resize(ret_state['current']['color'], shape)
+
+            if 'depth' in ret_state['current']:
+                ret_state['current']['depth'] = \
+                    cv2.resize(ret_state['current']['depth'], shape).reshape(shape[0], shape[1], 1)
+
+            if 'mask' in ret_state['current']:
+                #print('mask shape', ret_state['current']['mask'].shape)
+                ret_state['current']['mask'] = \
+                    cv2.resize(ret_state['current']['mask'].astype(np.float64), shape).reshape(shape[0], shape[1], 1)
+                ret_state['current']['mask'] = ret_state['current']['mask'] > 0.9
+
+                # from matplotlib import pyplot as plt
+                # plt.imshow(ret_state['current']['mask'])
+                # plt.show()
+        
+        
+        
+        if self.config.get('goal_condition', False):
+            goal = info['goal']
+
+            if 'color' not in goal:
+                goal['color'] = goal['rgb']
+
+            ret_state['goal'] = goal
+
+            # resize goal
+            if (not isinstance(ret_state['goal']['color'], tuple)) \
+                and (not isinstance(ret_state['goal']['color'], list)):
+                ret_state['goal']['color'] = \
+                    cv2.resize(ret_state['goal']['color'], shape)
+                ret_state['goal']['depth'] = \
+                    cv2.resize(ret_state['goal']['depth'], shape).reshape(shape[0], shape[1], 1)
+        action = self.agent.act(ret_state)
+        if self.config.get('action_mode', 'norm-pixel-pick-and-place'):
+            action = np.asarray(action).reshape(4)
+        
+            #print('action', action)
+            # res_action = {
+            #     'pick_0': action[0, :2][::-1],
+            #     'place_0': action[0, 2:4][::-1],
+            # }
+            # res_action['norm-pixel-pick-and-place'] = res_action.copy()#
+            res_action = action
+        elif self.config.action_mode == 'original':
+            res_action = action
+        else:
+            raise NotImplementedError
+        duration = time.time() - start_time
+        print(f"[TransporterNet] {info.get('arena_id', 'Unknown')}: Action planned in {duration:.4f} seconds.")
+        return res_action
+
+    def act(self, infos, updates):
         res_actions = []
 
-        for info in infos:
-            if self.success_noop:
-                if info['evaluation']['success']:
-                    return info['no_op']
-
-            ret_state = {
-                'current': {},
-                'goal': None,
-                # 'eid': env.get_episode_id(),
-                # 'step': env.get_step()
-            }
-            if 'color' not in info['observation']:
-                ret_state['current']['color'] = info['observation']['rgb']
-            else:
-                ret_state['current']['color'] = info['observation']['color'] #be careful here if change
-
-            if 'depth' in info['observation']:
-                ret_state['current']['depth'] = info['observation']['depth'] # be careful here if change
-            #print('state obsrvation keys', state['observation'].keys())
-            if 'mask' in info['observation']:
-                ret_state['current']['mask'] = info['observation']['mask'] # be careful here if change
-                
-                #cv2.imwrite('tmp/mask.png', state['observation']['mask']*255)
-            
-
-            ## rehape the color and depth with self.config.inshape[:2]
-            shape = tuple(self.config.in_shape[:2])
-
-            # TODO: need to make the following works
-            if (not isinstance(ret_state['current']['color'], tuple)) \
-                and (not isinstance(ret_state['current']['color'], list)):
-
-
-                ret_state['current']['color'] = \
-                    cv2.resize(ret_state['current']['color'], shape)
-
-                if 'depth' in ret_state['current']:
-                    ret_state['current']['depth'] = \
-                        cv2.resize(ret_state['current']['depth'], shape).reshape(shape[0], shape[1], 1)
-
-                if 'mask' in ret_state['current']:
-                    #print('mask shape', ret_state['current']['mask'].shape)
-                    ret_state['current']['mask'] = \
-                        cv2.resize(ret_state['current']['mask'].astype(np.float64), shape).reshape(shape[0], shape[1], 1)
-                    ret_state['current']['mask'] = ret_state['current']['mask'] > 0.9
-
-                    # from matplotlib import pyplot as plt
-                    # plt.imshow(ret_state['current']['mask'])
-                    # plt.show()
+        for info, up in zip(infos, updates):
             
             
-            
-            if self.config.goal_condition:
-                goal = info['goal']
+            res_action = self.single_act(info, up)
 
-                if 'color' not in goal:
-                    goal['color'] = goal['rgb']
-
-                ret_state['goal'] = goal
-
-                # resize goal
-                if (not isinstance(ret_state['goal']['color'], tuple)) \
-                    and (not isinstance(ret_state['goal']['color'], list)):
-                    ret_state['goal']['color'] = \
-                        cv2.resize(ret_state['goal']['color'], shape)
-                    ret_state['goal']['depth'] = \
-                        cv2.resize(ret_state['goal']['depth'], shape).reshape(shape[0], shape[1], 1)
-            action = self.agent.act(ret_state)
-            if self.config.action_mode == 'norm-pixel-pick-and-place':
-                action = np.asarray(action).reshape(self.config.action_dim)
-            
-                #print('action', action)
-                res_action = {
-                    'pick_0': action[0, :2][::-1],
-                    'place_0': action[0, 2:4][::-1],
-                }
-                res_action['norm-pixel-pick-and-place'] = res_action.copy()
-            elif self.config.action_mode == 'original':
-                res_action = action
-            else:
-                raise NotImplementedError
-            
             self.internal_state = self.agent.state
 
-            
             res_actions.append(res_action)
         
         return res_actions

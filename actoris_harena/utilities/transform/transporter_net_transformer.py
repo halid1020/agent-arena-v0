@@ -50,6 +50,7 @@ class TransporterNetTransformer:
                 sample[k] = v.unsqueeze(2)
 
         for k, v in sample.items():
+            #print('k, v shape', k, v.shape)
             if k in ['rgb', 'color', 'depth', 'mask'] and tuple(v.shape[:2]) != tuple(self.config.img_dim):
                 sample[k] = F.interpolate(v.permute(2, 0, 1).unsqueeze(0), self.config.img_dim, mode='bilinear', align_corners=False).squeeze(0).permute(1, 2, 0)
 

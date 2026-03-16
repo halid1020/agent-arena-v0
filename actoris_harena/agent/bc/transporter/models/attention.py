@@ -52,6 +52,8 @@ class Attention:
         model_type = Name2ResNet[encoder_version]
         #ResNet36_4s if lite else ResNet43_8s
         self.model = model_type(in_shape[2], 1)
+        n = sum(p.numel() for p in  self.model .parameters())
+        print(f"[TransporterNet] Number of parameters in Attention: {n}")
 
         self.device = to_device([self.model], "Attention", verbose=verbose)
 

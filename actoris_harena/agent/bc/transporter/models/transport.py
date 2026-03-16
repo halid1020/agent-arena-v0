@@ -62,6 +62,12 @@ class Transport:
         self.model_query = ResNet43_8s(in_channels, self.output_dim)
         self.model_key = ResNet43_8s(in_channels, self.kernel_dim)
 
+        n = sum(p.numel() for p in self.model_query.parameters())
+        print(f"[TransporterNet] Number of parameters in query model: {n}")
+
+        n = sum(p.numel() for p in self.model_key.parameters())
+        print(f"[TransporterNet] Number of parameters in key model: {n}")
+
         self.device = to_device(
             [self.model_query, self.model_key], name, verbose=verbose)
 

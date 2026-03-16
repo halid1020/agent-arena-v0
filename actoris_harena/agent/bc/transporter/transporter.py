@@ -114,7 +114,8 @@ class TransporterAgent:
                     obs['goal_{}'.format(k)] = v
             # plt.imshow(obs['goal_color'])
             # plt.savefig('goal_color_pre.png')
-            #print('obs keys', obs.keys())
+            #print('obs keys obs maks shape', obs.keys(), obs['mask'].shape)
+            
             obs = self.transform(obs, train=train, sim2real=sim2real)   
             if goal is not None:
                 for k, v in obs.items():
@@ -196,27 +197,32 @@ class TransporterAgent:
         self.save_dir = save_dir
         self.models_dir = os.path.join(save_dir, 'checkpoints')
 
-    # TODO: check the different here in the two cases
     def get_sample(self, dataset, augment=True):
-        """Get a dataset sample.
+        """Get a dataset sample."""
 
-        Args:
-          dataset: a agents.transporter.Dataset (train or validation)
-          augment: if True, perform data augmentation.
+        # 1. Randomly sample an index since this is now a PyTorch-style Dataset
+        import numpy as np
+        idx = np.random.randint(len(dataset))
+        sample_data = dataset[idx]
 
-        Returns:
-          tuple of data for training:
-            (input_image, p0pick, p0pick_theta, p0place, p0place_theta)
-          tuple additionally includes (z, roll, pitch) if self.six_dof
-          if self.use_goal_image, then the goal image is stacked with the
-          current image in `input_image`. If splitting up current and goal
-          images is desired, it should be done outside this method.
-        """
+        # 2. Extract observation, action, and goal dictionaries
+        obs = sample_data['observation']
+        for k, v in obs.items():
+            obs[k] = v[0]
+        
+        # Your YAML defines the action key as 'default', but we'll extract the first one dynamically to be safe
+        act_key = list(sample_data['action'].keys())[0] 
+        act_ = sample_data['action'][act_key]
+        #print('act shape', act_.shape)
+        
+        goal_obs = sample_data.get('goal', None)
 
-        (obs, act_, _, _), (goal_obs, _, _, _) = dataset.sample()
-        obs['action'] = act_
-        #print('before transform', act_)
-        img, act = self.get_image(obs, goal_obs, train=True)
+        # 3. Inject action into obs so get_image can transform it if needed
+        #obs['action'] = act_.reshape(-1, 2)
+        
+        # 4. FIX SYNTAX ERROR: Pass goal_obs correctly (removed the double comma)
+        img, act = self.get_image(obs, goal=goal_obs, train=True)
+        
         if act is None:
             act = act_
         #act = obs['action']
@@ -295,12 +301,12 @@ class TransporterAgent:
 
         return img, pick_and_place
 
-    def train(self, dataset, writer=None):
+    def train(self, dataset, logger=None):
         """Train on a dataset sample for 1 iteration.
 
         Args:
           dataset: a agents.transporter.Dataset.
-          writer: a TensorboardX SummaryWriter.
+          logger: a TensorboardX Summarylogger.
         """
         self.attention.train_mode()
         self.transport.train_mode()
@@ -345,16 +351,16 @@ class TransporterAgent:
         
        
 
-        writer.add_scalars([
-            ('train_loss/attention', loss0, step),
-            ('train_loss/transport', loss1, step),
-        ])
+        logger.log({
+            'train_loss/attention': loss0,
+            'train_loss/transport': loss1,
+        }, step=step)
 
         print(
             f'Train Iter: {step} \t Attention Loss: {loss0:.4f} \t Transport Loss: {loss1:.4f}')
         self.current_update_steps = step
 
-    def validate(self, dataset, writer=None):  # pylint: disable=unused-argument
+    def validate(self, dataset, logger=None):  # pylint: disable=unused-argument
         """Test on a validation dataset for 10 iterations."""
 
         n_iter = 10
@@ -362,7 +368,7 @@ class TransporterAgent:
         for i in range(n_iter):
             #img, p0pick, p0pick_theta, p0place, p0place_theta = self.get_sample(dataset, False)
             img, pick_and_place = self.get_sample(dataset, augment=False)
-            if writer is not None:
+            if logger is not None:
                 if self.input_obs in ['rgb', 'rgbd3', 'rgbd']:
                     # normalise rgb to 0-1
                     #print('img shape', img.shape)
@@ -371,7 +377,7 @@ class TransporterAgent:
                     #print('rgb shape', rgb.shape)
                     #rgb = (rgb - np.min(rgb))/(np.max(rgb) - np.min(rgb))
                     img_to_vis = (rgb*255).astype(np.uint8)
-                    writer.add_image('val image/{}/rgb'.format(i), img_to_vis, self.current_update_steps)
+                    #logger.add_image('val image/{}/rgb'.format(i), img_to_vis, self.current_update_steps)
                 if self.input_obs in ['depth', 'rgbd3']:
                     if len(img.shape) == 2:
                         img_to_vis = img.copy()
@@ -387,11 +393,11 @@ class TransporterAgent:
                         print('nan entry in depth image')
                         exit()
                     #print('img_to_vis shape', img_to_vis.shape)
-                    writer.add_image('val image/{}/depth'.format(i), img_to_vis, self.current_update_steps)
+                    # logger.add_image('val image/{}/depth'.format(i), img_to_vis, self.current_update_steps)
                 
                 # if self.input_obs in ['depth', 'rgbd3']:
                 #     img_to_vis = img[:, :, -2:-1].copy().astype(np.float32).transpose(2, 0, 1)
-                #     writer.add_image('val image/{}/depth'.format(i), img_to_vis, self.current_update_steps)
+                #     logger.add_image('val image/{}/depth'.format(i), img_to_vis, self.current_update_steps)
 
             p0pick = pick_and_place['p0pick']
             p0pick_theta = pick_and_place['p0theta']
@@ -450,15 +456,13 @@ class TransporterAgent:
         loss0 /= n_iter
         loss1 /= n_iter
 
-        writer.add_scalars([
-            ('test_loss/attention', loss0, self.current_update_steps),
-            ('test_loss/transport', loss1, self.current_update_steps),
-        ])
+        logger.log({
+            'test_loss/attention': loss0,
+            'test_loss/transport': loss1,
+        }, step=self.current_update_steps)
 
         if self.two_picker:
-            writer.add_scalars([
-                ('test_loss/attention_1', loss0_1, self.current_update_steps)
-            ])
+            logger.log({'test_loss/attention_1': loss0_1}, step=self.current_update_steps)
 
         print(
             f'Validation: \t Attention Loss: {loss0:.4f} \t Transport Loss: {loss1:.4f}')

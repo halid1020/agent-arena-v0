@@ -716,7 +716,6 @@ class VanillaSAC(TrainableAgent):
             return 0
 
         self._load_model(model_file)
-
         if self.save_replay:
             self._load_replay_buffer(replay_file)
 

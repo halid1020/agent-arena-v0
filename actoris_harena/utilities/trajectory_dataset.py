@@ -166,6 +166,7 @@ class TrajectoryDataset(Dataset):
         
         # Terminals (at the end of stored trajectory - which is the padded dummy step)
         self.terminals = np.zeros((self.total_timesteps, 1), dtype=np.float32)
+        term_indices = np.array([], dtype=np.int64)
         if self.total_trj > 0:
             term_indices = self.traj_starts + self.traj_lengths - 1
             self.terminals[term_indices] = 1.0
@@ -252,19 +253,41 @@ class TrajectoryDataset(Dataset):
             raise ValueError("[agent-arena, TrajectoryDatset]  Dataset not opened in append or write mode.")
 
         for obs_type, obs_data in observation.items():
-            self.observation[obs_type].append(obs_data[np.newaxis])
+            if obs_type not in self.obs_config.keys():
+                continue
+            
+            # Reshape data to match exactly what the config expects
+            expected_shape = tuple(self.obs_config[obs_type]['shape'])
+            try:
+                obs_data_reshaped = obs_data.reshape(expected_shape)
+            except ValueError as e:
+                raise ValueError(f"Shape mismatch for {obs_type}. Expected {expected_shape}, got {obs_data.shape}. Details: {e}")
+                
+            self.observation[obs_type].append(obs_data_reshaped[np.newaxis])
 
         for action_type, action_data in action.items():
-            self.action[action_type].append(action_data[np.newaxis])
+            expected_shape = tuple(self.act_config[action_type]['shape'])
+            action_data_reshaped = action_data.reshape(expected_shape)
+            
+            self.action[action_type].append(action_data_reshaped[np.newaxis])
 
         if done:
+            # 1. Safely calculate total actions in the Zarr store
+            total_actions = len(self.action[list(self.action.keys())[0]])
+            
+            # 2. Subtract the sum directly from the Zarr array, bypassing `self.traj_lengths`
             if len(self.trajectory_lengths) == 0:
-                new_length = len(self.action[list(self.action.keys())[0]])
+                new_length = total_actions
             else:
-                new_length = len(self.action[list(self.action.keys())[0]]) - np.sum(self.traj_lengths)
+                new_length = total_actions - int(np.sum(self.trajectory_lengths[:]))
+                
             self.trajectory_lengths.append(np.array([new_length]))
 
-        self.update_dataset_info()
+            # 3. CRITICAL: Expand the dataset capacity so the dataloader can see the new episode
+            if self.num_trj is not None:
+                self.num_trj += 1
+        
+            self.update_dataset_info()
 
     def add_trajectory(self, observations: Dict[str, np.ndarray], actions: Dict[str, np.ndarray], goals=None):
         if self.mode not in ['a', 'w']:

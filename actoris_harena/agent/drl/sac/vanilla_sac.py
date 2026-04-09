@@ -654,8 +654,8 @@ class VanillaSAC(TrainableAgent):
 
         self._load_model(model_file, resume=True)
         
-
-        self._load_replay_buffer(replay_file)
+        if self.save_replay:
+            self._load_replay_buffer(replay_file)
 
         self.loaded = True
         return self.update_steps
@@ -717,7 +717,8 @@ class VanillaSAC(TrainableAgent):
 
         self._load_model(model_file)
 
-        self._load_replay_buffer(replay_file)
+        if self.save_replay:
+            self._load_replay_buffer(replay_file)
 
         self.loaded = True
         return self.update_steps

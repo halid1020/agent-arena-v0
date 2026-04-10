@@ -2,7 +2,7 @@
 name = "actoris_harena"
 version = "0.2"
 description = "Bimanual manipulation research environment."
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 
 authors = [
     { name = "Halid Abdulrahim Kadi", email = "halidkadi.robot@gmail.com" }
@@ -13,64 +13,77 @@ readme = "README.md"
 dependencies = [
     "numpy<2.0",
     "pybind11>=2.12.0",
-    "ruamel.yaml==0.17.40",
-    "seaborn==0.13.2",
-    "dotmap==1.3.30",
+    "ruamel.yaml>=0.17.40",
+    "seaborn>=0.13.0",
+    "dotmap>=1.3.30",
     "gym==0.26.2",
-    "h5py==3.11.0",
-    "tqdm==4.66.5",
-    "opencv-python==4.10.0.84",
-    "imutils==0.5.4",
-    "matplotlib==3.9.2",
-    "moviepy==1.0.3",
-    "scikit-image==0.24.0",
-    "tensorboard==2.17.0",
-    "termcolor==2.5.0",
-    "kornia==0.7.2",
-    "pandas==2.2.3",
-    "charset-normalizer==3.4.0",
-    "pyquaternion==0.9.9",
-    "shapely==2.0.6",
-    "scikit-learn==1.5.2",
-    "pyswarm==0.6",
-    "wandb==0.17.8",
+    "h5py>=3.8.0",
+    "tqdm>=4.60.0",
+    "opencv-python>=4.8.0",
+    "imutils>=0.5.4",
+    "matplotlib>=3.7.0",
+    "moviepy>=1.0.3",
+    "scikit-image>=0.21.0",
+    "tensorboard>=2.14.0",
+    "termcolor>=2.3.0",
+    "kornia>=0.6.0",
+    "pandas>=2.0.0",
+    "charset-normalizer>=3.3.0",
+    "pyquaternion>=0.9.9",
+    "shapely>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "pyswarm>=0.6",
+    "wandb>=0.15.0",
     "transformations==2020.1.1",
-    "pybullet==3.2.6",
+    "pybullet>=3.2.0",
     "circle-fit",
-    "dm_control==1.0.21",
-    "pytorch-lightning==2.4.0",
-    "tensorboardX==2.6.2.2",
-    "psutil==6.0.0",
-    "transforms3d==0.4.2",
-    "einops==0.8.0",
-    "meshcat==0.3.2",
-    "multipledispatch==1.0.0",
-    "sk-video==1.1.10",
-    "zarr==2.18.0",
-    "open3d==0.18.0",
-    "ray==2.38.0",
-    "pygame==2.6.1",
-    "pymunk==6.8.1",
-    "gdown==5.2.0",
+    "dm_control>=1.0.14",
+    
+    "tensorboardX>=2.6.0",
+    "psutil>=5.9.0",
+    "transforms3d>=0.4.1",
+    "einops>=0.7.0",
+    "meshcat>=0.3.2",
+    "multipledispatch>=1.0.0",
+    "sk-video>=1.1.10",
+    "zarr>=2.16.0",
+    "open3d>=0.17.0",
+    "ray>=2.0.0",
+    "pygame>=2.5.0",
+    "pymunk>=6.5.0",
+    "gdown>=5.1.0",
     "scipy>=1.10.0",
     "ur-rtde",
     "pyrealsense2",
-    "omegaconf==2.3.0", 
-    "hydra-core==1.3.2",  
-    "robosuite==1.4.1",
-    "gymnasium==1.2.3",
-    "gymnasium-robotics==1.4.2",
-    "openai"
+    "omegaconf>=2.3.0", 
+    "hydra-core>=1.3.2",  
+    "robosuite>=1.4.1",
+    "gymnasium<=0.29.1",          # <-- CRITICAL for Python 3.8
+    "gymnasium-robotics<=1.3.1",  # <-- CRITICAL for Python 3.8
+    "openai>=1.0.0"
 ]
 
 [project.optional-dependencies]
 torch = [
-    "torch==2.4.1",
-    "torchvision==0.19.1",
-    "torchaudio==2.4.1",
-    "diffusers==0.36.0",
-    "transformers>=4.44.0",
-    "accelerate>=0.33.0"
+    "torch>=2.0.0",               # Relaxed for Python 3.8 fallback
+    "torchvision>=0.15.0",
+    "torchaudio>=2.0.0",
+    "pytorch-lightning>=2.0.0",
+    "diffusers>=0.20.0",
+    "transformers>=4.30.0",
+    "accelerate>=0.25.0"
+]
+
+diffskill = [
+    "torch==1.9.0",               # Strict original paper version
+    "torchvision==0.10.0",
+    "torchaudio==0.9.0",
+    "taichi==0.7.26",
+    "pykeops==1.5",
+    "kornia<=0.6.8",
+    "geomloss",
+    "yacs",
+    "natsort"
 ]
 
 [build-system]

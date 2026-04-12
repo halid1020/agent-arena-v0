@@ -1,4 +1,7 @@
 
+import torch
+from packaging import version
+
 # from actoris_harena.agent.drl_algorithms.dreamer_rssm import Dreamer
 from actoris_harena.agent.drl.planet.rssm import RSSM
 # from actoris_harena.agent.drl_algorithms.planet.rssm_bc import RSSM_BC
@@ -18,7 +21,7 @@ from actoris_harena.agent.cloth_control.flatten_then_fold import FlattenThenFold
 
 from actoris_harena.agent.drl.reinforce import REINFORCE
 
-from actoris_harena.agent.cloth_control.fabricflownet.adapter import FabricFlowNetAdapter
+# from actoris_harena.agent.cloth_control.fabricflownet.adapter import FabricFlowNetAdapter
 # from actoris_harena.agent.vcd.adapter import VCDAdapter
 
 from actoris_harena.agent.cloth_control.foldsformer.adapter import FoldsformerAdapter
@@ -28,9 +31,6 @@ from actoris_harena.agent.human.pick_and_place.pixel_human_one_picker import Pix
 from actoris_harena.agent.human.pick_and_place.pixel_human_two_picker import PixelHumanTwoPicker as PnPHuman2
 from actoris_harena.agent.human.pick_and_fling.pixel_human import PixelHuman as PnFHuman
 from actoris_harena.agent.human.pixel_multi_primitive import PixelMultiPrimitive
-
-
-from actoris_harena.agent.bc.diffusion.adapter import DiffusionAdapter
 
 
 from actoris_harena.agent.planning.mpc.rect_fabric.pick_and_place_cloth_mask_mpc \
@@ -59,11 +59,13 @@ from actoris_harena.agent.drl.sac.vanilla_image_sac \
     import VanillaImageSAC
 from actoris_harena.agent.drl.sac.vanilla_sac \
     import VanillaSAC
+
+is_torch_2 = version.parse(torch.__version__) >= version.parse("2.0.0")
+
 AGENTS = {  
     # 'dreamer-planning': Dreamer,
     'planet-clothpick': RSSM,
     'planet': RSSM,
-    'diffusion_policy': DiffusionAdapter,
     # 'rssm-bc': RSSM_BC,
     # 'curl_sac': CurlSAC_Adapter,
     # 'drq_sac': DrqSAC_Adapter,
@@ -76,7 +78,7 @@ AGENTS = {
     'flatten_then_fold': FlattenThenFold,
     #'phase_prediction':  PhasePredictionactoris_harena.Agent,
     'REINFORCE': REINFORCE,
-    'fabricflownet': FabricFlowNetAdapter,
+    # 'fabricflownet': FabricFlowNetAdapter,
     # 'vcd': VCDAdapter
     'foldsformer': FoldsformerAdapter,
 
@@ -106,8 +108,13 @@ AGENTS = {
     'vanilla-sac': VanillaSAC
 }
 
-# AGENT_NO_CONFIG = {
-    
-# }
+
+if is_torch_2:
+    from actoris_harena.agent.bc.diffusion.adapter import DiffusionAdapter
+    AGENTS['diffusion_policy'] = DiffusionAdapter
+else:
+    # Optional: Log a warning so you know why it's missing
+    print(f"[Registration] Skipping 'diffusion_policy' (Torch version {torch.__version__} < 2.0.0)")
+
 
 

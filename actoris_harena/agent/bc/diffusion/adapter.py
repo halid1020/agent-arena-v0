@@ -5,11 +5,28 @@ from pathlib import Path
 from typing import Any
 import ruamel.yaml as yaml
 from tqdm import tqdm
-import torch
+
 import logging
 import numpy as np
 from collections import deque
 import torch
+
+# --- START OF CATCH-ALL MONKEY PATCH ---
+import torch
+import sys
+from types import ModuleType
+
+# --- START OF CATCH-ALL MONKEY PATCH ---
+import torch
+import sys
+from types import ModuleType
+
+# --- START OF CATCH-ALL MONKEY PATCH ---
+import torch
+import sys
+from types import ModuleType
+
+
 import cv2
 import torch.nn as nn
 from diffusers.optimization import get_scheduler

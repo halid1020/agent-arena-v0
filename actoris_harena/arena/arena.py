@@ -28,6 +28,10 @@ class Arena(ABC):
         self.action_tool = DummyActionTool()
         self.video_frames = []
         self.aid = 0
+        self.action_space = None
+        self.num_eval_trials = config.get('num_eval_trials', 30)
+        self.num_train_trials = config.get('num_train_trials', 1000)
+        self.num_val_trials = config.get('num_val_trials', 10)
 
     def set_id(self, id):
         self.aid = id
@@ -156,25 +160,24 @@ class Arena(ABC):
         """
         self.video_frames.clear()
     
-    @abstractmethod
-    def get_action_space() -> ActionSpaceType:
+    def get_action_space(self) -> ActionSpaceType:
         """
         Get the action space of the arena.
 
         Returns:
             ActionSpaceType: The action space defined using gym.spaces.
         """
-        raise NotImplementedError
+        return self.action_space
     
-    @abstractmethod
-    def sample_random_action():
+
+    def sample_random_action(self):
         """
         Sample a random action from the action space.
 
         Returns:
             A uniformly sampled action from the action space.
         """
-        raise NotImplementedError
+        return self.action_space.sample()
     
     def set_train(self):
         """
@@ -194,7 +197,6 @@ class Arena(ABC):
         """
         self.mode = "val"
     
-    @abstractmethod
     def get_no_op(self) -> ActionType:
         """
         Get the no-op action (action with no effect on the environment).
@@ -202,7 +204,7 @@ class Arena(ABC):
         Returns:
             ActionType: The no-op action.
         """
-        raise NotImplementedError
+        return np.zeros(self.action_space.shape, dtype=np.float32)
     
     @abstractmethod
     def compare(self, result_1, result_2):

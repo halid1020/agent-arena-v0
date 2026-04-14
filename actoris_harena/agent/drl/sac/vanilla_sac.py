@@ -261,12 +261,10 @@ class VanillaSAC(TrainableAgent):
         config = self.config
         context, action, reward, next_context, done = batch.values()
         B = context.shape[0]
-        # print('sampled action', action)
-        # C = self.each_image_shape[0]
-        # N = self.context_horizon
-        # H, W = self.each_image_shape[1:]
-
-        
+        if reward.dim() == 1:
+            reward = reward.unsqueeze(-1)
+        if done.dim() == 1:
+            done = done.unsqueeze(-1)
 
         # alpha loss
         if self.auto_alpha_learning:
@@ -276,6 +274,8 @@ class VanillaSAC(TrainableAgent):
             self.alpha_optim.zero_grad()
             alpha_loss.backward()
             self.alpha_optim.step()
+            with torch.no_grad():
+                self.log_alpha.clamp_(min=-5.0, max=1.0)
         else:
             alpha = self.init_alpha
 
@@ -293,6 +293,14 @@ class VanillaSAC(TrainableAgent):
 
         critic_loss = 0.5*(F.mse_loss(q1_pred, target_q) + F.mse_loss(q2_pred, target_q))
 
+        # --- TRIPWIRE 2: Q-Value and Loss Check ---
+        if self.update_steps % 10 == 0:
+            print(f"\n[Update {self.update_steps}]")
+            print(f"Target Q Max: {target_q.max().item():.2f}")
+            print(f"Q1 Pred Max: {q1_pred.max().item():.2f}")
+            print(f"Critic Loss: {critic_loss.item():.4f}")
+        # ------------------------------------------
+
         # optimize critics
         self.critic_optim.zero_grad()
         critic_loss.backward()
@@ -300,16 +308,34 @@ class VanillaSAC(TrainableAgent):
         self.critic_optim.step()
 
         # actor loss
+        # Note: We need the raw mean and log_std from the forward pass, not just the sample
+        mean, log_std = self.actor(context) 
         pi, log_pi = self.actor.sample(context)
         q1_pi, q2_pi = self.critic(context, pi)
         min_q_pi = torch.min(q1_pi, q2_pi)
+        
+        # --- NEW: Add a tiny regularization penalty to the Actor loss ---
         actor_loss = (alpha * log_pi - min_q_pi).mean()
-        #print('\nactor loss', actor_loss.item(), 'alpha', alpha.item())
+        reg_loss = 0.001 * (mean**2).mean() + 0.001 * (log_std**2).mean()
+        total_actor_loss = actor_loss + reg_loss
+        # ----------------------------------------------------------------
 
         self.actor_optim.zero_grad()
-        actor_loss.backward()
+        total_actor_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.critic_grad_clip_value)
         self.actor_optim.step()
 
+        # --- TRIPWIRE 3: The NaN Catcher ---
+        for name, param in self.critic.named_parameters():
+            if torch.isnan(param).any():
+                print(f"CRITICAL ERROR: NaN spotted in CRITIC weight '{name}' at update {self.update_steps}!")
+                import sys; sys.exit(1)
+                
+        for name, param in self.actor.named_parameters():
+            if torch.isnan(param).any():
+                print(f"CRITICAL ERROR: NaN spotted in ACTOR weight '{name}' at update {self.update_steps}!")
+                import sys; sys.exit(1)
+        # -----------------------------------
         
         # soft updates
         if self.update_steps % self.config.target_update_interval == 0:
@@ -390,7 +416,17 @@ class VanillaSAC(TrainableAgent):
         
         next_obs_for_process =  self._get_next_obs_for_process(next_info)
 
+       
+
         reward = next_info.get('reward', 0.0)[self.reward_key] if isinstance(next_info.get('reward', 0.0), dict) else next_info.get('reward', 0.0)
+        
+        # --- TRIPWIRE 1: Input Check ---
+        if self.act_steps % 10 == 0:  # Print every 10 steps so it doesn't spam
+            sample_img = next_obs_for_process[0]
+            print(f"[Step {self.act_steps}] Image Min: {sample_img.min():.3f}, Max: {sample_img.max():.3f}")
+            print(f"[Step {self.act_steps}] Reward: {reward}")
+        # -------------------------------
+
         self.logger.log(
             {'train/step_reward': reward}, step=self.act_steps
         )

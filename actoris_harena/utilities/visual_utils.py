@@ -289,7 +289,6 @@ def plot_image_trajectory(obs,
 ### frames: S * H * W * 3 in RGB numpy, or list of H*W*3 RGB numpys
 
 def save_video(frames, path='', title='default', fps=30):
-
     if isinstance(frames, list):
         frames = np.asarray(frames, dtype=np.uint8)
     else:

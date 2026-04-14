@@ -158,7 +158,7 @@ class VanillaImageSAC(VanillaSAC):
         if rgb.dtype != np.float32:
             rgb = rgb.astype(np.float32)
         rgb_resized = cv2.resize(rgb, (self.config.each_image_shape[2], self.config.each_image_shape[1]), interpolation=cv2.INTER_AREA)
-        return rgb_resized.transpose(2, 0, 1)
+        return rgb_resized.transpose(2, 0, 1) / 255.0
 
     def _process_context_for_input(self, context):
         

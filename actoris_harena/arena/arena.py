@@ -5,78 +5,85 @@ import numpy as np
 from ..utilities.logger.dummy_logger import DummyLogger
 from ..utilities.types import ActionType, InformationType, ActionSpaceType
 
-
- 
 class Arena(ABC):
     """
-        Abstract class for defining an arena in a control problem.
+    Abstract base class for defining an arena (environment wrapper) in a control problem.
+    This class handles the boilerplate for episode tracking, seeding, logging, 
+    and defining the expected interfaces for concrete implementations.
     """
 
-    def __init__(self, config):
-        self.name = "arena"
-        self.mode = "train"
-        self.setup_ray(id=0)
-        self.disp = False
-        self.random_reset = True
-        self.logger = DummyLogger()
-        self.eid = 0
-        self.action_horizon = config.get('action_horizon', -1)
-
-        from .dummy_task import DummyTask
-        self.task = DummyTask()
-        from .dummy_action_tool import DummyActionTool
-        self.action_tool = DummyActionTool()
-        self.video_frames = []
-        self.aid = 0
-
-    def set_id(self, id):
-        self.aid = id
-    
-    def get_id(self):
-        return self.aid
-
-    def set_log_dir(self, logdir: str, project_name:str, exp_name: str):
+    def __init__(self, config: Dict[str, Any]):
         """
-        Set the log directory for the logger.
+        Initialize the Arena with default properties and configurations.
 
         Args:
-            logdir: The path to the log directory.
+            config (Dict[str, Any]): Configuration dictionary containing trial limits, 
+                                     action horizons, and display settings.
+        """
+        self.name = "arena"               # Default name of the arena for logging
+        self.mode = "train"               # Default mode is training
+        self.setup_ray(id=0)              # Initialize multi-processing handle
+        self.disp = False                 # GUI display flag
+        self.random_reset = True          # Flag to allow random episode resets
+        self.logger = DummyLogger()       # Fallback logger
+        self.eid = 0                      # Current Episode ID
+        self.action_horizon = config.get('action_horizon', -1)
+
+        # Lazy imports for dummy placeholders to avoid circular dependencies
+        from .dummy_task import DummyTask
+        from .dummy_action_tool import DummyActionTool
+        
+        self.task = DummyTask()
+        self.action_tool = DummyActionTool()
+        self.video_frames = []            # Buffer to store frames for video rendering
+        self.aid = 0                      # Arena ID
+        self.action_space = None          # To be defined by child classes (gym.Space)
+        
+        # Trial caps based on modes
+        self.num_eval_trials = config.get('num_eval_trials', 30)
+        self.num_train_trials = config.get('num_train_trials', 1000)
+        self.num_val_trials = config.get('num_val_trials', 10)
+
+    def set_id(self, id: int):
+        """Set the unique identifier for this arena instance."""
+        self.aid = id
+    
+    def get_id(self) -> int:
+        """Return the unique identifier of this arena instance."""
+        return self.aid
+
+    def set_log_dir(self, logdir: str, project_name: str, exp_name: str):
+        """
+        Set the logging directory and configure the active logger.
+
+        Args:
+            logdir (str): Base path to the log directory.
+            project_name (str): Name of the overarching project.
+            exp_name (str): Specific name of the experiment run.
         """
         self.logger.set_log_dir(logdir, project_name, exp_name)
         print("Log directory for the arena is set to {}".format(logdir))
-
-    ##### The following is used by api #####
-    def get_name(self) -> str:
-        """
-        Get the name of the arena.
-
-        Returns:
-            str: The name of the arena.
-        """
-
-        return self.name
     
-    def get_num_episodes(self):
-        if self.mode == 'eval':
-            return self.num_eval_trials
-        elif self.mode == 'val':
-            return self.num_val_trials
-        elif self.mode == 'train':
-            return self.num_train_trials
-        else:
-            raise NotImplementedError
+    def get_name(self) -> str:
+        """Return the name of the arena."""
+        return self.name
     
     def set_disp(self, flg: bool):
         """
-        Set the display flag for GUI demonstration.
+        Toggle the display flag for GUI demonstration (e.g., cv2.imshow).
 
         Args:
-            flg (bool): True to enable display, False to disable.
+            flg (bool): True to enable GUI display, False to disable.
         """
-
         self.disp = flg
 
     def get_num_episodes(self) -> np.int32:
+        """
+        Get the total number of episodes allocated for the current operating mode.
+
+        Returns:
+            np.int32: The number of trials for 'eval', 'val', or 'train'.
+        """
         if self.mode == 'eval':
             return self.num_eval_trials
         elif self.mode == 'val':
@@ -84,33 +91,20 @@ class Arena(ABC):
         elif self.mode == 'train':
             return self.num_train_trials
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"Mode {self.mode} is not supported.")
 
-    
-    def get_eval_configs(self):
-        eval_configs = [
-            {'eid': eid, 'tier': 0, 'save_video': True}
-            for eid in range(self.num_eval_trials)
-        ]
-        
-        return eval_configs
+    def get_eval_configs(self) -> List[Dict[str, Any]]:
+        """Generate configurations for all evaluation episodes."""
+        return [{'eid': eid, 'tier': 0, 'save_video': True} for eid in range(self.num_eval_trials)]
 
-    def get_train_configs(self):
-        train_configs = [
-            {'eid': eid, 'tier': 0, 'save_video': self.config.get('save_video', False)}
-            for eid in range(self.num_train_trials)
-        ]
-        
-        return train_configs
+    def get_train_configs(self) -> List[Dict[str, Any]]:
+        """Generate configurations for all training episodes."""
+        return [{'eid': eid, 'tier': 0, 'save_video': getattr(self, 'config', {}).get('save_video', False)} 
+                for eid in range(self.num_train_trials)]
 
-    
-    def get_val_configs(self):
-        val_configs = [
-            {'eid': eid, 'tier': 0, 'save_video': True}
-            for eid in range(self.num_val_trials)
-        ]
-        
-        return val_configs
+    def get_val_configs(self) -> List[Dict[str, Any]]:
+        """Generate configurations for all validation episodes."""
+        return [{'eid': eid, 'tier': 0, 'save_video': True} for eid in range(self.num_val_trials)]
    
     # Core arena methods
     @abstractmethod
@@ -120,157 +114,116 @@ class Arena(ABC):
 
         Args:
             episode_config (Optional[Dict[str, Any]]): Configuration for the episode.
-            
-            if episode_config is None, 
-                it set episode_config to {'eid': <random>, 'save_video': False}
-            
-            if eid is not given in episode_config and `random_reset` is True, 
-                then sample a random eid;
+            If None, defaults to {'eid': <random>, 'save_video': False}.
+            If 'eid' is omitted and `random_reset` is True, a random eid is sampled.
 
         Returns:
-            InformationType: Information about the arena state after reset.
+            InformationType: A dictionary containing the observation and arena state.
         """
-        
         raise NotImplementedError
     
     @abstractmethod
     def step(self, action: ActionType) -> InformationType:
         """
-            This method take an `action` to the environment using its action_tool,
-            and return `information` about the arena along with task-oriented information using task.
+        Execute an action within the environment.
+
+        Args:
+            action (ActionType): The action to be executed, provided by the agent.
+
+        Returns:
+            InformationType: Arena state and task-oriented info (rewards, done flags).
         """
         raise NotImplementedError
 
     def get_frames(self) -> List[np.ndarray]:
-        """
-        Get the list of frames collected so far.
-
-        Returns:
-            List[np.ndarray]: List of frames.
-        """
+        """Return the list of RGB frames collected during the episode. This is for video saving."""
         return self.video_frames
     
     def clear_frames(self):
-        """
-        Clear the list of collected frames.
-        """
+        """Clear the frame buffer."""
         self.video_frames.clear()
     
-    @abstractmethod
-    def get_action_space() -> ActionSpaceType:
-        """
-        Get the action space of the arena.
-
-        Returns:
-            ActionSpaceType: The action space defined using gym.spaces.
-        """
-        raise NotImplementedError
+    def get_action_space(self) -> ActionSpaceType:
+        """Return the action space (gym.Space) of the arena."""
+        return self.action_space
     
-    @abstractmethod
-    def sample_random_action():
-        """
-        Sample a random action from the action space.
-
-        Returns:
-            A uniformly sampled action from the action space.
-        """
-        raise NotImplementedError
+    def sample_random_action(self) -> ActionType:
+        """Return a uniformly sampled action from the arena's action space."""
+        return self.action_space.sample()
     
     def set_train(self):
-        """
-        Set the arena to sample only training episodes.
-        """
+        """Set the arena to sample only training episodes."""
         self.mode = "train"
 
     def set_eval(self):
-        """
-        Set the arena to sample only evaluation episodes.
-        """
+        """Set the arena to sample only evaluation episodes."""
         self.mode = "eval"
 
     def set_val(self):
-        """
-        Set the arena to sample only validation episodes.
-        """
+        """Set the arena to sample only validation episodes."""
         self.mode = "val"
     
-    @abstractmethod
     def get_no_op(self) -> ActionType:
         """
-        Get the no-op action (action with no effect on the environment).
+        Get a zeroed-out action, representing no movement or effect.
 
         Returns:
-            ActionType: The no-op action.
+            ActionType: A zero array matching the action space shape.
         """
-        raise NotImplementedError
+        return np.zeros(self.action_space.shape, dtype=np.float32)
     
     @abstractmethod
-    def compare(self, result_1, result_2):
+    def compare(self, result_1: List[Dict], result_2: List[Dict]) -> int:
         """
-        result_1 and result_2 are the validation results from two different 'policies'. 
-        They are in the form of a list of information dictionaries for each episode.
-        If result_1 is better than result_2 return 1, worse return -1, if similar return 0.
+        Compare validation results from two different policies.
+
+        Args:
+            result_1: List of information dictionaries from policy 1.
+            result_2: List of information dictionaries from policy 2.
+
+        Returns:
+            int: 1 if result_1 > result_2, -1 if result_1 < result_2, 0 if tied/similar.
         """
         raise NotImplementedError
     
     def evaluate(self) -> Dict[str, Any]:
-        """
-        Evaluate the arena and return metrics.
-
-        Returns:
-            Dict[str, Any]: A dictionary of evaluated metrics.
-        """
+        """Evaluate the arena's current task status and return metrics."""
         return self.task.evaluate(self, metrics={})
     
     def get_action_horizon(self) -> int:
-        """
-        Get the action horizon (length of an episode) of the arena.
-
-        Returns:
-            int: The action horizon.
-        """
+        """Return the maximum number of steps (action horizon) per episode."""
         return self.action_horizon
 
-
     def set_task(self, task):
-        """
-        Set the task for the arena.
-
-        Args:
-            task: The task to be set.
-        """
+        """Inject a specific task evaluation metric tool into the arena."""
         self.task = task
 
     def set_action_tool(self, action_tool):
-        """
-        Set the action tool for the arena.
-
-        Args:
-            action_tool: The action tool to be set.
-        """
+        """Inject a specific action transformation tool into the arena."""
         self.action_tool = action_tool
 
     def get_goal(self):
+        """Fetch the current goal from the underlying task."""
         return self.task.get_goal()
     
-    def success(self):
+    def success(self) -> bool:
+        """Check if the underlying task considers the current state a success."""
         return self.task.success(self)
     
-    def setup_ray(self, id):
+    def setup_ray(self, id: int):
         """
-            This method sets up the ray handle for the arena for multi-processing.
+        Set up the ray handle to facilitate multi-processing.
+
+        Args:
+            id (int): Ray worker ID.
         """
         self.id = id
         self.ray_handle = {"val": id}
 
-    def get_mode(self):
+    def get_mode(self) -> str:
+        """Return the current mode ('train', 'eval', or 'val')."""
         return self.mode
     
-    def get_episode_id(self):
+    def get_episode_id(self) -> int:
+        """Return the current Episode ID (eid)."""
         return self.eid
-
-    def compare(self, results_1, results_2):
-        return 0
-    
-    def get_action_horizon(self):
-        return self.action_horizon

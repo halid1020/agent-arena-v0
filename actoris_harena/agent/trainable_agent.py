@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Optional, List
+
 from ..arena.arena import Arena
-from ..utilities.utils import TrainWriter
 from .agent import Agent
 
 
@@ -10,8 +10,7 @@ class TrainableAgent(Agent):
         super().__init__(config, )
         self.mode = 'train'
         self.name = 'trainable_agent'
-        #self.train_writer: TrainWriter = TrainWriter()
-        self.loaded = False
+        self.loaded = False # Flag if the model is loaded.
        
 
     def train(self, update_steps: int, arenas: Optional[List[Arena]] = None) -> bool:
@@ -60,7 +59,7 @@ class TrainableAgent(Agent):
     @abstractmethod
     def save(self, path: Optional[str] = None) -> bool:
         """
-        Save the current agent checkpoint to the specified path.
+        Save the current agent model checkpoint to the specified path.
 
         Args:
             path: Optional path to save the checkpoint to, 
@@ -83,15 +82,6 @@ class TrainableAgent(Agent):
     def set_eval(self) -> None:
         """Set the agent to evaluation mode."""
         raise NotImplementedError
-
-    def get_train_writer(self) -> TrainWriter:
-        """
-        Get the writer for logging training data.
-
-        Returns:
-            TrainWriter: The train writer object.
-        """
-        return self.train_writer
     
     def set_data_augmenter(self, data_augmenter):
         self.data_augmenter = data_augmenter

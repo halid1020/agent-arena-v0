@@ -2,7 +2,7 @@
 name = "actoris_harena"
 version = "0.2"
 description = "Bimanual manipulation research environment."
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 
 authors = [
     { name = "Halid Abdulrahim Kadi", email = "halidkadi.robot@gmail.com" }
@@ -11,66 +11,127 @@ authors = [
 readme = "README.md"
 
 dependencies = [
+    # --- Universal Dependencies (Same across all versions) ---
     "numpy<2.0",
     "pybind11>=2.12.0",
-    "ruamel.yaml==0.17.40",
-    "seaborn==0.13.2",
-    "dotmap==1.3.30",
-    "gym==0.26.2",
-    "h5py==3.11.0",
-    "tqdm==4.66.5",
-    "opencv-python==4.10.0.84",
-    "imutils==0.5.4",
-    "matplotlib==3.9.2",
+    "dotmap>=1.3.30",
     "moviepy==1.0.3",
-    "scikit-image==0.24.0",
-    "tensorboard==2.17.0",
-    "termcolor==2.5.0",
-    "kornia==0.7.2",
-    "pandas==2.2.3",
-    "charset-normalizer==3.4.0",
+    "imutils>=0.5.4",
     "pyquaternion==0.9.9",
-    "shapely==2.0.6",
-    "scikit-learn==1.5.2",
     "pyswarm==0.6",
-    "wandb==0.17.8",
     "transformations==2020.1.1",
-    "pybullet==3.2.6",
     "circle-fit",
-    "dm_control==1.0.21",
-    "pytorch-lightning==2.4.0",
-    "tensorboardX==2.6.2.2",
-    "psutil==6.0.0",
-    "transforms3d==0.4.2",
-    "einops==0.8.0",
+    "sk-video==1.1.10",
     "meshcat==0.3.2",
     "multipledispatch==1.0.0",
-    "sk-video==1.1.10",
-    "zarr==2.18.0",
-    "open3d==0.18.0",
-    "ray==2.38.0",
-    "pygame==2.6.1",
-    "pymunk==6.8.1",
-    "gdown==5.2.0",
-    "scipy>=1.10.0",
     "ur-rtde",
     "pyrealsense2",
-    "omegaconf==2.3.0", 
-    "hydra-core==1.3.2",  
+    "omegaconf>=2.3.0", 
+    "hydra-core>=1.3.2",  
     "robosuite==1.4.1",
-    "gymnasium==1.2.3",
-    "gymnasium-robotics==1.4.2",
-    "openai"
+    "gym==0.26.2",
+
+    # --- Python < 3.10 (Relaxed/Legacy Versions) ---
+    "ruamel.yaml>=0.17.40; python_version < '3.10'",
+    "seaborn>=0.13.0; python_version < '3.10'",
+    "h5py>=3.8.0; python_version < '3.10'",
+    "tqdm>=4.60.0; python_version < '3.10'",
+    "opencv-python>=4.8.0; python_version < '3.10'",
+    "matplotlib>=3.7.0; python_version < '3.10'",
+    "scikit-image>=0.21.0; python_version < '3.10'",
+    "tensorboard>=2.14.0; python_version < '3.10'",
+    "termcolor>=2.3.0; python_version < '3.10'",
+    "kornia>=0.6.0; python_version < '3.10'",
+    "pandas>=2.0.0; python_version < '3.10'",
+    "charset-normalizer>=3.3.0; python_version < '3.10'",
+    "shapely>=2.0.0; python_version < '3.10'",
+    "scikit-learn>=1.3.0; python_version < '3.10'",
+    "wandb>=0.15.0; python_version < '3.10'",
+    "pybullet>=3.2.0; python_version < '3.10'",
+    "dm_control>=1.0.14; python_version < '3.10'",
+    "tensorboardX>=2.6.0; python_version < '3.10'",
+    "psutil>=5.9.0; python_version < '3.10'",
+    "transforms3d>=0.4.1; python_version < '3.10'",
+    "einops>=0.7.0; python_version < '3.10'",
+    "zarr>=2.16.0; python_version < '3.10'",
+    "open3d>=0.17.0; python_version < '3.10'",
+    "ray>=2.0.0; python_version < '3.10'",
+    "pygame>=2.5.0; python_version < '3.10'",
+    "pymunk>=6.5.0; python_version < '3.10'",
+    "gdown>=5.1.0; python_version < '3.10'",
+    "scipy>=1.10.0; python_version < '3.10'",
+    "gymnasium<=0.29.1; python_version < '3.10'",
+    "gymnasium-robotics<=1.3.1; python_version < '3.10'",
+    "openai>=1.0.0; python_version < '3.10'",
+
+    # --- Python >= 3.10 (Strict/Newer Versions) ---
+    "ruamel.yaml==0.17.40; python_version >= '3.10'",
+    "seaborn==0.13.2; python_version >= '3.10'",
+    
+    "h5py==3.11.0; python_version >= '3.10'",
+    "tqdm==4.66.5; python_version >= '3.10'",
+    "opencv-python==4.10.0.84; python_version >= '3.10'",
+    "matplotlib==3.9.2; python_version >= '3.10'",
+    "scikit-image==0.24.0; python_version >= '3.10'",
+    "tensorboard==2.17.0; python_version >= '3.10'",
+    "termcolor==2.5.0; python_version >= '3.10'",
+    "kornia==0.7.2; python_version >= '3.10'",
+    "pandas==2.2.3; python_version >= '3.10'",
+    "charset-normalizer==3.4.0; python_version >= '3.10'",
+    "shapely==2.0.6; python_version >= '3.10'",
+    "scikit-learn==1.5.2; python_version >= '3.10'",
+    "wandb==0.17.8; python_version >= '3.10'",
+    "pybullet==3.2.6; python_version >= '3.10'",
+    "dm_control==1.0.21; python_version >= '3.10'",
+    "pytorch-lightning==2.4.0; python_version >= '3.10'", # Moved from extras in 3.10
+    "tensorboardX==2.6.2.2; python_version >= '3.10'",
+    "psutil==6.0.0; python_version >= '3.10'",
+    "transforms3d==0.4.2; python_version >= '3.10'",
+    "einops==0.8.0; python_version >= '3.10'",
+    "zarr==2.18.0; python_version >= '3.10'",
+    "open3d==0.18.0; python_version >= '3.10'",
+    "ray==2.38.0; python_version >= '3.10'",
+    "pygame==2.6.1; python_version >= '3.10'",
+    "pymunk==6.8.1; python_version >= '3.10'",
+    "gdown==5.2.0; python_version >= '3.10'",
+    "gymnasium==1.2.3; python_version >= '3.10'",
+    "gymnasium-robotics==1.4.2; python_version >= '3.10'",
+    "openai; python_version >= '3.10'"
 ]
 
 [project.optional-dependencies]
 torch = [
-    "torch==2.4.1",
-    "torchvision==0.19.1",
-    "torchaudio==2.4.1",
-    "diffusers==0.36.0",
-    "transformers>=4.44.0",
-    "accelerate>=0.33.0"
+    # Torch for Python < 3.10
+    "torch>=2.0.0; python_version < '3.10'",
+    "torchvision>=0.15.0; python_version < '3.10'",
+    "torchaudio>=2.0.0; python_version < '3.10'",
+    "pytorch-lightning>=2.0.0; python_version < '3.10'",
+    "diffusers>=0.20.0; python_version < '3.10'",
+    "transformers>=4.30.0; python_version < '3.10'",
+    "accelerate>=0.25.0; python_version < '3.10'",
+
+    # Torch for Python >= 3.10
+    "torch==2.4.1; python_version >= '3.10'",
+    "torchvision==0.19.1; python_version >= '3.10'",
+    "torchaudio==2.4.1; python_version >= '3.10'",
+    "diffusers==0.36.0; python_version >= '3.10'",
+    "transformers>=4.44.0; python_version >= '3.10'",
+    "accelerate>=0.33.0; python_version >= '3.10'"
+]
+
+# Run `pip install "pip<24.1" setuptools==65.5.0 wheel==0.38.4` before running this block of installation.
+diffskill = [
+    "cmake==3.24.0",
+    "gym==0.21.0",
+    "torch==1.9.0",               # Strict original paper version
+    "torchvision==0.10.0",
+    "torchaudio==0.9.0",
+    "taichi==0.7.26",
+    "pykeops==1.5",
+    "kornia<=0.6.8",
+    "geomloss",
+    "yacs",
+    "natsort"
 ]
 
 [build-system]

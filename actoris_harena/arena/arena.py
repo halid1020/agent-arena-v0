@@ -196,6 +196,7 @@ class Arena(ABC):
 
     def set_task(self, task):
         """Inject a specific task evaluation metric tool into the arena."""
+        print("[Arena] set task", type(task))
         self.task = task
 
     def set_action_tool(self, action_tool):

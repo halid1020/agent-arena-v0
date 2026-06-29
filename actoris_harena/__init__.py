@@ -20,7 +20,7 @@ from .agent.rl_agent import RLAgent
 from .arena.arena import Arena
 from .arena.task import Task
 
-from .utilities.trajectory_dataset import TrajectoryDataset
+from .data.static_trajectory_dataset import StaticTrajectoryDataset
 from .utilities.transform.transform import Transform
 from .utilities.logger.logger_interface import Logger
 from .arena.loggers.standard_logger import StandardLogger

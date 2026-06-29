@@ -1,7 +1,7 @@
 # TODO: make this test work
 
 import numpy as np
-from actoris_harena.utilities.trajectory_dataset \
+from actoris_harena.actoris_harena.data.static_trajectory_dataset \
     import TrajectoryDataset
 
 # Define the shapes of your observation and action types

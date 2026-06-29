@@ -170,7 +170,7 @@ class DiffusionAdapter(TrainableAgent):
             self.stats = dataset.stats
             #self.transform = DiffusionTransform(self.config, self.stats)
         elif self.config.dataset_mode == 'general':
-            from actoris_harena.utilities.trajectory_dataset import TrajectoryDataset
+            from actoris_harena.actoris_harena.data.static_trajectory_dataset import TrajectoryDataset
             # convert dotmap to dict
             config = self.config.dataset_config.toDict()
             #print('config', config)
@@ -199,7 +199,7 @@ class DiffusionAdapter(TrainableAgent):
     
     def _init_demo_policy_dataset(self, arenas):
         arena = arenas[0] # assume only one arena
-        from actoris_harena.utilities.trajectory_dataset import TrajectoryDataset
+        from actoris_harena.actoris_harena.data.static_trajectory_dataset import TrajectoryDataset
             # convert dotmap to dict
         config = self.config.dataset_config #.toDict()
         config['io_mode'] = 'a'

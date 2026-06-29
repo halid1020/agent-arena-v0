@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import actoris_harena as ag_ar
-from actoris_harena.utilities.trajectory_dataset import TrajectoryDataset
+from actoris_harena.actoris_harena.data.static_trajectory_dataset import TrajectoryDataset
 from actoris_harena.utilities.perform_single import perform_single
 
 obs_config = {'rgb': {'shape': (128, 128, 3),  'output_key': 'rgb'}}

@@ -93,7 +93,7 @@ class TransporterAdapter(TrainableAgent):
         
         if self.config.train_mode == 'from_dataset':
             self.datasets = {}
-            from actoris_harena.utilities.trajectory_dataset import TrajectoryDataset
+            from actoris_harena.actoris_harena.data.static_trajectory_dataset import TrajectoryDataset
             
             # Iterate through the dictionary keys ('train', 'eval') and values
             for key, dataset_dict in self.config.datasets.items():

@@ -97,3 +97,46 @@ class TestImportIsCheap(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTheCameraProfileIsTheRigsToSet(unittest.TestCase):
+    """The three tables that name a bench's cameras are not this package's.
+
+    A shared view builder that shipped one rig's camera names would silently
+    give a different rig the wrong answer -- a composite naming four cameras it
+    does not have, or a pi0.5 slot mapping for a viewpoint it never sees. The
+    empty default is what makes that impossible: nothing is assumed until a rig
+    says so.
+    """
+
+    def tearDown(self) -> None:
+        from actoris_harena.recording.camera_profile import CameraProfile, set_profile
+
+        set_profile(CameraProfile())
+
+    def test_the_default_profile_names_no_camera(self) -> None:
+        from actoris_harena.recording.camera_profile import CameraProfile, profile
+
+        set_to_default = CameraProfile()
+        self.assertEqual(set_to_default.pi05_slots, {})
+        self.assertEqual(set_to_default.composites, {})
+        self.assertEqual(set_to_default.slug_elisions, ())
+        self.assertEqual(profile().composites, {})
+
+    def test_a_rig_installs_its_own_and_the_view_builder_sees_it(self) -> None:
+        from actoris_harena.recording import dataset_view
+        from actoris_harena.recording.camera_profile import CameraProfile, set_profile
+
+        set_profile(CameraProfile(composites={"quad": ("a", "b", "c", "d")}))
+        self.assertEqual(dataset_view._composites(), {"quad": ("a", "b", "c", "d")})
+
+    def test_pi05s_own_slot_names_stay_in_the_module(self) -> None:
+        # These are facts about the pretrained model, identical on every rig,
+        # so they are NOT part of the profile.
+        from actoris_harena.recording.dataset_view import (
+            PI05_SLOT_ALIASES,
+            PI05_SLOT_ORDER,
+        )
+
+        self.assertEqual(len(PI05_SLOT_ORDER), 3)
+        self.assertEqual(set(PI05_SLOT_ALIASES.values()), set(PI05_SLOT_ORDER))

@@ -1,7 +1,7 @@
 [project]
 name = "actoris_harena"
-version = "0.2"
-description = "Bimanual manipulation research environment."
+version = "0.3"
+description = "Shared robot-learning pipeline and simulated benchmark arenas."
 requires-python = ">=3.8"
 
 authors = [
@@ -10,7 +10,56 @@ authors = [
 
 readme = "README.md"
 
+# Core is deliberately tiny. This package has TWO consumers whose dependency
+# sets cannot both be satisfied at once, so neither of them is core:
+#
+#   [sim]  the benchmark arenas -- numpy<2, gym 0.26, robosuite 1.4.1,
+#          pybullet, dm_control, ray, open3d. Python 3.8-3.9 era pins.
+#   [rig]  the collection / visualisation / training / deployment pipeline
+#          the robot repos import, which runs beside LeRobot and therefore
+#          under numpy>=2.0,<2.3 on Python >=3.12.
+#
+# MEASURED: LeRobot pins numpy>=2.0,<2.3 and requires-python>=3.12, while the
+# sim stack pins numpy<2.0. Installing both into one environment cannot work,
+# and that is not a bug to fix here -- it is why they are separate extras.
+# Install exactly one:
+#
+#   pip install -e ".[sim]"    # the arenas
+#   pip install -e ".[rig]"    # a robot repo's venv
 dependencies = [
+    "numpy",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# The pipeline the robot repos import. LeRobot is NOT here on purpose: each
+# robot repo's install.sh installs it editable from a sibling ../lerobot
+# checkout at a pinned commit, and a version range here would fight that pin.
+# torch likewise arrives with LeRobot.
+#
+# Every entry below is imported by a module in this package -- top level for
+# aiohttp / cv2 / numpy / yaml, inside a function for the rest (pyarrow and
+# pandas by the dataset integrity and view code, av by the video readers and
+# the slide encoder, matplotlib by the analysis figures).
+rig = [
+    "aiohttp>=3.9",
+    "opencv-python>=4.8",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+    "pyarrow>=14.0",
+    "pandas>=2.0",
+    "av>=11.0",
+    "matplotlib>=3.7",
+]
+
+# Only actoris_harena.recording.realsense_camera needs this, and only on a rig
+# that has the camera plugged in. Kept out of [rig] so a training box or a
+# dataset-curation session does not need a librealsense wheel.
+realsense = [
+    "pyrealsense2>=2.54",
+]
+
+sim = [
     # --- Universal Dependencies (Same across all versions) ---
     "numpy<2.0",
     "pybind11>=2.12.0",
@@ -24,8 +73,6 @@ dependencies = [
     "sk-video==1.1.10",
     "meshcat==0.3.2",
     "multipledispatch==1.0.0",
-    "ur-rtde",
-    "pyrealsense2",
     "omegaconf>=2.3.0", 
     "hydra-core>=1.3.2",  
     "robosuite==1.4.1",
@@ -99,7 +146,6 @@ dependencies = [
     "openai; python_version >= '3.10'"
 ]
 
-[project.optional-dependencies]
 torch = [
     # Torch for Python < 3.10
     "torch>=2.0.0; python_version < '3.10'",

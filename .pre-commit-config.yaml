@@ -1,0 +1,54 @@
+# Linting is SCOPED, on purpose.
+#
+# This repo holds two bodies of code with different histories. The simulated
+# arenas and agents under actoris_harena/{arena,agent,utilities,configuration,
+# registration}/ are 355 files and ~64k lines, written over years and shared
+# with forks and with the origin/dataset, origin/ros1-noetic and
+# origin/ros2-humble branches. Running black over them would be a whole-repo
+# reformat that destroys `git blame` and makes every one of those branches
+# unmergeable -- for no gain, since nothing in this change set edits them.
+#
+# So `files:` below names only the shared rig pipeline and its tests, which are
+# new code held to the same standard as the robot repos that import it
+# (so101_garment's .pre-commit-config.yaml is where these hook versions and
+# flake8 ignores come from -- keep them in step).
+#
+# Enable with:  pre-commit install
+files: '^(actoris_harena/(__init__\.py|recording/|training/|analysis/|policies/|deploy/|web/|rigs\.py|cli\.py)|test/rig/)'
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=5000']
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/PyCQA/flake8
+    # >=7.1 needed on Python 3.12: older pycodestyle tokenizes inside
+    # f-strings (PEP 701) and false-positives E221/E702/E713 on them
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        # E203: whitespace before ':' -- conflicts with black's slice style
+        args: ['--extend-ignore=E501,E231,E402,E203']
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.4.1
+    hooks:
+      - id: mypy
+        args: ["--ignore-missing-imports", "--explicit-package-bases"]
+        additional_dependencies: [types-PyYAML]

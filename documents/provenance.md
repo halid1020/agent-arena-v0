@@ -16,6 +16,7 @@ is the pointer back.
 |---|---|---|
 | `sync.py`, `deploy/{chunking,chunk_metrics,chunk_sweep,sweep_journal}.py`, `recording/{camera_controls,device_faults}.py` | stage 3a | `83f56db` (`develop`, after the four feature branches merged) |
 | `deploy/{policy_run,policy_wire,policy_client,policy_log,policy_rig}.py` | stage 3b | `0fd77dd` (`harena-migration`) |
+| `recording/{depth,drift,usb_topology,fault_report,audio_cue,dataset_check,dataset_edit,dataset_read,collection_settings}.py` + `recording/sounds/` | stage 3c | `6719bec` (`harena-migration`) |
 
 To read the history of any file here, find its former path under `src/common/`
 in that repository and run `git log --follow` on it there.

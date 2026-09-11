@@ -187,3 +187,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["actoris_harena*"]
+
+[tool.setuptools.package-data]
+# The start/stop cues resolve against a directory beside audio_cue.py, so they
+# have to ship with it -- a wheel without them makes resolve_sound() return
+# None and the recorder go silent, with nothing raising to say why.
+"actoris_harena.recording" = ["sounds/*.wav"]

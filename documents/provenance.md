@@ -14,7 +14,8 @@ is the pointer back.
 
 | Area | Moved in | From `so101_garment` at |
 |---|---|---|
-| `sync.py`, `deploy/{chunking,chunk_metrics,chunk_sweep,sweep_journal}.py`, `recording/{camera_controls,device_faults}.py` | `rig-pipeline` stage 3a | `83f56db` (`develop`, after the four feature branches merged) |
+| `sync.py`, `deploy/{chunking,chunk_metrics,chunk_sweep,sweep_journal}.py`, `recording/{camera_controls,device_faults}.py` | stage 3a | `83f56db` (`develop`, after the four feature branches merged) |
+| `deploy/{policy_run,policy_wire,policy_client,policy_log,policy_rig}.py` | stage 3b | `0fd77dd` (`harena-migration`) |
 
 To read the history of any file here, find its former path under `src/common/`
 in that repository and run `git log --follow` on it there.

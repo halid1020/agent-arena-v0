@@ -2,7 +2,11 @@ __pycache__
 */__pycache__
 *.hdf5
 *.zip
-data
+# Anchored. A bare `data` matched EVERY directory of that name at any depth,
+# which silently untracked the whole of actoris_harena/data/ -- and
+# origin/dataset imports it, so a fresh clone of that branch cannot `import
+# actoris_harena`. Only a run-output directory at the repo root is meant here.
+/data
 wandb
 *.pth
 tmp

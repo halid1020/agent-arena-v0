@@ -1,0 +1,41 @@
+{
+    "dataset_name": "dual_arm_dataset",
+    "hardware_configuration": {
+        "robot_type": "Dual UR5e with Robotiq 2F-85",
+        "camera_intrinsics": {
+            "front": [
+                600,
+                0,
+                320,
+                0,
+                600,
+                240,
+                0,
+                0,
+                1
+            ]
+        },
+        "tactile_sensor_type": "GelSight Mini (4 units)"
+    },
+    "streams": [
+        "front_camera",
+        "top_camera",
+        "left_wrist_camera",
+        "right_wrist_camera",
+        "left_arm_joints",
+        "right_arm_joints",
+        "left_tactile",
+        "right_tactile",
+        "left_actions",
+        "right_actions"
+    ],
+    "recordings": {
+        "rec_1782731441": {
+            "human_name": "fold_towel_01",
+            "file": "rec_1782731441.npz",
+            "start_abs_time": 1782731441.22777,
+            "language_instruction": "Fold the blue towel in half.",
+            "subtasks": []
+        }
+    }
+}

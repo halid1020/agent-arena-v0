@@ -19,6 +19,7 @@ is the pointer back.
 | `recording/{depth,drift,usb_topology,fault_report,audio_cue,dataset_check,dataset_edit,dataset_read,collection_settings}.py` + `recording/sounds/` | stage 3c | `6719bec` (`harena-migration`) |
 | `web/{roots,util,jobs,lifecycle,projects}.py` | stage 3d | `878d8ee` (`harena-migration`) |
 | `recording/{dataset_view,camera_profile}.py` | stage 3e | `0080538` (`harena-migration`) |
+| `training/{destinations,matrix,metrics,progress,runs}.py` | stage 3f | `ec49dda` (`harena-migration`) |
 
 To read the history of any file here, find its former path under `src/common/`
 in that repository and run `git log --follow` on it there.

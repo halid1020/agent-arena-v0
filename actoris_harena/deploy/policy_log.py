@@ -27,11 +27,12 @@ behind each *chunk* (not each tick: a chunk covers seconds) under
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
 
 import numpy as np
+
+from actoris_harena.outputs import output_root
 
 RUNS_SUBDIR = "policy_runs"
 TICK_COLUMNS = ("t", "trial", "mode", "queue", "served", "state", "commanded")
@@ -49,21 +50,9 @@ OUTCOMES = ("success", "failure", "discard")
 FRAME_QUALITY = 95
 
 
-#: The environment variable each rig sets to say where its outputs go, and the
-#: one this package reads. ``SO101_OUTPUT_DIR`` is still honoured because
-#: so101_garment's setup.sh, its Slurm jobs and a dozen of its documents all
-#: name it, and a rename that silently moved a running rig's logs would be a
-#: poor trade for tidiness.
-OUTPUT_DIR_VARS = ("RIG_OUTPUT_DIR", "SO101_OUTPUT_DIR")
-
-
 def runs_root() -> Path:
     """Where run logs live: beside every other output of a session."""
-    for var in OUTPUT_DIR_VARS:
-        value = os.environ.get(var)
-        if value:
-            return Path(value).expanduser() / RUNS_SUBDIR
-    return Path("outputs").expanduser() / RUNS_SUBDIR
+    return output_root() / RUNS_SUBDIR
 
 
 class RunLog:

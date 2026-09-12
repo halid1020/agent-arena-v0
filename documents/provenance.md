@@ -21,6 +21,7 @@ is the pointer back.
 | `recording/{dataset_view,camera_profile}.py` | stage 3e | `0080538` (`harena-migration`) |
 | `training/{destinations,matrix,metrics,progress,runs}.py` | stage 3f | `ec49dda` (`harena-migration`) |
 | `analysis/*` (12 files), `outputs.py`, `action_layout.py` | stage 3g | `3d04f70` (`harena-migration`) |
+| `recording/{cameras,realsense_camera,frames}.py` | stage 3h | `657706b` (`harena-migration`) |
 
 To read the history of any file here, find its former path under `src/common/`
 in that repository and run `git log --follow` on it there.

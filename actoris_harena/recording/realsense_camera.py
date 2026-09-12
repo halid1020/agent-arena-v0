@@ -1,0 +1,188 @@
+"""Intel RealSense RGB-D capture thread for data collection.
+
+Mirrors :class:`actoris_harena.recording.cameras.CameraCapture` so the central RGB-D
+camera plugs into the same tool/recorder machinery for its COLOUR stream (a
+normal ``observation.images.<rgb_name>`` video feature), while additionally
+publishing an aligned 16-bit DEPTH stream via
+``FramePublisher.set_depth_image``. Colour and depth are stamped with the SAME
+capture time so they stay co-timed for the reference-time collector.
+
+Depth is aligned into the colour frame (``rs.align``) so the two share
+intrinsics. The colour-stream intrinsics and the depth scale (metres per unit)
+are read from the device at :meth:`open` and exposed for the dataset's
+``realsense.json`` replicability record.
+
+``pyrealsense2`` is imported at module load, so import this module only when a
+RealSense is actually configured (the teleop tool does so behind
+``--central-depth`` / ``realsense.enabled``); the base recording package never
+imports it.
+"""
+
+from __future__ import annotations
+
+import threading
+import time
+import traceback
+
+import numpy as np
+import pyrealsense2 as rs  # type: ignore[import]
+
+from actoris_harena.recording.frames import FramePublisher
+
+# Auto-exposure settling frames before the lock is applied.
+_WARMUP_FRAMES = 30
+
+
+class RealSenseCapture:
+    """Capture thread for one RealSense: colour (RGB) + aligned 16-bit depth."""
+
+    def __init__(
+        self,
+        rgb_name: str,
+        depth_name: str,
+        width: int,
+        height: int,
+        fps: int,
+        serial: str = "",
+        align_to_color: bool = True,
+        lock_auto_exposure: bool = True,
+    ) -> None:
+        # ``name``/``width``/``height``/``fps`` match CameraCapture so the view
+        # and recorder treat the colour stream like any other camera.
+        self.name = rgb_name
+        self.depth_name = depth_name
+        self.width = width
+        self.height = height
+        self.fps = fps
+        self.serial = serial
+        self.align_to_color = align_to_color
+        self.lock_auto_exposure = lock_auto_exposure
+
+        self._pipeline: "rs.pipeline | None" = None
+        self._align: "rs.align | None" = None
+        self._thread: threading.Thread | None = None
+        self._stop = threading.Event()
+        self._lock = threading.Lock()
+        self._last_frame_mono: float | None = None
+
+        # Replicability metadata, populated at open().
+        self.depth_scale: float = 0.0  # metres per depth unit
+        self.intrinsics: dict = {}
+
+    # ── Lifecycle ────────────────────────────────────────────────────────────
+
+    def open(self) -> bool:
+        """Start the pipeline and read intrinsics/scale. Fail-fast (bool)."""
+        try:
+            pipeline = rs.pipeline()
+            config = rs.config()
+            if self.serial:
+                config.enable_device(self.serial)
+            config.enable_stream(
+                rs.stream.color, self.width, self.height, rs.format.rgb8, self.fps
+            )
+            config.enable_stream(
+                rs.stream.depth, self.width, self.height, rs.format.z16, self.fps
+            )
+            profile = pipeline.start(config)
+        except Exception as e:  # pragma: no cover - hardware path
+            print(f"❌ RealSense '{self.name}' failed to start: {e}")
+            return False
+
+        self._pipeline = pipeline
+        self._align = rs.align(rs.stream.color) if self.align_to_color else None
+        depth_sensor = profile.get_device().first_depth_sensor()
+        self.depth_scale = float(depth_sensor.get_depth_scale())
+        color_profile = profile.get_stream(rs.stream.color).as_video_stream_profile()
+        intr = color_profile.get_intrinsics()
+        self.intrinsics = {
+            "width": intr.width,
+            "height": intr.height,
+            "fx": intr.fx,
+            "fy": intr.fy,
+            "ppx": intr.ppx,
+            "ppy": intr.ppy,
+            "model": str(intr.model),
+            "coeffs": list(intr.coeffs),
+        }
+        print(
+            f"  📷 RealSense '{self.name}' + depth '{self.depth_name}' started: "
+            f"{self.width}x{self.height}@{self.fps}, depth_scale={self.depth_scale:.6f} m"
+        )
+        return True
+
+    def start(self, data_manager: FramePublisher) -> None:
+        self._thread = threading.Thread(
+            target=self._loop, args=(data_manager,), daemon=True
+        )
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=3.0)
+        if self._pipeline is not None:
+            try:
+                self._pipeline.stop()
+            except Exception:
+                pass
+            self._pipeline = None
+
+    def seconds_since_last_frame(self, now_mono: float) -> float | None:
+        with self._lock:
+            if self._last_frame_mono is None:
+                return None
+            return now_mono - self._last_frame_mono
+
+    # ── Capture loop ───────────────────────────────────────────────────────────
+
+    def _maybe_lock_exposure(self, frame_count: int) -> None:
+        if not self.lock_auto_exposure or frame_count != _WARMUP_FRAMES:
+            return
+        try:
+            assert self._pipeline is not None
+            sensor = (
+                self._pipeline.get_active_profile().get_device().first_color_sensor()
+            )
+            if sensor.supports(rs.option.enable_auto_exposure):
+                sensor.set_option(rs.option.enable_auto_exposure, 0)
+                print(f"  🔒 RealSense '{self.name}' auto-exposure locked")
+        except Exception as e:  # pragma: no cover - hardware path
+            print(f"⚠️  could not lock RealSense exposure: {e}")
+
+    def _loop(self, data_manager: FramePublisher) -> None:
+        frame_count = 0
+        try:
+            while not self._stop.is_set() and not data_manager.is_shutdown_requested():
+                assert self._pipeline is not None
+                frames = self._pipeline.wait_for_frames()
+                # Stamp the capture instant before alignment/copy so RGB and
+                # depth share one time on the collector's reference clock.
+                t_capture = time.monotonic()
+                if self._align is not None:
+                    frames = self._align.process(frames)
+                color = frames.get_color_frame()
+                depth = frames.get_depth_frame()
+                if not color or not depth:
+                    continue
+                rgb = np.asanyarray(color.get_data())  # already RGB (rgb8)
+                depth16 = np.asanyarray(depth.get_data()).astype(np.uint16)
+                data_manager.set_rgb_image(rgb, self.name, t_capture=t_capture)
+                data_manager.set_depth_image(
+                    depth16, self.depth_name, t_capture=t_capture
+                )
+                with self._lock:
+                    self._last_frame_mono = t_capture
+                frame_count += 1
+                self._maybe_lock_exposure(frame_count)
+        except Exception as e:  # pragma: no cover - hardware path
+            print(f"❌ RealSense '{self.name}' thread error: {e}")
+            traceback.print_exc()
+        finally:
+            if self._pipeline is not None:
+                try:
+                    self._pipeline.stop()
+                except Exception:
+                    pass
+                self._pipeline = None
+            print(f"📷 RealSense '{self.name}' thread stopped")

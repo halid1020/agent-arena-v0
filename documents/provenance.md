@@ -24,6 +24,8 @@ is the pointer back.
 | `recording/{cameras,realsense_camera,frames}.py` | stage 3h | `657706b` (`harena-migration`) |
 | `recording/config.py` (the recording half of `config_parser.py`) | stage 3i | `b522983` (`harena-migration`) |
 | `recording/features.py` (with `RobotSchema`) | stage 3j | `cc2b669` (`harena-migration`) |
+| `web/{roots_api,lifecycle_api,projects_api,training_api}.py`, `recording/monitor_wire.py` | stage 4 | `0c544e0` (`harena-migration`) |
+| `rigs.py`, `cli.py`, `web/console.py` | stage 4 | new here |
 
 To read the history of any file here, find its former path under `src/common/`
 in that repository and run `git log --follow` on it there.
